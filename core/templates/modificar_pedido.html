@@ -1,0 +1,189 @@
+{% extends 'dashboard.html' %}
+{% load static %}
+{% block page_title %}<h3 class="w3-center"><i class="fa fa-edit"></i> Modificar Pedido</h3>{% endblock %}
+{% block content %}
+<div class="w3-container w3-padding-32">
+    <div class="w3-card-4" style="border-radius:15px;">
+        <div class="w3-container w3-padding-24">
+            <!-- Información del pedido -->
+            <div class="w3-panel w3-light-grey w3-round-large w3-padding">
+                <h4 class="w3-text">Información del Pedido</h4>
+                <p><strong>N° Pedido:</strong> {{ pedido.id }} | <strong>Total:</strong> ${{ pedido.total_precio }}</p>
+                <p><strong>Cliente:</strong> {{ pedido.user.username }} | <strong>Estado:</strong>
+                    <span class="w3-tag w3-round-large
+                        {% if pedido.estado == 'completado' %}w3-green
+                        {% elif pedido.estado == 'pendiente' %}w3-yellow
+                        {% elif pedido.estado == 'cancelado' %}w3-red
+                        {% else %}w3-blue{% endif %}">
+                        {{ pedido.estado|title }}
+                    </span>
+                </p>
+            </div>
+
+            <!-- Mensajes -->
+            {% if messages %}
+            <div class="w3-panel">
+                {% for message in messages %}
+                <div class="w3-panel w3-{{ message.tags }} w3-round-large w3-padding">
+                    <p>{{ message }}</p>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Formulario para modificar cantidades -->
+            <form method="post" action="{% url 'modificar_pedido' pedido_id=pedido.id %}">
+                {% csrf_token %}
+                <div class="w3-responsive w3-margin-bottom">
+                    <h4 class="w3-text-indigo"><i class="fa fa-shopping-cart"></i> Productos del Pedido</h4>
+                    <table class="w3-table w3-bordered w3-striped w3-hoverable">
+                        <thead>
+                            <tr class="w3-secondary">
+                                <th>Producto</th>
+                                <th class="w3-center">Cantidad</th>
+                                <th class="w3-right-align">Precio Unitario</th>
+                                <th class="w3-right-align">Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for detalle in detalles_pedido %}
+                            <tr>
+                                <td>
+                                    <strong>{{ detalle.producto.nombre }}</strong>
+                                    {% if detalle.producto.marca %}
+                                    <br><span class="w3-small w3-text-gray">{{ detalle.producto.marca }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="w3-center">
+                                    <input type="number" class="w3-input w3-border w3-round"
+                                           name="nueva_cantidad_{{ detalle.id }}"
+                                           value="{{ detalle.cantidad }}" min="1" style="width:80px;">
+                                </td>
+                                <td class="w3-right-align">${{ detalle.producto.precio }}</td>
+                                <td class="w3-right-align w3-text-indigo">
+                                    <strong>${{ detalle.subtotal }}</strong>
+                                    <input type="hidden" name="detalle_pedido_id_{{ detalle.id }}" value="{{ detalle.id }}">
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr class="w3-light-grey">
+                                <th colspan="3" class="w3-right-align">Total Actual:</th>
+                                <th class="w3-right-align w3-text-indigo">${{ pedido.total_precio }}</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <div class="w3-center w3-margin-top">
+                    <button type="submit" class="w3-button w3-green w3-round-large">
+                        <i class="fa fa-save"></i> Guardar Cambios
+                    </button>
+                </div>
+            </form>
+
+            <hr class="w3-border-grey">
+
+            <!-- Formulario para agregar nuevo producto -->
+            <div class="w3-row-padding">
+                <div class="w3-half">
+                    <div class="w3-card w3-round-large w3-padding">
+                        <h4 class="w3-text-indigo"><i class="fa fa-plus-circle"></i> Agregar Producto</h4>
+                        <form method="post" action="{% url 'agregar_producto' pedido_id=pedido.id %}">
+                            {% csrf_token %}
+                            <div class="w3-section">
+                                <label class="w3-text-dark-gray"><b>Producto:</b></label>
+                                <select class="w3-select w3-border w3-round" name="nuevo_producto" required>
+                                    <option value="" disabled selected>Selecciona un producto</option>
+                                    {% for producto in productos_catalogo %}
+                                    <option value="{{ producto.id }}">{{ producto.nombre }} - ${{ producto.precio }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="w3-section">
+                                <label class="w3-text-dark-gray"><b>Cantidad:</b></label>
+                                <input type="number" class="w3-input w3-border w3-round"
+                                       name="nueva_cantidad_nuevo" min="1" value="1" required>
+                            </div>
+
+                            <button type="submit" class="w3-button w3-blue w3-round-large w3-block">
+                                <i class="fa fa-cart-plus"></i> Agregar Producto
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Formulario para eliminar producto -->
+                <div class="w3-half">
+                    <div class="w3-card w3-round-large w3-padding">
+                        <h4 class="w3-text-indigo"><i class="fa fa-trash"></i> Eliminar Producto</h4>
+                        <form method="post" action="{% url 'modificar_pedido' pedido_id=pedido.id %}">
+                            {% csrf_token %}
+                            <div class="w3-section">
+                                <label class="w3-text-dark-gray"><b>Selecciona producto a eliminar:</b></label>
+                                <select class="w3-select w3-border w3-round" name="eliminar_producto_id" required>
+                                    <option value="" disabled selected>Selecciona un producto</option>
+                                    {% for detalle in detalles_pedido %}
+                                    <option value="{{ detalle.id }}">
+                                        {{ detalle.producto.nombre }} - Cantidad: {{ detalle.cantidad }} - ${{ detalle.subtotal }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <input type="hidden" name="eliminar_producto" value="True">
+                            <button type="submit" class="w3-button w3-red w3-round-large w3-block">
+                                <i class="fa fa-times"></i> Eliminar Producto
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botones de navegación -->
+            <div class="w3-center w3-padding-32">
+                <a href="{% url 'pedidos_panel' %}" class="w3-button w3-indigo w3-round-large">
+                    <i class="fa fa-arrow-left"></i> Volver al Panel de Pedidos
+                </a>
+
+                <a href="{% url 'detalle_pedido' pedido.id %}" class="w3-button w3-blue w3-round-large">
+                    <i class="fa fa-eye"></i> Ver Detalles Completos
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .w3-card-4 {
+        border-radius: 15px;
+        overflow: hidden;
+    }
+
+    .w3-table th {
+        font-weight: bold;
+    }
+
+    .w3-table td, .w3-table th {
+        vertical-align: middle;
+    }
+
+    input[type="number"] {
+        text-align: center;
+    }
+
+    @media screen and (max-width: 768px) {
+        .w3-half {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .w3-button {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+    }
+</style>
+{% endblock %}

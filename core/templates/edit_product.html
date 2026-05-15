@@ -1,0 +1,139 @@
+{% extends 'dashboard.html' %}
+{% block page_title %}<h4><i class="fa fa-edit"></i> EDITAR PRODUCTO N°:{{ product_id }}</h4>
+{% endblock %}
+{% block content %}
+{% load static %}
+<div class="w3-container w3-padding-32">
+    <div class="w3-container w3-round-large w3-white" style="max-width:800px; margin:0 auto;">
+        <form method="POST" enctype="multipart/form-data" action="{% url 'edit_product' product_id=product_id %}" class="w3-container w3-padding-24">
+            {% csrf_token %}
+            {{ form.media }}
+
+            <!-- Mejorar la presentación del formulario generado por Django -->
+            <div class="w3-row-padding">
+                {% for field in form %}
+                <div class="w3-half w3-margin-bottom">
+                    <label class="w3-text-indigo"><b>{{ field.label }}</b></label>
+                    {{ field }}
+                    {% if field.help_text %}
+                    <span class="w3-small w3-text-gray">{{ field.help_text }}</span>
+                    {% endif %}
+                    {% for error in field.errors %}
+                    <span class="w3-small w3-text-red">{{ error }}</span>
+                    {% endfor %}
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="w3-center w3-margin-top">
+                <button type="submit" class="w3-button w3-indigo w3-round-large w3-large">
+                    <i class="fa fa-save"></i> Guardar Cambios
+                </button>
+                <a href="{% url 'product_panel' %}" class="w3-button w3-gray w3-round-large w3-large">
+                    <i class="fa fa-times"></i> Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    /* Estilos para mejorar la apariencia de los campos del formulario */
+    form input[type="text"],
+    form input[type="number"],
+    form input[type="file"],
+    form textarea,
+    form select {
+        width: 100%;
+        padding: 10px;
+        margin: 8px 0;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box;
+    }
+
+    form input[type="checkbox"] {
+        margin: 10px 5px;
+        transform: scale(1.5);
+    }
+
+    /* Estilo para los mensajes de error */
+    .w3-text-red {
+        font-weight: bold;
+    }
+
+    /* Estilo para las etiquetas */
+    label {
+        margin-bottom: 8px;
+        display: block;
+        font-weight: bold;
+    }
+
+    /* Estilo para campos de imagen */
+    .image-preview {
+        max-width: 200px;
+        max-height: 200px;
+        margin: 10px 0;
+        border: 2px dashed #ccc;
+        padding: 5px;
+    }
+
+    /* Responsive */
+    @media screen and (max-width: 768px) {
+        .w3-half {
+            width: 100%;
+        }
+
+        .w3-button.w3-large {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+    }
+</style>
+
+<script>
+    // Función para mostrar previsualización de imágenes
+    function previewImage(input, previewId) {
+        const preview = document.getElementById(previewId);
+        const file = input.files[0];
+
+        if (file) {
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                preview.src = e.target.result;
+                preview.style.display = 'block';
+            }
+
+            reader.readAsDataURL(file);
+        } else {
+            preview.style.display = 'none';
+        }
+    }
+
+    // Inicializar previsualizaciones cuando el documento esté listo
+    document.addEventListener('DOMContentLoaded', function() {
+        // Agregar previsualización para campos de imagen si existen
+        const imageFields = document.querySelectorAll('input[type="file"]');
+        imageFields.forEach((field, index) => {
+            const fieldName = field.name;
+            const previewId = 'preview-' + fieldName;
+
+            // Crear elemento de previsualización
+            const preview = document.createElement('img');
+            preview.id = previewId;
+            preview.className = 'image-preview';
+            preview.style.display = 'none';
+            preview.alt = 'Vista previa';
+
+            // Insertar después del campo de archivo
+            field.parentNode.appendChild(preview);
+
+            // Agregar evento change
+            field.addEventListener('change', function() {
+                previewImage(this, previewId);
+            });
+        });
+    });
+</script>
+{% endblock %}

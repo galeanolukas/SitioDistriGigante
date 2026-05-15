@@ -1,0 +1,111 @@
+from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
+from . import views
+from . import google_auth
+
+urlpatterns = [
+    path('', views.index, name='index'),
+    path('buscar/', views.buscar_productos, name='buscar_productos'),
+    path('catalogo/', views.catalogo, name='catalogo'),
+    path('catalogo/random/', views.productos_orden, name='ordenar_catalogo'),
+    path('catalogo/<str:tp>/', views.catalogo, name='ordenar_x'),
+    path('accounts/login/', views.login_view, name='login'),
+    path('logout/', views.logout_view, name='logout'),
+    path('registro/', views.register, name='register'),
+    path('registro/<int:reset_id>/', views.register, name='reset_register'),
+    path('registro/validar/<int:ID>/', views.validar_registro, name='validate_code'),
+    path('registro/confirmar/<int:ID>/', views.confirm_register, name='confirm_register'),
+    path('registro/actualizado/<int:perfil_id>/', views.registro_actualizado, name='registro_actualizado'),
+    path('registro/recuperar/', views.recuperar_pass, name='reset_pass'),
+    path('registro/validar/<int:ID>/', views.confirm_register, name='validar_registro'),
+    path('admin_panel/', views.admin_panel, name='admin_panel'),
+    path('admin_panel/crear_usuario/', views.create_user, name='create_user'),
+    path('admin_panel/crear_cartel/', views.flayer_panel, name='create_flayer'),
+    path('admin_panel/crear_cartel/<int:ID>/', views.flayer_panel, name='create_flayer_id'),
+    path('admin_panel/eliminar_cartel/<int:ID>/', views.eliminar_cartel, name='eliminar_flayer'),
+    path('admin_panel/borrar_user/<int:user_id>/', views.delete_user, name='delete_user'),
+    path('admin_panel/cargar_archivo/', views.cargar_archivo, name='cargar_archivo'),
+    path('admin_panel/cargar_archivo/deshacer/', views.deshacer_ultima_carga, name='deshacer_ultima_carga'),
+    path('admin_panel/cargar_archivo/<int:ID>/', views.cargar_archivo, name='cargar_archivo_id'),
+    path('admin_panel/eliminar_archivo/<int:ID>/', views.eliminar_archivo, name='eliminar_archivo_id'),
+    path('admin_panel/cargar_productos/<int:ID>/', views.cargar_productos, name='cargar_productos'),
+    path('admin_panel/clientes/', views.panel_gestion_clientes, name='gestion_clientes'),
+    path('admin_panel/catologo_a_pdf/', views.selec_catalogo_pdf, name='catalogo_a_pdf'),
+    path('crear_superuser/', views.create_superuser, name='create_superuser'),
+    path('admin_panel/editar_usuario/<int:user_id>/', views.edit_user, name='edit_user'),
+    path('admin_panel/productos/', views.product_panel, name='product_panel'),
+    path('admin_panel/productos/cambiar-orden/', views.cambiar_orden_catalogo, name='cambiar_orden_catalogo'),
+    path('admin_panel/productos/reset_precios/', views.limpiar_precios, name='limpiar_precios'),
+    path('admin_panel/productos/modif_stock/', views.modif_stock, name='modif_stock'),
+    path('admin_panel/productos/imagen/', views.buscar_imagenes, name='product_img_search'),
+    path('admin_panel/producto/imagen/<int:ID>/', views.buscar_imagenes, name='product_img_search_id'),
+    path('admin_panel/pedido/<int:pedido_id>/pdf/', views.generar_pdf_pedido, name='generar_pdf_pedido'),
+    path('admin_panel/pedidos_panel/', views.pedidos_panel, name='pedidos_panel'),
+    path('admin_panel/mercado-pago/agregar/', views.agregar_cuenta_mercado_pago, name='agregar_cuenta_mercado_pago'),
+    path('admin_panel/mercado-pago/eliminar/<int:cuenta_id>/', views.eliminar_cuenta_mercado_pago, name='eliminar_cuenta_mercado_pago'),
+    path('admin_panel/mercado-pago/activar/<int:cuenta_id>/', views.toggle_activar_cuenta_mercado_pago, name='toggle_activar_cuenta_mercado_pago'),
+    path('panel_usuario/', views.user_panel, name='user_panel'),
+    path('producto/crear/', views.create_product, name='create_product'),
+    path('producto/editar/<int:product_id>/', views.edit_product, name='edit_product'),
+    path('producto/borrar/<int:product_id>/', views.delete_product, name='delete_product'),
+    path('producto/detalle/<int:product_id>/', views.product_detail, name='product_detail'),
+    path('producto/ofertar/<int:product_id>/', views.crear_oferta, name='crear_oferta'),
+    path('api/productos/', views.api_productos, name='api_productos'),
+    path('agregar-al-carrito/<int:product_id>/', views.agregar_al_carrito, name='agregar_al_carrito'),
+    path('eliminar-producto/<int:cart_item_id>/', views.eliminar_producto, name='eliminar_producto'),
+    path('carrito/', views.carrito, name='carrito'),
+    path('confirmar-pedido/', views.confirmar_pedido, name='confirmar_pedido'),
+    path('carrito/modificar_cantidad/<int:cart_item_id>/', views.modificar_cantidad, name='modificar_cantidad'),
+    path('carrito/pago/<str:usuario>/<str:estado>/', views.respuesta_pago, name='respuesta_pago'),
+    path('pago-exitoso/<int:pedido_id>/', views.respuesta_pago_mp, name='pago_exitoso_mp'),
+    path('pago-fallido/<int:pedido_id>/', views.respuesta_pago_mp, name='pago_fallido_mp'),
+    path('pago-pendiente/<int:pedido_id>/', views.respuesta_pago_mp, name='pago_pendiente_mp'),
+    path('procesar-pago/<int:pedido_id>/', views.procesar_pago, name='procesar_pago'),
+    path('webhook/mercadopago/', views.mercadopago_webhook, name='mercadopago_webhook'),
+    path('carrito/procesar_pago/<int:pedido_id>/', views.procesar_pago, name='procesar_pago_legacy'),
+    path('modificar_pedido/<int:pedido_id>/', views.modificar_pedido, name='modificar_pedido'),
+    path('toggle-featured/<int:product_id>/', views.toggle_featured, name='toggle_featured'),
+    path('detalle_pedido/<int:pedido_id>/', views.detalle_pedido, name='detalle_pedido'),
+    path('cambiar_estado_pedido/<int:pedido_id>/', views.cambiar_estado_pedido, name='cambiar_estado_pedido'),
+    path('agregar_producto/<int:pedido_id>/', views.agregar_producto, name='agregar_producto'),
+    path('eliminar_pedido/<int:pedido_id>/', views.eliminar_pedido, name='eliminar_pedido'),
+    path('acerca.html', views.acerca, name='acerca'),
+    path('contacto/', views.contacto, name='contacto'),
+    path('preventista/', views.pedi_preventista, name='pedi_preventista'),
+    path('faq.html', views.faq, name='faq'),
+    path('ofertas/', views.ofertas, name='ofertas'),
+    path('gestion-ofertas/', views.gestion_ofertas, name='gestion_ofertas'),
+    path('gestion-envios/', views.gestion_envios, name='gestion_envios'),
+    path('gestion-envios/inicializar/', views.inicializar_envios, name='inicializar_envios'),
+    path('api/opciones-envio/', views.api_opciones_envio, name='api_opciones_envio'),
+    path('api/notificaciones/', views.api_notificaciones, name='api_notificaciones'),
+    path('api/notificaciones/marcar-leidas/', views.api_marcar_notificaciones_leidas, name='api_marcar_notificaciones_leidas'),
+    path('api/notificaciones/<int:notificacion_id>/marcar-leida/', views.api_marcar_notificacion_leida, name='api_marcar_notificacion_leida'),
+    path('gestion-ofertas/toggle/<int:oferta_id>/', views.toggle_oferta, name='toggle_oferta'),
+    path('gestion-ofertas/eliminar/<int:oferta_id>/', views.eliminar_oferta, name='eliminar_oferta'),
+    path('catalogo-pdf/', views.catalogo_pdf, name='catalogo_pdf'),
+    path('catalogo-pdf/<str:orden>/', views.catalogo_pdf, name='catalogo_pdf_orden'),
+    
+    # URLs de Sistema de Transportistas
+    path('panel-transportista/', views.panel_transportista, name='panel_transportista'),
+    path('gestion-envios-transportista/', views.gestion_envios_transportista, name='gestion_envios_transportista'),
+    path('escanear-qr-entrega/', views.escanear_qr_publico, name='escanear_qr_entrega'),
+    path('escanear-qr-publico/', views.escanear_qr_publico, name='escanear_qr_publico'),
+    path('gestion-transportistas/', views.gestion_transportistas, name='gestion_transportistas'),
+    path('asignar-envio/<int:envio_id>/', views.asignar_envio_transportista, name='asignar_envio_transportista'),
+    
+    # URLs de Google OAuth
+    path('auth/google/', google_auth.google_login, name='google_login'),
+    path('auth/callback/', google_auth.google_callback, name='google_callback'),
+
+]
+
+urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+urlpatterns += [
+    path("ckeditor5/", include('django_ckeditor_5.urls'), name="ck_editor_5_upload_file"),
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+if settings.DEBUG:
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -1,0 +1,232 @@
+{% extends 'dashboard.html' %}
+{% load static %}
+{% block title %}USUARIOS{% endblock %}
+{% block page_title %}
+<h4 class="w3-text-white w3-center">PANEL DE USUARIOS</h4>
+{% endblock %}
+{% block content %}
+<!-- Modal para Crear Usuario -->
+<div id="createUserModal" class="w3-modal">
+    <div class="w3-modal-content w3-card-4 w3-animate-zoom" style="max-width:600px">
+        <header class="w3-container w3-secondary">
+            <span onclick="document.getElementById('createUserModal').style.display='none'"
+                  class="w3-button w3-display-topright">&times;</span>
+            <h3 class="w3-center"><i class="fa fa-user-plus"></i> Nuevo Usuario</h3>
+        </header>
+
+        <form method="post" class="w3-container" action="{% url 'create_user' %}">
+            {% csrf_token %}
+
+            <div class="w3-section">
+                {% for field in form %}
+                    {% if field.name != 'is_superuser' and field.name != 'grupos' %}
+                    <div class="w3-margin-bottom">
+                        <label class="w3-text-gray"><b>{{ field.label }}</b></label>
+                        {{ field }}
+                        {% if field.help_text %}
+                        <span class="w3-small w3-text-gray">{{ field.help_text }}</span>
+                        {% endif %}
+                        {% for error in field.errors %}
+                        <span class="w3-small w3-text-red">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                {% endfor %}
+
+                <!-- Campo Grupo -->
+                <div class="w3-margin-bottom">
+                    <label class="w3-text-gray"><b>Grupo</b></label>
+                    <select class="w3-select w3-border w3-round-large" name="grupos" required>
+                        <option value="" disabled selected>Seleccionar grupo</option>
+                        {% for group in groups %}
+                        <option value="{{ group.id }}">{{ group.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Campo Superusuario personalizado -->
+                <div class="w3-margin-bottom">
+                    <label class="w3-text-gray"><b>Tipo de Usuario</b></label>
+                    <div class="w3-panel w3-light-grey w3-round-large w3-padding">
+                        <label class="w3-checkbox">
+                            <input type="checkbox" id="id_is_superuser" name="is_superuser">
+                            <span class="w3-checkmark"></span> Superusuario
+                        </label>
+                        <p class="w3-small w3-text-gray">Los superusuarios tienen acceso completo al sistema.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="w3-container w3-padding-16 w3-center">
+                <button type="submit" class="w3-button w3-green w3-round-large w3-margin-right">
+                    <i class="fa fa-check"></i> Crear Usuario
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="w3-container w3-padding">
+    <div class="w3-container w3-light-grey w3-round-large w3-padding">
+        <div class="w3-center">
+            <!-- Formulario de búsqueda -->
+            <div class="w3-panel">
+                <form method="GET" action="{{ search_action }}" class="w3-container">
+                    <div class="w3-row">
+                        <div class="w3-col m10 s9">
+                            <input class="w3-input w3-border w3-round-large" type="text"
+                                   name="{{ search_name }}" placeholder="{{ placeholder }}"
+                                   value="{{ request.GET.user }}">
+                        </div>
+                        <div class="w3-col m2 s3">
+                            <button type="submit" class="w3-button w3-secondary w3-round-large w3-block">
+                                <i class="fa fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Contenido y funcionalidad específica de "Usuario" -->
+            <div class="w3-responsive">
+                <table class="w3-table w3-bordered w3-striped w3-hoverable">
+                    <thead>
+                        <tr class="w3-secondary">
+                            <th>ID</th>
+                            <th>Usuario</th>
+                            <th>Email</th>
+                            <th>Admin</th>
+                            <th>Grupo</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td>{{ user.id }}</td>
+                            <td>{{ user.username }}</td>
+                            <td>{{ user.email }}</td>
+                            <td>{% if user.is_superuser %}Sí{% else %}No{% endif %}</td>
+                            <td>
+                                {% for group in user.groups.all %}
+                                    {{ group.name }}{% if not forloop.last %}, {% endif %}
+                                {% empty %}
+                                    Sin grupo
+                                {% endfor %}
+                            </td>
+                            <td>
+                                <a href="{% url 'edit_user' user.id %}" class="w3-button w3-blue w3-small" title="Editar usuario">
+                                    <i class="fa fa-edit"></i>
+                                </a>
+                                <button onclick="document.getElementById('deleteModal{{ user.id }}').style.display='block'"
+                                        class="w3-button w3-red w3-small" title="Eliminar usuario">
+                                    <i class="fa fa-user-times"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <!-- Modal para Eliminar Usuario -->
+                        <div id="deleteModal{{ user.id }}" class="w3-modal">
+                            <div class="w3-modal-content w3-card-4 w3-animate-zoom" style="max-width:500px">
+                                <header class="w3-container w3-red">
+                                    <span onclick="closeModal('deleteModal{{ user.id }}')"
+                                          class="w3-button w3-display-topright">&times;</span>
+                                    <h3 class="w3-center"><i class="fa fa-exclamation-triangle"></i> Confirmar Eliminación</h3>
+                                </header>
+
+                                <div class="w3-container">
+                                    <div class="w3-section">
+                                        <p class="w3-center">¿Estás seguro de que deseas eliminar al usuario?</p>
+                                        <p class="w3-text-red w3-center"><strong>¡Esta acción no se puede deshacer!</strong></p>
+                                    </div>
+                                </div>
+
+                                <footer class="w3-container w3-padding-16">
+                                    <div class="w3-center">
+                                        <form method="POST" action="{% url 'delete_user' user.id %}" style="display:inline;">
+                                            {% csrf_token %}
+                                            <button type="submit" class="w3-button w3-red w3-round-large w3-margin-right">
+                                                <i class="fa fa-trash"></i> Eliminar
+                                            </button>
+                                        </form>
+                                    </div>
+                                </footer>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="w3-center w3-padding-16">
+                                No se encontraron usuarios
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Paginación -->
+            {% if users.has_other_pages %}
+            <div class="w3-center w3-padding-32">
+              <div class="w3-bar">
+                {% if users.has_previous %}
+                  <a class="w3-button w3-primary" href="?page={{ users.previous_page_number }}">« Anterior</a>
+                {% endif %}
+
+                {% for i in users.paginator.page_range %}
+                  {% if users.number == i %}
+                    <a class="w3-button w3-red">{{ i }}</a>
+                  {% elif i > users.number|add:'-3' and i < users.number|add:'3' %}
+                    <a class="w3-button w3-hover-primary" href="?page={{ i }}">{{ i }}</a>
+                  {% endif %}
+                {% endfor %}
+
+                {% if users.has_next %}
+                  <a class="w3-button w3-primary w3-text-white" href="?page={{ users.next_page_number }}">Siguiente »</a>
+                {% endif %}
+              </div>
+            </div>
+            {% endif %}
+
+            <br>
+            <button class="w3-button w3-secondary w3-round-large" onclick="document.getElementById('createUserModal').style.display='block'">
+                <i class="fa fa-user-plus"></i> Nuevo Usuario
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- [Aquí irían los modales de crear y eliminar usuario] -->
+
+<style>
+    .w3-hoverable tbody tr:hover {
+        background-color: #f0f0f0;
+        transition: background-color 0.3s;
+    }
+
+    @media screen and (max-width: 600px) {
+        .w3-responsive table {
+            font-size: 11px;
+        }
+
+        .w3-button {
+            padding: 5px 8px;
+            margin: 2px;
+        }
+
+        .w3-bar-item {
+            padding: 5px 8px;
+            font-size: 12px;
+        }
+    }
+</style>
+
+<script>
+// Cerrar todos los modales al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+    // Cerrar todos los modales para que no aparezcan visibles al recargar
+    const modals = document.querySelectorAll('.w3-modal');
+    modals.forEach(modal => {
+        modal.style.display = 'none';
+    });
+});
+</script>
+{% endblock %}

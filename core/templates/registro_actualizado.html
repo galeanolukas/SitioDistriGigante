@@ -1,0 +1,71 @@
+{% extends 'dashboard.html' %}
+{% load static %}
+{% block content %}
+<div class="w3-container w3-padding-32">
+    <div class="w3-card-4 w3-round-large w3-white w3-padding">
+        <div class="w3-center">
+            <h2 class="w3-text-indigo">Bienvenido/a, {{ user.username }}!</h2>
+            <h5 class="w3-text-gray">{{ user.email }}</h5>
+
+            <div class="w3-card w3-round-large w3-margin-top w3-light-grey">
+                <div class="w3-container w3-indigo w3-round-large">
+                    <h4>Tus datos de perfil</h4>
+                </div>
+                <div class="w3-container w3-padding-24">
+                    <div class="w3-center">
+                        <img src="{{ perfil.imagen.url }}" class="w3-image w3-round-large" style="max-height: 300px; object-fit: contain; border: 2px solid #ddd;">
+                    </div>
+
+                    <div class="w3-panel w3-leftbar w3-border-indigo w3-padding w3-margin-top">
+                        <p><i class="fa fa-id-card w3-text-indigo"></i> Nombre y apellido: <strong>{{ perfil.nombre }}</strong></p>
+                    </div>
+
+                    <div class="w3-panel w3-leftbar w3-border-indigo w3-padding">
+                        <p><i class="fa fa-map-marker w3-text-indigo"></i> Dirección: <strong>{{ perfil.direccion }}</strong></p>
+                    </div>
+
+                    <div class="w3-panel w3-leftbar w3-border-indigo w3-padding">
+                        <p><i class="fa fa-building w3-text-indigo"></i> Localidad/Ciudad: <strong>{{ perfil.localidad }}</strong></p>
+                    </div>
+
+                    <div class="w3-panel w3-leftbar w3-border-indigo w3-padding">
+                        <p><i class="fa fa-phone w3-text-indigo"></i> Tel/Cel: <strong>{{ perfil.telefono }}</strong></p>
+                    </div>
+                    <!-- Agrega más campos según sea necesario -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .w3-leftbar {
+        border-left: 4px solid #3f51b5 !important;
+    }
+
+    .w3-panel {
+        margin: 16px 0;
+        transition: background-color 0.3s;
+    }
+
+    .w3-panel:hover {
+        background-color: #f5f5f5;
+    }
+
+    .fa {
+        margin-right: 10px;
+        width: 20px;
+        text-align: center;
+    }
+
+    @media screen and (max-width: 600px) {
+        .w3-container {
+            padding: 16px;
+        }
+
+        img.w3-image {
+            max-height: 200px;
+        }
+    }
+</style>
+{% endblock %}

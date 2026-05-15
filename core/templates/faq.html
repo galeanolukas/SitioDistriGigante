@@ -1,0 +1,286 @@
+{% extends 'base.html' %}
+{% block content %}
+{% load static %}
+<style>
+    .faq-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    
+    .faq-header {
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: white;
+        padding: 30px;
+        border-radius: 15px;
+        text-align: center;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .faq-item {
+        margin-bottom: 15px;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+    }
+    
+    .faq-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    }
+    
+    .faq-question {
+        background: var(--light-grey);
+        padding: 20px;
+        cursor: pointer;
+        border: none;
+        width: 100%;
+        text-align: left;
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--text-dark);
+        transition: all 0.3s ease;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .faq-question:hover {
+        background: #e8eaed;
+    }
+    
+    .faq-question.active {
+        background: var(--secondary);
+        color: white;
+    }
+    
+    .faq-answer {
+        padding: 0 20px;
+        max-height: 0;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        background: white;
+        border-left: 4px solid var(--secondary);
+    }
+    
+    .faq-answer.show {
+        padding: 20px;
+        max-height: 500px;
+    }
+    
+    .faq-icon {
+        transition: transform 0.3s ease;
+        font-size: 14px;
+    }
+    
+    .faq-icon.rotate {
+        transform: rotate(180deg);
+    }
+    
+    @media (max-width: 768px) {
+        .faq-container {
+            padding: 10px;
+        }
+        
+        .faq-header {
+            padding: 20px;
+        }
+        
+        .faq-question {
+            padding: 15px;
+            font-size: 14px;
+        }
+        
+        .faq-answer {
+            padding: 15px;
+        }
+    }
+</style>
+
+<div class="faq-container">
+    <div class="faq-header">
+        <h2 class="w3-xxlarge"><i class="fas fa-question-circle w3-margin-right"></i>Preguntas Frecuentes</h2>
+        <p class="w3-large">Todo lo que necesitas saber sobre Distribuidora Gigante</p>
+    </div>
+    
+    <div class="faq-content">
+        <div class="faq-item">
+            <button class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Cómo realizo un pedido en Distribuidora Gigante?</span>
+                <i class="fas fa-chevron-down faq-icon"></i>
+            </button>
+            <div class="faq-answer">
+                <p>Realizar tu pedido es muy sencillo:</p>
+                <ol>
+                    <li>Regístrate en nuestro sitio web con tus datos personales</li>
+                    <li>Navega por nuestro catálogo de productos</li>
+                    <li>Agrega los productos deseados a tu carrito</li>
+                    <li>Confirma tu pedido y elige el método de pago</li>
+                    <li>Recibirás un correo de confirmación con los detalles</li>
+                </ol>
+                <p>¿Necesitas ayuda? Contáctanos al +54370 526-2361</p>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <button class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Cuáles son los métodos de pago aceptados?</span>
+                <i class="fas fa-chevron-down faq-icon"></i>
+            </button>
+            <div class="faq-answer">
+                <p>Aceptamos los siguientes métodos de pago:</p>
+                <ul>
+                    <li><strong>Efectivo:</strong> Pago contra entrega</li>
+                    <li><strong>Transferencia bancaria:</strong> Cuenta bancaria de Distribuidora Gigante</li>
+                    <li><strong>Mercado Pago:</strong> Tarjetas de crédito, débito y otros medios</li>
+                    <li><strong>Crédito comercial:</strong> Para clientes habituales (sujeto a aprobación)</li>
+                </ul>
+                <p>Todos nuestros pagos son seguros y están protegidos.</p>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <button class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Cuál es el tiempo de entrega de los pedidos?</span>
+                <i class="fas fa-chevron-down faq-icon"></i>
+            </button>
+            <div class="faq-answer">
+                <p>Los tiempos de entrega varían según tu ubicación:</p>
+                <ul>
+                    <li><strong>Formosa capital:</strong> 24-48 horas hábiles</li>
+                    <li><strong>Interior de Formosa:</strong> 48-72 horas hábiles</li>
+                    <li><strong>Otras provincias:</strong> 3-5 días hábiles</li>
+                </ul>
+                <p>Los pedidos se procesan de lunes a viernes de 8:00 a 17:00 hs. Los pedidos realizados después de las 15:00 hs se procesarán al día siguiente.</p>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <button class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Ofrecen garantía en los productos?</span>
+                <i class="fas fa-chevron-down faq-icon"></i>
+            </button>
+            <div class="faq-answer">
+                <p>Sí, todos nuestros productos cuentan con garantía:</p>
+                <ul>
+                    <li><strong>Garantía de fábrica:</strong> Según las políticas de cada fabricante</li>
+                    <li><strong>Garantía de calidad:</strong> Verificamos todos los productos antes del envío</li>
+                    <li><strong>Devoluciones:</strong> Aceptamos devoluciones dentro de los 30 días por defectos de fabricación</li>
+                </ul>
+                <p>Para gestionar una garantía, contacta a nuestro servicio de atención al cliente.</p>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <button class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Cómo puedo convertirme en cliente mayorista?</span>
+                <i class="fas fa-chevron-down faq-icon"></i>
+            </button>
+            <div class="faq-answer">
+                <p>Para convertirte en cliente mayorista:</p>
+                <ol>
+                    <li>Completa el formulario de registro</li>
+                    <li>Presenta tu CUIT y documentación comercial</li>
+                    <li>Nuestro equipo comercial evaluará tu solicitud</li>
+                    <li>Accederás a precios especiales y beneficios exclusivos</li>
+                </ol>
+                <p>Comunícate con nuestro equipo comercial al +54370 526-2361 para más información.</p>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <button class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Qué hago si recibí un producto dañado o incorrecto?</span>
+                <i class="fas fa-chevron-down faq-icon"></i>
+            </button>
+            <div class="faq-answer">
+                <p>Si recibes un producto con problemas:</p>
+                <ol>
+                    <li>No aceptes el producto si el paquete está visiblemente dañado</li>
+                    <li>Toma fotos del producto y el empaque</li>
+                    <li>Contacta inmediatamente a nuestro servicio al cliente</li>
+                    <li>Te ofreceremos un reemplazo o reembolso completo</li>
+                    <li>La gestión se realizará dentro de las 48 horas hábiles</li>
+                </ol>
+                <p>Nuestro compromiso es garantizar tu satisfacción total.</p>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <button class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Puedo cancelar o modificar mi pedido?</span>
+                <i class="fas fa-chevron-down faq-icon"></i>
+            </button>
+            <div class="faq-answer">
+                <p>Claro que sí:</p>
+                <ul>
+                    <li><strong>Antes del procesamiento:</strong> Puedes cancelar o modificar sin costo</li>
+                    <li><strong>En procesamiento:</strong> Contáctanos inmediatamente para gestionar cambios</li>
+                    <li><strong>En tránsito:</strong> Podemos redirigir la entrega si es necesario</li>
+                </ul>
+                <p>Llama a nuestro centro de atención al cliente para cualquier modificación.</p>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <button class="faq-question" onclick="toggleFAQ(this)">
+                <span>¿Tienen servicio técnico postventa?</span>
+                <i class="fas fa-chevron-down faq-icon"></i>
+            </button>
+            <div class="faq-answer">
+                <p>Sí, ofrecemos servicio técnico completo:</p>
+                <ul>
+                    <li><strong>Soporte telefónico:</strong> Lunes a viernes de 8:00 a 17:00 hs</li>
+                    <li><strong>Soporte por WhatsApp:</strong> +54370 512-0682</li>
+                    <li><strong>Service autorizado:</strong> Para reparaciones y mantenimientos</li>
+                    <li><strong>Repuestos y accesorios:</strong> Contamos con stock completo</li>
+                </ul>
+                <p>Nuestro equipo técnico está capacitado para resolver cualquier inconveniente.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="w3-panel w3-light-grey w3-round-large w3-padding-32 w3-margin-top">
+        <h4 class="w3-text-gray"><i class="fas fa-info-circle w3-margin-right"></i>¿No encontraste lo que buscabas?</h4>
+        <p class="w3-text-gray">Nuestro equipo de atención al cliente está listo para ayudarte con cualquier consulta adicional.</p>
+        <div class="w3-row w3-margin-top">
+            <div class="w3-col s12 m6">
+                <a href="{% url 'contacto' %}" class="w3-button w3-secondary w3-block w3-round-large w3-margin-bottom">
+                    <i class="fas fa-envelope w3-margin-right"></i>Enviar Mensaje
+                </a>
+            </div>
+            <div class="w3-col s12 m6">
+                <a href="tel:+543705262361" class="w3-button w3-primary w3-block w3-round-large w3-margin-bottom">
+                    <i class="fas fa-phone w3-margin-right"></i>Llamar Ahora
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleFAQ(button) {
+    const answer = button.nextElementSibling;
+    const icon = button.querySelector('.faq-icon');
+    const allQuestions = document.querySelectorAll('.faq-question');
+    const allAnswers = document.querySelectorAll('.faq-answer');
+    const allIcons = document.querySelectorAll('.faq-icon');
+    
+    // Close all other FAQs
+    allQuestions.forEach((q, index) => {
+        if (q !== button) {
+            q.classList.remove('active');
+            allAnswers[index].classList.remove('show');
+            allIcons[index].classList.remove('rotate');
+        }
+    });
+    
+    // Toggle current FAQ
+    button.classList.toggle('active');
+    answer.classList.toggle('show');
+    icon.classList.toggle('rotate');
+}
+</script>
+{% endblock %}

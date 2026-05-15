@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% block title %}REGISTRATE{% endblock %}
+{% block content %}
+{% load static %}
+<!--Contenido-->
+<div class="contenido px-3 py-4 mt-3 text-center">
+    <div class="row justify-content-sm-center pb-3 fs-5 fw-normal lh-sm text-body-emphasis bg-body-secondary rounded shadow-sm">
+        <h3 class="pt-5">{% if reset_pass %}Recupera{% else %}Registra{% endif %} tu cuenta</h3>
+        <p class="border-bottom py-1"></p>
+        <div class="col-sm-4 mb-5 form-signin fw-normal">
+            <form class="needs-validation" novalidate id="formulario" name="form" autocomplete="off" action="{% if reset_pass %}{% url 'reset_register' reset_id=reset_id %}{% else %}{% url 'register' %}{% endif %}"method="POST">
+                {% csrf_token %}
+                {% if reset_pass %}
+                <div class="form-floating mb-3">
+                  <p style="font-size:0.6em;">La contraseña debe contener al menos 8 caracteres, 1 letra Mayus y un simbolo ejem: #$%&.</p>
+                </div>
+                <div class="form-floating mb-3">
+                    <input type="password" class="form-control" id="floatingPassword" placeholder="Password" name="password" required>
+                    <label for="floatingPassword">Nueva Contraseña</label>
+                    <div class="valid-feedback">Good</div>
+                    <div class="invalid-feedback">Wrong</div>
+                    <div class="invalid-feedback">
+                        Ingrese una contraseña válida.
+                    </div>
+                </div>
+                <div class="form-floating mb-3">
+                    <input type="password" class="form-control" id="floatingPassword" placeholder="Password" name="confirm_password" required>
+                    <div class="valid-feedback">Buena</div>
+                    <div class="invalid-feedback">Mal</div>
+                    <label for="floatingPassword">Confirmar contraseña</label>
+                    <div class="invalid-feedback">
+                        Debe coincidir con la contraseña anterior.
+                    </div>
+                </div>
+                {% else %}
+                <form method="POST" class="w3-container">
+                    {% csrf_token %}
+                    <div class="form-floating mb-3">
+                        {{ form.username }}
+                        <label for="{{ form.username.id_for_label }}">Nombre de usuario</label>
+                        {% if form.username.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.username.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="form-floating mb-3">
+                        {{ form.email }}
+                        <label for="{{ form.email.id_for_label }}">Email</label>
+                        {% if form.email.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.email.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="form-floating mb-3">
+                      <p style="font-size:0.6em;">La contraseña debe contener al menos 8 caracteres, 1 letra Mayus y un simbolo ejem: #$%&.</p>
+                    </div>
+                    <div class="form-floating mb-3">
+                        {{ form.password }}
+                        <label for="{{ form.password.id_for_label }}">Contraseña</label>
+                        {% if form.password.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.password.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="form-floating mb-3">
+                        {{ form.confirm_password }}
+                        <label for="{{ form.confirm_password.id_for_label }}">Confirmar contraseña</label>
+                        {% if form.confirm_password.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.confirm_password.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="form-floating mb-3">
+                        {{ form.captcha }}
+                        {% if form.captcha.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.captcha.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+                <div class="form-check text-start my-3 mb-3">
+                    <input class="form-check-input" type="checkbox" value="remember-me" id="flexCheckDefault" required>
+                    <label class="form-check-label" for="flexCheckDefault">
+                      Acepto los términos y condiciones
+                    </label>
+                    <div class="invalid-feedback">
+                      Debes aceptar los términos antes de registrarte.
+                    </div>
+                </div>
+                {% endif %}
+                <button class="btn btn-primary w-100 py-2" type="submit">{% if reset_pass %}Confirmar{% else %}Registrarme{% endif %}</button>
+                <hr class="mt-4 mb-2">
+                <small class="text-body-secondary fw-medium">Si ya tienes una cuenta ingresa aquí: <a href="{% url 'login' %}" class="text-decoration-none"><strong>Ingresar</strong></a></small>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Script de reCAPTCHA -->
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+
+{% endblock %}

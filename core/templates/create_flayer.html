@@ -1,0 +1,292 @@
+{% extends 'dashboard.html' %}
+{% block page_title %}
+<h4 class="w3-center"><i class="fas fa-images"></i> PANEL Y FLAYERS</h4>
+{% endblock %}
+{% load static %}
+{% block content %}
+
+<div class="w3-container">
+    <!-- Panel Principal -->
+        <!-- Tabla de Carteles Existentes -->
+        <div class="w3-container w3-padding-16">
+            {% if carteles %}
+            <div class="w3-responsive">
+                <table class="w3-table w3-striped w3-bordered w3-hoverable">
+                    <thead>
+                        <tr class="w3-secondary">
+                            <th>Título</th>
+                            <th>Imagen</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in carteles %}
+                        <tr class="w3-hover-light-grey">
+                            <td><strong>{{ p.titulo }}</strong></td>
+                            <td>
+                                {% if p.imagen %}
+                                <img src="{{ p.imagen.url }}" alt="{{ p.titulo }}"
+                                     class="w3-image" style="max-height: 60px; max-width: 100px;">
+                                {% else %}
+                                <span class="w3-text-grey">Sin imagen</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="w3-cell-row">
+                                    <!-- Botón Editar -->
+                                    <div class="w3-cell">
+                                        <a href="{% url 'create_flayer_id' p.id %}"
+                                           class="w3-button w3-blue w3-round w3-tooltip" title="Editar cartel">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    </div>
+                                    <!-- Botón Eliminar -->
+                                    <div class="w3-cell">
+                                        <button onclick="document.getElementById('deleteModal{{ p.id }}').style.display='block'"
+                                                class="w3-button w3-red w3-round w3-tooltip" title="Eliminar cartel">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- Modal de Eliminación -->
+                        <div id="deleteModal{{ p.id }}" class="w3-modal">
+                            <div class="w3-modal-content w3-card-4 w3-animate-zoom" style="max-width:500px">
+                                <div class="w3-container w3-red">
+                                    <span onclick="document.getElementById('deleteModal{{ p.id }}').style.display='none'"
+                                          class="w3-button w3-display-topright">&times;</span>
+                                    <h3 class="w3-center"><i class="fas fa-exclamation-triangle"></i> Eliminar Cartel</h3>
+                                </div>
+                                <div class="w3-container w3-padding-24">
+                                    <div class="w3-panel w3-pale-red w3-border w3-round">
+                                        <h4>¿Estás seguro de eliminar este cartel?</h4>
+                                        <p><strong>Título:</strong> {{ p.titulo }}</p>
+                                        <p class="w3-text-red"><i class="fas fa-warning"></i> Esta acción no se puede deshacer.</p>
+                                    </div>
+                                    <div class="w3-center">
+                                        <form action="{% url 'eliminar_flayer' p.id %}" method="POST">
+                                        {% csrf_token %}
+                                        <button type="submit" class="w3-button w3-red w3-round-large">
+                                            <i class="fas fa-trash"></i> Eliminar
+                                        </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="w3-center w3-padding-32">
+                <div class="w3-text-grey">
+                    <i class="fas fa-image w3-jumbo"></i>
+                    <h4>No hay carteles cargados</h4>
+                    <p>Comienza cargando tu primer cartel o flayer.</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Formulario para Cargar Nuevo Flayer -->
+        <div class="w3-container w3-padding-16 w3-secondary">
+            <h3 class="w3-border-bottom w3-padding-16"><i class="fas fa-upload"></i> Cargar Nuevo Flayer</h3>
+
+            <form method="POST" enctype="multipart/form-data" action="" class="w3-container w3-padding-16 w3-white w3-round-large">
+                {% csrf_token %}
+
+                <div class="w3-section">
+                    <label class="w3-text-dark-grey"><b>Título del Flayer:</b></label>
+                    {{ form.titulo }}
+                </div>
+
+                <div class="w3-section">
+                    <label class="w3-text-dark-grey"><b>Imagen:</b></label>
+                    {{ form.imagen }}
+                </div>
+
+                <div class="w3-section">
+                    <label class="w3-text-dark-grey"><b>Texto descriptivo:</b></label>
+                    {{ form.texto }}
+                </div>
+
+                <div class="w3-row-padding">
+                    <div class="w3-half">
+                        <label class="w3-text-dark-grey"><b>Color del Texto:</b></label>
+                        {{ form.color_texto }}
+                    </div>
+                    <div class="w3-half">
+                        <label class="w3-text-dark-grey"><b>Color de Fondo:</b></label>
+                        {{ form.color_fondo }}
+                    </div>
+                </div>
+
+                {{ form.media }}
+
+                <div class="w3-center w3-margin-top">
+                    <button type="submit" class="w3-button w3-green w3-round-large">
+                        <i class="fas fa-upload"></i> Cargar Flayer
+                    </button>
+                </div>
+            </form>
+        </div>
+
+</div>
+
+<!-- Estilos adicionales -->
+<style>
+.w3-tooltip {
+    position: relative;
+    display: inline-block;
+}
+
+.w3-tooltip .w3-text {
+    visibility: hidden;
+    width: 120px;
+    background-color: #555;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -60px;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.w3-tooltip:hover .w3-text {
+    visibility: visible;
+    opacity: 1;
+}
+
+.w3-cell-row {
+    display: flex;
+    flex-wrap: nowrap;
+}
+
+.w3-cell {
+    padding: 0 2px;
+}
+
+/* Mejora para los campos del formulario */
+.w3-input, .w3-select {
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 10px;
+    width: 100%;
+}
+
+.w3-input:focus, .w3-select:focus {
+    border-color: #2196F3;
+    outline: none;
+}
+
+/* Responsive */
+@media screen and (max-width: 768px) {
+    .w3-cell-row {
+        flex-direction: column;
+    }
+
+    .w3-cell {
+        margin-bottom: 5px;
+    }
+
+    .w3-half {
+        width: 100%;
+        margin-bottom: 16px;
+    }
+}
+
+/* Animaciones */
+.w3-hover-light-grey {
+    transition: background-color 0.3s ease;
+}
+
+.w3-button {
+    transition: all 0.3s ease;
+}
+
+.w3-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.w3-modal {
+    z-index: 1000;
+}
+
+/* Previsualización de colores */
+.color-preview {
+    width: 30px;
+    height: 30px;
+    border-radius: 4px;
+    display: inline-block;
+    margin-left: 10px;
+    vertical-align: middle;
+    border: 1px solid #ccc;
+}
+</style>
+
+<script>
+// Cerrar modales al hacer clic fuera
+window.onclick = function(event) {
+    var modals = document.querySelectorAll('.w3-modal');
+    modals.forEach(function(modal) {
+        if (event.target == modal) {
+            modal.style.display = 'none';
+        }
+    });
+}
+
+// Función para previsualizar colores
+function updateColorPreview(inputId, previewId) {
+    var colorInput = document.getElementById(inputId);
+    var preview = document.getElementById(previewId);
+
+    if (colorInput && preview) {
+        preview.style.backgroundColor = colorInput.value;
+
+        colorInput.addEventListener('input', function() {
+            preview.style.backgroundColor = this.value;
+        });
+    }
+}
+
+// Inicializar previsualización de colores cuando el documento esté listo
+document.addEventListener('DOMContentLoaded', function() {
+    // Cerrar todos los modales para que no aparezcan visibles al recargar (doble seguro)
+    const modals = document.querySelectorAll('.w3-modal');
+    modals.forEach(modal => {
+        modal.style.display = 'none';
+        modal.classList.remove('show');
+    });
+    
+    // Asumiendo que los campos de color tienen IDs específicos
+    updateColorPreview('id_color_texto', 'color_texto_preview');
+    updateColorPreview('id_color_fondo', 'color_fondo_preview');
+});
+
+// Para el campo de imagen, podrías agregar previsualización
+function previewImage(input) {
+    if (input.files && input.files[0]) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('imagePreview').innerHTML =
+                '<img src="' + e.target.result + '" class="w3-image" style="max-height: 150px; margin-top: 10px;">';
+        }
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+</script>
+
+<!-- Incluir scripts de colorfield -->
+<script type="text/javascript" src="{% static '/colorfield/colorfield.js' %}"></script>
+<script type="text/javascript" src="{% static '/colorfield/jscolor/jscolor.min.js' %}"></script>
+
+{% endblock %}

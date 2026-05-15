@@ -1,0 +1,795 @@
+{% extends 'base_catalogo.html' %}
+{% block title %}TU CARRITO{% endblock %}
+{% block content %}
+{% load static %}
+<main class="w3-container w3-padding-32">
+    <div class="w3-content" style="max-width:1200px;">
+        <div class="w3-card-4 w3-white w3-round-large">
+            <div class="w3-row" style="min-height: 70vh;">
+                <!-- Columna de productos con scroll -->
+                <div class="w3-col l8 m12" style="min-height: 100%; display: flex; flex-direction: column;">
+                    <div class="w3-container w3-padding-24" style="flex-shrink: 0;">
+                        <div class="w3-row w3-margin-bottom">
+                            <div class="w3-col s12 m6">
+                                <h3 class="w3-large"><i class="fas fa-shopping-cart"></i> <b>Carrito de Pedidos</b></h3>
+                            </div>
+                            <div class="w3-col s12 m6 w3-right-align">
+                                <span class="w3-text-grey">{{ total_quantity }} PRODUCTOS</span>
+                            </div>
+                        </div>
+                        <div class="w3-border-bottom w3-margin-bottom"></div>
+                    </div>
+
+                    <!-- Contenedor con scroll para los productos -->
+                    <div class="w3-container" style="overflow-y: auto; flex-grow: 1; padding: 0 24px;">
+                        {% for item in cart.cartitem_set.all %}
+                        <div class="w3-row w3-margin-bottom w3-padding-16 w3-border-bottom">
+                            <!-- Imagen del producto -->
+                            <div class="w3-col s3 m2">
+                                {% if item.product.imagenurl %}
+                                    <img src="{{ item.product.imagenurl }}" class="w3-image w3-round"
+                                         alt="{{ item.product.nombre }}" style="max-height:80px;">
+                                {% else %}
+                                    <img src="{{ item.product.imagen1.url }}" class="w3-image w3-round"
+                                         alt="{{ item.product.nombre }}" style="max-height:80px;">
+                                {% endif %}
+                            </div>
+
+                            <!-- Nombre del producto -->
+                            <div class="w3-col s4 m4">
+                                <div class="w3-cell-row">
+                                    <div class="w3-cell" style="padding-right: 8px;">
+                                        <h6 class="w3-large"><b>{{ item.product.nombre }}</b></h6>
+                                        {% if item.product.en_oferta %}
+                                            <span class="w3-badge w3-red w3-tiny" style="font-size: 0.7rem;">
+                                                {% if item.product.en_oferta.tipo_oferta == 'descuento' %}
+                                                    {{ item.product.en_oferta.descuento }}% OFF
+                                                {% elif item.product.en_oferta.tipo_oferta == 'combinar' %}
+                                                    COMBO
+                                                {% elif item.product.en_oferta.tipo_oferta == 'multiplicidad' %}
+                                                    {{ item.product.en_oferta.get_tipo_multiplicidad_display }}
+                                                {% else %}
+                                                    OFERTA
+                                                {% endif %}
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% if item.product.en_oferta %}
+                                    <div class="w3-small">
+                                        <span class="w3-text-grey" style="text-decoration: line-through;">${{ item.product.precio }}</span>
+                                        <span class="w3-text-red w3-margin-left"><b>${{ item.product.en_oferta.precio_final }}</b> c/u</span>
+                                    </div>
+                                {% else %}
+                                    <p class="w3-text-grey w3-small">${{ item.product.precio }} c/u</p>
+                                {% endif %}
+                            </div>
+
+                            <!-- Cantidad -->
+                            <div class="w3-col s3 m3">
+                                <form action="{% url 'modificar_cantidad' cart_item_id=item.id %}" method="post" class="w3-container">
+                                    {% csrf_token %}
+                                    <div class="w3-cell-row">
+                                        <div class="w3-cell" style="padding: 2px;">
+                                            <button type="submit" class="w3-button w3-light-grey w3-round w3-small"
+                                                    onclick="this.form.cantidad.value=parseInt(this.form.cantidad.value)-1">
+                                                <i class="fas fa-minus"></i>
+                                            </button>
+                                        </div>
+                                        <div class="w3-cell" style="padding: 2px;">
+                                            <input type="number" name="cantidad" value="{{ item.quantity }}" 
+                                                   class="w3-input w3-border w3-round w3-center" 
+                                                   style="width: 50px; height: 30px;" min="1">
+                                        </div>
+                                        <div class="w3-cell" style="padding: 2px;">
+                                            <button type="submit" class="w3-button w3-light-grey w3-round w3-small"
+                                                    onclick="this.form.cantidad.value=parseInt(this.form.cantidad.value)+1">
+                                                <i class="fas fa-plus"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+
+                            <!-- Subtotal y eliminar -->
+                            <div class="w3-col s2 m2 w3-right-align">
+                                <h6 class="w3-large"><b>${{ item.subtotal }}</b></h6>
+                                <form action="{% url 'eliminar_producto' cart_item_id=item.id %}" method="post">
+                                    {% csrf_token %}
+                                    <button type="submit" class="w3-button w3-text-red w3-tiny">
+                                        <i class="fas fa-trash"></i> Eliminar
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="w3-center w3-padding-32">
+                            <i class="fas fa-shopping-cart w3-jumbo w3-text-light-grey"></i>
+                            <h4 class="w3-text-grey">Tu carrito está vacío</h4>
+                            <a href="{% url 'catalogo' %}" class="w3-button w3-secondary w3-text-white w3-round-large w3-margin-top">
+                                <i class="fas fa-store"></i> Ir al Catálogo
+                            </a>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Botones de acción (fuera del área de scroll) -->
+                    {% if total_quantity > 0 %}
+                    <div class="w3-container w3-margin w3-center">
+                        <a href="{% url 'catalogo' %}" class="w3-button w3-primary w3-text-white w3-round-large">
+                            <i class="fas fa-arrow-left"></i> Seguir Comprando
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Columna de resumen (misma altura) -->
+                <div class="w3-col l4 m12 w3-light-grey" style="height: 100%;">
+                    <div class="w3-container w3-padding-24" style="height: 100%; display: flex; flex-direction: column;">
+                        <div style="flex-shrink: 0;">
+                            <h4 class="w3-center w3-large"><b>Resumen de Compra</b></h4>
+                            <div class="w3-border-bottom"></div>
+
+                            <div class="w3-row w3-margin-top">
+                                <div class="w3-half">
+                                    <h6>Productos:</h6>
+                                </div>
+                                <div class="w3-half w3-right-align">
+                                    <span>{{ total_quantity }}</span>
+                                </div>
+                            </div>
+
+                            <div class="w3-row w3-margin-top">
+                                <div class="w3-half">
+                                    <h6>Subtotal:</h6>
+                                </div>
+                                <div class="w3-half w3-right-align">
+                                    <span>${{ total_price }}</span>
+                                </div>
+                            </div>
+
+                            <div class="w3-border-bottom w3-margin-top"></div>
+
+                            <div class="w3-row w3-margin-top">
+                                <div class="w3-half">
+                                    <h5><b>TOTAL:</b></h5>
+                                </div>
+                                <div class="w3-half w3-right-align">
+                                    <h4><b>${{ total_price }}</b></h4>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="w3-center w3-margin-top" style="margin-top: auto; flex-shrink: 0">
+                            <!-- Botón para abrir modal de confirmar pedido con envío -->
+                            <button onclick="return openConfirmarPedidoModal()"
+                                    class="w3-button w3-secondary w3-text-white w3-round-large">
+                                <i class="fas fa-check"></i> Finalizar Pedido
+                            </button>
+                        </div>
+
+                        <div class="w3-center w3-small w3-text-grey w3-margin-top" style="flex-shrink: 0;">
+                            <p>Desde el botón de pagos de MercadoPago podrás abonar con tarjetas de Crédito/Débito.</p>
+                            <img src="https://imgmp.mlstatic.com/org-img/banners/ar/medios/785X40.jpg"
+                                 alt="Mercado Pago - Medios de pago" class="w3-image" style="max-width:300px;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- Incluir modals -->
+{% include 'modals.html' %}
+
+<!-- Datos del carrito como atributos data -->
+<div id="cartData" 
+     data-es-cliente="{% if es_cliente %}true{% else %}false{% endif %}"
+     data-perfil-completo="{% if perfil_completo %}true{% else %}false{% endif %}"
+     data-es-vendedor="{% if es_vendedor %}true{% else %}false{% endif %}"
+     data-es-administrador="{% if es_administrador %}true{% else %}false{% endif %}"
+     data-url-confirm-register="{% url 'confirm_register' ID=user.id %}?redirect_to=carrito"
+     style="display: none;">
+    {% for item in cart.cartitem_set.all %}
+    <div class="cart-item" 
+         data-quantity="{{ item.quantity }}"
+         data-nombre="{{ item.product.nombre|escapejs }}"
+         data-subtotal="{{ item.subtotal }}"
+         data-tiene-oferta="{% if item.product.en_oferta %}true{% else %}false{% endif %}"
+         data-descuento="{% if item.product.en_oferta %}{{ item.product.en_oferta.descuento }}{% else %}0{% endif %}">
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Modal para hacer pedido -->
+<div id="pedidoModal" class="w3-modal">
+    <div class="w3-modal-content w3-card-4 w3-animate-zoom" style="max-width:700px">
+        <div class="w3-container w3-secondary w3-text-white">
+            <span onclick="document.getElementById('pedidoModal').style.display='none'"
+                  class="w3-button w3-display-topright w3-large">&times;</span>
+            <h3 class="w3-center w3-padding-16"><i class="fas fa-shopping-bag"></i> Tu Pedido</h3>
+        </div>
+
+        <div class="w3-container w3-margin w3-padding-24">
+            <div class="w3-row w3-margin-bottom">
+                <div class="w3-half">
+                    <p><strong><i class="fas fa-user"></i> Usuario:</strong> {{ user.username }}</p>
+                </div>
+                <div class="w3-half w3-right-align">
+                    <p><strong><i class="fas fa-cubes"></i> Productos:</strong> {{ total_quantity }}</p>
+                </div>
+            </div>
+
+            <div class="w3-border-bottom w3-margin-bottom"></div>
+
+            <div class="w3-responsive" style="max-height:300px; overflow-y:auto;">
+                <table class="w3-table w3-bordered w3-centered">
+                    <thead>
+                        <tr class="w3-light-grey">
+                            <th>Cantidad</th>
+                            <th>Producto</th>
+                            <th>Precio Unit.</th>
+                            <th>Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in cart.cartitem_set.all %}
+                        <tr>
+                            <td>{{ item.quantity }}</td>
+                            <td>{{ item.product.nombre }}</td>
+                            <td>${{ item.product.precio }}</td>
+                            <td><strong>${{ item.subtotal }}</strong></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="w3-row w3-margin w3-padding-16 w3-round">
+                <div class="w3-half">
+                    <h4><strong><i class="fas fa-receipt"></i> TOTAL:</strong></h4>
+                </div>
+                <div class="w3-half w3-right-align">
+                    <h4><strong>${{ total_price }}</strong></h4>
+                </div>
+            </div>
+
+            <div class="w3-row w3-margin-top">
+                <div class="w3-col s12">
+                    <div class="w3-panel w3-pale-blue w3-leftbar w3-border-blue w3-round">
+                        <p><i class="fas fa-info-circle"></i> <strong>Información importante:</strong></p>
+                        <p class="w3-small">Al confirmar el pedido, se generará una orden de compra que podrás visualizar en tu historial.
+                        El vendedor seleccionado será notificado para procesar tu solicitud.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="w3-center w3-margin w3-padding-16">
+                <form method="post" action="{% url 'carrito' %}" id="pedidoForm" class="w3-inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="cliente_id" id="clienteIdInput" value="">
+                    <button type="submit" class="w3-button w3-green w3-round-large" name="crear_pedido" id="confirmarPedidoBtn">
+                        <i class="fas fa-check"></i> Confirmar Pedido
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal simplificado para seleccionar cliente -->
+{% if es_vendedor or es_administrador %}
+<div id="seleccionarClienteModal" class="w3-modal">
+    <div class="w3-modal-content w3-card-4 w3-animate-zoom" style="max-width:600px">
+        <header class="w3-container w3-secondary w3-text-white">
+            <span onclick="closeModal('seleccionarClienteModal')" class="w3-button w3-display-topright">&times;</span>
+            <h3 class="w3-center"><i class="fas fa-users"></i> Seleccionar Cliente</h3>
+        </header>
+
+        <div class="w3-container w3-padding-24">
+            {% if not clientes %}
+            <!-- Si no hay clientes asignados -->
+            <div class="w3-panel w3-yellow w3-round-large">
+                <h4><i class="fas fa-exclamation-triangle"></i> No tienes clientes asignados</h4>
+                <p>Para realizar pedidos, primero necesitas tener clientes asignados.</p>
+            </div>
+
+            <div class="w3-center w3-margin-top">
+                <a href="{% url 'gestion_clientes' %}" class="w3-button w3-secondary w3-round-large">
+                    <i class="fas fa-user-plus"></i> Gestionar Clientes
+                </a>
+                <button onclick="closeModal('seleccionarClienteModal')" class="w3-button w3-gray w3-round-large">
+                    <i class="fas fa-times"></i> Cancelar
+                </button>
+            </div>
+            {% else %}
+            <!-- Si hay clientes asignados -->
+            <div class="w3-panel w3-primary w3-text-white w3-round-large">
+                <p><i class="fas fa-info-circle"></i> Selecciona el cliente para quien es este pedido.</p>
+            </div>
+
+            <!-- Búsqueda simple -->
+            <div class="w3-section">
+                <input type="text" id="buscarCliente" onkeyup="filtrarClientes()"
+                       class="w3-input w3-border w3-round-large"
+                       placeholder="Buscar cliente...">
+            </div>
+
+            <!-- Lista simplificada de clientes -->
+            <div class="w3-responsive" style="max-height:300px; overflow-y:auto;">
+                <div id="listaClientes">
+                    {% for cliente in clientes %}
+                    <div class="w3-card w3-margin-bottom w3-hover-light-grey cliente-item">
+                        <div class="w3-container w3-padding-16">
+                            <h4><b>{{ cliente.user.username }} - {{ cliente.user.perfil.nombre }} </b></h4>
+                            <p class="w3-small">
+                                <i class="fas fa-envelope"></i> {{ cliente.user.email }}<br>
+                                <i class="fas fa-phone"></i> {{ cliente.telefono|default:"Sin teléfono" }}<br>
+                                <i class="fas fa-map-marker"></i> {{ cliente.direccion|default:"Sin dirección" }}
+                            </p>
+                            <button onclick="seleccionarCliente(this)"
+                                    data-cliente-id="{{ cliente.user.id }}"
+                                    data-cliente-nombre="{{ cliente.user.get_full_name|default:cliente.user.username|escapejs }}"
+                                    class="w3-button w3-green w3-round w3-small">
+                                <i class="fas fa-check"></i> Seleccionar
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="w3-center w3-margin-top">
+                <a href="{% url 'gestion_clientes' %}" class="w3-button w3-blue w3-round-large w3-small">
+                    <i class="fas fa-user-plus"></i> Agregar Nuevo Cliente
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<script>
+// Función para obtener datos del carrito desde atributos data
+function getCartData() {
+    const cartDataElement = document.getElementById('cartData');
+    const cartItems = [];
+    
+    // Obtener items del carrito
+    const itemElements = cartDataElement.querySelectorAll('.cart-item');
+    itemElements.forEach(function(element) {
+        cartItems.push({
+            quantity: parseInt(element.dataset.quantity),
+            nombre: element.dataset.nombre,
+            subtotal: parseFloat(element.dataset.subtotal),
+            tieneOferta: element.dataset.tieneOferta === 'true',
+            descuento: parseInt(element.dataset.descuento)
+        });
+    });
+    
+    return {
+        esCliente: cartDataElement.dataset.esCliente === 'true',
+        perfilCompleto: cartDataElement.dataset.perfilCompleto === 'true',
+        esVendedor: cartDataElement.dataset.esVendedor === 'true',
+        esAdministrador: cartDataElement.dataset.esAdministrador === 'true',
+        cartItems: cartItems,
+        urlConfirmRegister: cartDataElement.dataset.urlConfirmRegister
+    };
+}
+
+// Función para cerrar modales
+function closeModal(modalId) {
+    document.getElementById(modalId).style.display = 'none';
+}
+
+// Manejar envío del formulario de confirmación de pedido
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM cargado, buscando formulario...');
+    
+    const confirmarPedidoForm = document.getElementById('confirmarPedidoForm');
+    console.log('Formulario encontrado:', confirmarPedidoForm);
+    
+    if (confirmarPedidoForm) {
+        confirmarPedidoForm.addEventListener('submit', function(e) {
+            console.log('Submit detectado, previniendo...');
+            e.preventDefault();
+            
+            console.log('Formulario de confirmación de pedido enviado');
+            
+            // Validar que se haya seleccionado una opción de envío
+            const opcionEnvio = document.querySelector('input[name="opcion_envio"]:checked');
+            console.log('Opción de envío seleccionada:', opcionEnvio);
+            
+            if (!opcionEnvio) {
+                alert('Por favor selecciona una opción de envío.');
+                return;
+            }
+            
+            // Obtener datos del formulario
+            const formData = new FormData(this);
+            console.log('FormData creado:', formData);
+            
+            // Enviar por AJAX
+            console.log('Enviando a:', this.action);
+            fetch(this.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+                }
+            })
+            .then(response => {
+                console.log('Respuesta recibida:', response);
+                return response.json();
+            })
+            .then(data => {
+                console.log('Datos procesados:', data);
+                if (data.success) {
+                    // Cerrar modal
+                    closeModal('confirmarPedidoModal');
+                    
+                    // Mostrar mensaje de éxito
+                    alert('Pedido confirmado exitosamente. Serás redirigido al pago.');
+                    
+                    // Redirigir a procesar pago
+                    if (data.pedido_id) {
+                        window.location.href = `/procesar-pago/${data.pedido_id}/`;
+                    } else {
+                        window.location.href = '/catalogo';
+                    }
+                } else {
+                    alert('Error: ' + (data.message || 'No se pudo confirmar el pedido'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Ocurrió un error al confirmar el pedido. Por favor, inténtalo nuevamente.');
+            });
+        });
+    } else {
+        console.error('No se encontró el formulario confirmarPedidoForm');
+    }
+});
+
+// Función para abrir modal de selección de cliente
+function openSeleccionarClienteModal() {
+    document.getElementById('seleccionarClienteModal').style.display = 'block';
+    // Limpiar búsqueda al abrir
+    if (document.getElementById('buscarCliente')) {
+        document.getElementById('buscarCliente').value = '';
+        filtrarClientes(); // Mostrar todos los clientes
+    }
+}
+
+// Función para filtrar clientes
+function filtrarClientes() {
+    const input = document.getElementById('buscarCliente');
+    if (!input) return;
+
+    const filter = input.value.toLowerCase();
+    const clientes = document.getElementsByClassName('cliente-item');
+
+    for (let i = 0; i < clientes.length; i++) {
+        const cliente = clientes[i];
+        const text = cliente.textContent.toLowerCase();
+        if (text.indexOf(filter) > -1) {
+            cliente.style.display = 'block';
+        } else {
+            cliente.style.display = 'none';
+        }
+    }
+}
+
+// Función para seleccionar cliente
+function seleccionarCliente(button) {
+    const clienteId = button.dataset.clienteId;
+    const clienteNombre = button.dataset.clienteNombre;
+    
+    // Guardar el ID del cliente seleccionado
+    document.getElementById('clienteIdInput').value = clienteId;
+
+    // Habilitar el botón de confirmar pedido
+    document.getElementById('confirmarPedidoBtn').disabled = false;
+
+    // Cerrar el modal de selección
+    closeModal('seleccionarClienteModal');
+
+    // Abrir el modal de confirmación de pedido
+    document.getElementById('pedidoModal').style.display = 'block';
+
+    // Mostrar mensaje de confirmación
+    alert(`Cliente seleccionado: ${clienteNombre}`);
+}
+
+// Función para abrir modal de confirmación de pedido con envío
+function openConfirmarPedidoModal() {
+    const cartData = getCartData();
+    
+    if (cartData.esCliente && !cartData.perfilCompleto) {
+        // Si es cliente y perfil incompleto, redirigir a completar perfil
+        window.location.href = cartData.urlConfirmRegister;
+        return false;
+    } else if (cartData.esVendedor || cartData.esAdministrador) {
+        // Si es vendedor/administrador, mostrar modal de selección de cliente
+        openSeleccionarClienteModal();
+        return false;
+    } else {
+        // Si es cliente con perfil completo, cargar datos del carrito y mostrar modal con envío
+        cargarResumenCarrito();
+        cargarOpcionesEnvio();
+        document.getElementById('confirmarPedidoModal').style.display = 'block';
+        return true;
+    }
+}
+
+// Cerrar todos los modales al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+    // Cerrar todos los modales para que no aparezcan visibles al recargar
+    const modals = document.querySelectorAll('.w3-modal');
+    modals.forEach(modal => {
+        modal.style.display = 'none';
+    });
+});
+
+// Función para cargar resumen del carrito en el modal
+function cargarResumenCarrito() {
+    const cartData = getCartData();
+    const resumenDiv = document.getElementById('resumenCarrito');
+    let resumenHTML = '';
+    let subtotal = 0;
+    
+    cartData.cartItems.forEach(function(item) {
+        resumenHTML += `
+            <div class="w3-row w3-margin-bottom">
+                <div class="w3-col s1">
+                    <span class="w3-badge w3-blue w3-round">${item.quantity}</span>
+                </div>
+                <div class="w3-col s7">
+                    <strong>${item.nombre}</strong>
+                    ${item.tieneOferta ? '<br><small class="w3-text-red">OFERTA: ' + item.descuento + '% OFF</small>' : ''}
+                </div>
+                <div class="w3-col s4 w3-right-align">
+                    <strong>$${item.subtotal}</strong>
+                </div>
+            </div>
+        `;
+        subtotal += item.subtotal;
+    });
+    
+    resumenDiv.innerHTML = resumenHTML;
+    document.getElementById('subtotalProductos').textContent = `$${subtotal}`;
+    actualizarTotalPagar();
+}
+
+// Función para cargar opciones de envío
+function cargarOpcionesEnvio() {
+    // Obtener opciones de envío desde la API
+    fetch('/api/opciones-envio/')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                renderizarOpcionesEnvio(data.opciones);
+            } else {
+                console.error('Error al cargar opciones de envío:', data.message);
+                // Mostrar mensaje de error en el modal
+                const opcionesDiv = document.getElementById('opcionesEnvio');
+                if (opcionesDiv) {
+                    opcionesDiv.innerHTML = '<p class="w3-text-red">No se pudieron cargar las opciones de envío. Por favor, recarga la página.</p>';
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error en la petición de opciones de envío:', error);
+            // Mostrar mensaje de error en el modal
+            const opcionesDiv = document.getElementById('opcionesEnvio');
+            if (opcionesDiv) {
+                opcionesDiv.innerHTML = '<p class="w3-text-red">Error de conexión. Por favor, verifica tu conexión a internet.</p>';
+            }
+        });
+}
+
+// Función para renderizar opciones de envío en el modal
+function renderizarOpcionesEnvio(opciones) {
+    const opcionesDiv = document.getElementById('opcionesEnvio');
+    if (!opcionesDiv) return;
+    
+    if (opciones.length === 0) {
+        opcionesDiv.innerHTML = '<p class="w3-text-grey">No hay opciones de envío disponibles.</p>';
+        return;
+    }
+    
+    let opcionesHTML = '';
+    opciones.forEach((opcion, index) => {
+        const checked = index === 0 ? 'checked' : '';
+        opcionesHTML += `
+            <div class="w3-row w3-margin-bottom">
+                <div class="w3-col s1">
+                    <input type="radio" name="opcion_envio" value="${opcion.id}" 
+                           ${checked} onchange="actualizarCostoEnvio(${opcion.costo})"
+                           class="w3-radio">
+                </div>
+                <div class="w3-col s11">
+                    <strong>${opcion.nombre}</strong>
+                    ${opcion.descripcion ? `<br><small class="w3-text-grey">${opcion.descripcion}</small>` : ''}
+                    ${opcion.tiempo_entrega ? `<br><small class="w3-text-primary"><i class="fas fa-clock"></i> ${opcion.tiempo_entrega}</small>` : ''}
+                    <br><span class="w3-text-secondary">${opcion.texto_costo}</span>
+                </div>
+            </div>
+        `;
+    });
+    
+    opcionesDiv.innerHTML = opcionesHTML;
+    
+    // Actualizar el costo inicial con la primera opción
+    if (opciones.length > 0) {
+        actualizarCostoEnvio(opciones[0].costo);
+    }
+}
+
+// Función para actualizar costo de envío
+function actualizarCostoEnvio(costo) {
+    document.getElementById('costoEnvio').textContent = costo > 0 ? `$${costo}` : 'Gratis';
+    actualizarTotalPagar();
+    
+    // Mostrar/ocultar formulario de dirección según el tipo de envío
+    const radios = document.getElementsByName('opcion_envio');
+    for (let radio of radios) {
+        if (radio.checked) {
+            const opcionId = radio.value;
+            // Aquí podríamos verificar si es envío a domicilio para mostrar el formulario
+            // Por ahora, lo mostramos siempre que haya un costo
+            const direccionDiv = document.getElementById('direccionEnvio');
+            if (costo > 0) {
+                direccionDiv.style.display = 'block';
+            } else {
+                direccionDiv.style.display = 'none';
+            }
+            break;
+        }
+    }
+}
+
+// Función para actualizar total a pagar
+function actualizarTotalPagar() {
+    const subtotal = parseFloat(document.getElementById('subtotalProductos').textContent.replace('$', '')) || 0;
+    const costoEnvio = parseFloat(document.getElementById('costoEnvio').textContent.replace('$', '')) || 0;
+    const total = subtotal + costoEnvio;
+    document.getElementById('totalPagar').textContent = `$${total}`;
+}
+
+// Función para abrir modal de pedido con validaciones (mantener existente)
+function openPedidoModal() {
+    const cartData = getCartData();
+    
+    if (cartData.esCliente && !cartData.perfilCompleto) {
+        // Si es cliente y perfil incompleto, redirigir a completar perfil
+        window.location.href = cartData.urlConfirmRegister;
+        return false;
+    } else if (cartData.esVendedor || cartData.esAdministrador) {
+        // Si es vendedor/administrador, mostrar modal de selección de cliente
+        openSeleccionarClienteModal();
+        return false;
+    } else {
+        // Si es cliente con perfil completo, mostrar modal normal
+        document.getElementById('pedidoModal').style.display = 'block';
+        return true;
+    }
+}
+
+// Ajustar altura del contenedor principal en dispositivos móviles
+function adjustHeight() {
+    const mainRow = document.querySelector('.w3-row');
+    if (window.innerWidth <= 992) {
+        mainRow.style.height = 'auto';
+    } else {
+        mainRow.style.height = '75vh';
+    }
+}
+
+// Inicializar cuando el documento esté listo
+document.addEventListener('DOMContentLoaded', function() {
+    // Ajustar altura
+    adjustHeight();
+    window.addEventListener('resize', adjustHeight);
+
+    // Configurar búsqueda de clientes si existe
+    if (document.getElementById('buscarCliente')) {
+        document.getElementById('buscarCliente').addEventListener('keyup', filtrarClientes);
+    }
+});
+
+// Cerrar modal al hacer clic fuera
+window.onclick = function(event) {
+    if (event.target.classList.contains('w3-modal')) {
+        event.target.style.display = 'none';
+    }
+}
+</script>
+
+<style>
+.w3-modal {
+    z-index: 9999;
+}
+
+.w3-modal-content {
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.w3-cell-row {
+    display: flex;
+    align-items: center;
+}
+
+.w3-cell {
+    padding: 0 5px;
+}
+
+/* Personalizar scrollbar */
+.w3-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.w3-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.w3-container::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 10px;
+}
+
+.w3-container::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* Estilos para la lista de clientes */
+.cliente-item {
+    transition: transform 0.2s;
+    cursor: pointer;
+}
+
+.cliente-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* Estilos responsivos */
+@media screen and (max-width: 992px) {
+    .w3-col.l8, .w3-col.l4 {
+        width: 100%;
+        height: auto !important;
+    }
+
+    .w3-modal-content {
+        width: 95% !important;
+        margin: 5% auto;
+    }
+}
+
+@media screen and (max-width: 600px) {
+    .w3-modal-content {
+        margin: 10px;
+        width: 95% !important;
+    }
+
+    .cliente-item {
+        margin-bottom: 10px;
+    }
+}
+
+/* Efectos hover para botones */
+.w3-button {
+    transition: all 0.3s ease;
+}
+
+.w3-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+</style>
+{% endblock %}

@@ -1,0 +1,89 @@
+{% load static %}
+{% block style %}
+<style>
+  .w3-accordion .w3-button {
+    text-align: left;
+    padding: 12px 16px;
+    border-radius: 4px;
+    margin-bottom: 4px;
+  }
+
+  .w3-sidebar {
+    box-shadow: 2px 0 10px rgba(0,0,0,0.2);
+  }
+
+  .w3-hover-secondary:hover {
+    background-color: var(--secondary) !important;
+  }
+</style>
+{% endblock %}
+<!-- Sidebar offcanvas para w3.css -->
+<div id="offcanvasRight" class="w3-sidebar w3-bar-block w3-primary w3-animate-left" style="display:none; width:300px; z-index:5;">
+  <div class="w3-container w3-padding">
+    <div class="w3-row">
+      <div class="w3-col s10">
+        <img src="{% static 'img/logos-distr.png' %}" width="50" style="max-height:50px;"/>
+      </div>
+      <div class="w3-col s2">
+        <button onclick="w3_close_sidebar()" class="w3-button w3-primary w3-large w3-right">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="w3-container w3-padding">
+    <div class="w3-accordion">
+      {% for key, list in categorias.items %}
+      <div class="w3-margin-bottom">
+        <button onclick="accordionFunction('accordion{{ key.id }}')" class="w3-button w3-block w3-primary w3-left-align w3-hover-secondary">
+          {{ key.nombre |upper }} <i class="fas fa-caret-down w3-right"></i>
+        </button>
+        <div id="accordion{{ key.id }}" class="w3-hide w3-animate-opacity">
+          <div class="w3-white w3-padding">
+            {% for item in list %}
+            <a href="/catalogo/{{ item.nombre }}" class="w3-bar-item w3-button w3-block w3-left-align w3-hover-light-grey" style="text-decoration:none; color:var(--primary);">
+              {{ item.nombre|upper }}
+            </a>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<script>
+  // Función para abrir el sidebar
+  function w3_open_sidebar() {
+    document.getElementById("offcanvasRight").style.display = "block";
+  }
+
+  // Función para cerrar el sidebar
+  function w3_close_sidebar() {
+    document.getElementById("offcanvasRight").style.display = "none";
+  }
+
+  // Función para los acordeones
+  function accordionFunction(id) {
+    var x = document.getElementById(id);
+    if (x.className.indexOf("w3-show") == -1) {
+      x.className += " w3-show";
+      // Cambiar icono a flecha arriba
+      x.previousElementSibling.querySelector('.fa-caret-down').className = 'fas fa-caret-up w3-right';
+    } else {
+      x.className = x.className.replace(" w3-show", "");
+      // Cambiar icono a flecha abajo
+      x.previousElementSibling.querySelector('.fa-caret-up').className = 'fas fa-caret-down w3-right';
+    }
+  }
+
+  // Cerrar el sidebar si se hace clic fuera de él
+  window.onclick = function(event) {
+    var sidebar = document.getElementById("offcanvasRight");
+    if (event.target == sidebar) {
+      w3_close_sidebar();
+    }
+  }
+</script>

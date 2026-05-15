@@ -1,0 +1,159 @@
+{% extends 'dashboard.html' %}
+{% block title %}Conf Imagen{% endblock %}
+{% load static %}
+{% load user_tags %}
+{% block page_title %}<h5><b>IMAGENES DE LOS PRODUCTOS</b></h5>{% endblock %}
+{% block content %}
+<div class="w3-container w3-padding">
+    <div class="w3-light-grey w3-round-large w3-padding">
+        <div class="w3-center">
+
+            <div class="w3-responsive">
+                <table class="w3-table w3-bordered w3-striped">
+                    <thead>
+                        <tr class="w3-indigo">
+                            <th>TOTAL PRODUCTOS</th>
+                            <th>CON IMAGEN</th>
+                            <th>CON IMAGEN URL</th>
+                            <th>SIN IMAGEN</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>{{ total_productos }}</strong></td>
+                            <td><strong>{{ con_imagen }}</strong></td>
+                            <td><strong>{{ con_url }}</strong></td>
+                            <td><strong>{{ sin_imagen }}</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            {% if ID %}
+            <h5 class="w3-text-indigo"><b>BUSCAR DE IMAGEN</b></h5>
+            {% else %}
+            <h5 class="w3-text-indigo"><b>BUSCAR DE IMAGENES</b></h5>
+            {% endif %}
+        </div>
+
+        <hr>
+
+        <div class="w3-row">
+            {% if ID %}
+            <div class="w3-half">
+                <div class="w3-display-container w3-center w3-margin-top">
+                    <div class="w3-content w3-section" style="max-width:100%">
+                        <p class="w3-small w3-text-gray">Click en la imagen para editar</p>
+                        {% for product in productos %}
+                        {% if product.imagenurl|length == 0 %}
+                        <div class="w3-display-container mySlides w3-animate-fading">
+                            <a href="{% url 'edit_product' product_id=productos.0.id %}">
+                                <img src="{{ product.imagen1.url }}" style="width:100%; max-height:300px; object-fit:contain;">
+                            </a>
+                        </div>
+                        <div class="w3-display-container mySlides w3-animate-fading">
+                            <a href="{% url 'edit_product' product_id=productos.0.id %}">
+                                <img src="{{ product.imagen2.url }}" style="width:100%; max-height:300px; object-fit:contain;">
+                            </a>
+                        </div>
+                        {% else %}
+                        <div class="w3-display-container mySlides w3-animate-fading">
+                            <a href="{% url 'edit_product' product_id=productos.0.id %}">
+                                <img src="{{ product.imagenurl }}" style="width:100%; max-height:300px; object-fit:contain;">
+                            </a>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                    <br>
+                    <button class="w3-button w3-indigo w3-circle w3-margin" onclick="plusDivs(-1)">❮</button>
+                    <button class="w3-button w3-indigo w3-circle w3-margin" onclick="plusDivs(1)">❯</button>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="{% if ID %}w3-half{% else %}w3-full{% endif %}">
+                <form method="POST" enctype="multipart/form-data" {% if ID %}action="{% url 'product_img_search_id' ID=ID %}"{% else %}action="{% url 'product_img_search' %}"{% endif %} class="w3-container">
+                    {% csrf_token %}
+                    <div class="w3-center">
+                        {% if ID %}
+                        <label class="w3-text-indigo"><b>Nombre o Descripción</b></label>
+                        <p class="w3-small w3-text-gray">*Edita el texto para mejorar la busqueda</p>
+                        <input class="w3-input w3-border w3-round-large w3-margin-bottom" type="text" name="nombre_descripcion" value="{{ productos.0.nombre }}">
+                        <br>
+                        {% else %}
+                        <input class="w3-input w3-border" type="text" name="nombre_descripcion" value="{{ productos.0.nombre }}" hidden>
+                        {% endif %}
+
+                        <label class="w3-text-indigo"><b>Elige un motor de busqueda</b></label>
+                        <select name="engine" id="engine" class="w3-select w3-border w3-round-large">
+                            <option value="google">Google</option>
+                            <option value="duckduckgo">DuckDuckGO</option>
+                        </select>
+                    </div>
+                    <br>
+
+                    <button type="submit" class="w3-button w3-indigo w3-block w3-round-large">
+                        <i class="fa fa-search"></i>
+                        {% if ID %}
+                        BUSCAR IMAGEN
+                        {% else %}
+                        BUSCAR TODAS LAS IMAGENES
+                        {% endif %}
+                    </button>
+
+                    <br>
+                    <div class="w3-center">
+                        <input class="w3-check" type="checkbox" value="True" name="sinimagen">
+                        <label>S/N IMAGEN</label>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Script para el carrusel manual
+    var slideIndex = 1;
+    showDivs(slideIndex);
+
+    function plusDivs(n) {
+        showDivs(slideIndex += n);
+    }
+
+    function showDivs(n) {
+        var i;
+        var x = document.getElementsByClassName("mySlides");
+        if (n > x.length) {slideIndex = 1}
+        if (n < 1) {slideIndex = x.length}
+        for (i = 0; i < x.length; i++) {
+            x[i].style.display = "none";
+        }
+        x[slideIndex-1].style.display = "block";
+    }
+</script>
+
+<style>
+    .mySlides {
+        display: none;
+        text-align: center;
+    }
+
+    .w3-button.w3-circle {
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+    }
+
+    .w3-responsive table {
+        font-size: 14px;
+    }
+
+    @media screen and (max-width: 600px) {
+        .w3-half {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}

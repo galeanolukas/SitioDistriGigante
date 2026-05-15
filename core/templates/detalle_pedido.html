@@ -1,0 +1,264 @@
+{% extends 'dashboard.html' %}
+{% load static %}
+{% block content %}
+<div class="w3-container w3-padding">
+        <div class="w3-container w3-light-grey w3-round-large">
+            <div class="w3-padding">
+                <h3 class="w3-text-red"><b>Detalles del Pedido</b></h3>
+                <p class="w3-text-dark-gray">
+                    <strong>No. del pedido:</strong> {{ pedido.id }} |
+                    <strong>Subtotal:</strong> <span class="w3-text-grey">${{ pedido.subtotal_productos|default:pedido.total_precio }}</span>
+                    {% if pedido.costo_envio > 0 %}
+                    | <strong>Envío:</strong> <span class="w3-text-blue">${{ pedido.costo_envio }}</span>
+                    {% endif %}
+                    | <strong>Total:</strong> <span class="w3-text-indigo">${{ pedido.total_con_envio|default:pedido.total_precio }}</span>
+                </p>
+                <hr class="w3-border-grey">
+
+                <!-- Información adicional del pedido -->
+                <div class="w3-row-padding w3-margin-bottom">
+                    <div class="w3-third w3-center">
+                        <div class="w3-white w3-padding w3-round-large">
+                            <h5 class="w3-text-red">Información del Cliente</h5>
+                            <p class="w3-small">
+                                <strong>Usuario:</strong> {{ pedido.user.username }}<br>
+                                <strong>Email:</strong> {{ pedido.user.email }}<br>
+                                {% if pedido.user.first_name %}
+                                <strong>Nombre:</strong> {{ pedido.user.first_name }} {{ pedido.user.last_name }}
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="w3-third">
+                        <div class="w3-white w3-padding w3-round-large">
+                            <h5 class="w3-text-red">Estado:
+                              <span class="w3-tag w3-round-large
+                                  {% if pedido.estado == 'completado' %}w3-green
+                                  {% elif pedido.estado == 'pendiente' %}w3-yellow
+                                  {% elif pedido.estado == 'cancelado' %}w3-red
+                                  {% else %}w3-blue{% endif %} w3-large">
+                                  {{ pedido.estado|title }}
+                              </span>
+                            </h5>
+                            <p class="w3-small w3-center">
+                                <strong>Fecha:</strong> {{ pedido.fecha_pedido|date:"d/m/Y H:i" }}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="w3-third">
+                        <div class="w3-white w3-padding w3-round-large">
+                            <h5 class="w3-text-red">Información de Entrega</h5>
+                            <p class="w3-small">
+                                {% if pedido.vendedor %}
+                                <strong>Vendedor:</strong> {{ pedido.vendedor.get_full_name|default:pedido.vendedor.username }}<br>
+                                {% endif %}
+                                <strong>Pagado:</strong>
+                                {% if pedido.pagado %}
+                                    <span class="w3-text-green">Sí</span>
+                                {% else %}
+                                    <span class="w3-text-red">No</span>
+                                {% endif %}
+                                <br>
+                                <strong>Costo de Envío:</strong>
+                                {% if pedido.costo_envio > 0 %}
+                                    <span class="w3-text-blue">${{ pedido.costo_envio }}</span>
+                                {% else %}
+                                    <span class="w3-text-green">Gratis</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabla de productos -->
+                <div class="w3-responsive w3-margin-top">
+                    <table class="w3-table w3-bordered w3-striped w3-hoverable">
+                        <thead>
+                            <tr class="w3-secondary">
+                                <th>Producto</th>
+                                <th class="w3-center">Cantidad</th>
+                                <th class="w3-right-align">Precio Unitario</th>
+                                <th class="w3-right-align">Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for detalle in detalles_pedido %}
+                            <tr>
+                                <td>
+                                    <strong>{{ detalle.producto.nombre }}</strong>
+                                    {% if detalle.producto.marca %}
+                                    <br><span class="w3-small w3-text-gray">{{ detalle.producto.marca }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="w3-center">{{ detalle.cantidad }}</td>
+                                <td class="w3-right-align">${{ detalle.producto.precio }}</td>
+                                <td class="w3-right-align w3-text-indigo"><strong>${{ detalle.subtotal }}</strong></td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="w3-center w3-padding-16">
+                                    <div class="w3-panel w3-yellow w3-round-large">
+                                        <p>No hay productos en este pedido</p>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr class="w3-light-grey">
+                                <th colspan="3" class="w3-right-align">Subtotal Productos:</th>
+                                <th class="w3-right-align">${{ pedido.subtotal_productos|default:pedido.total_precio }}</th>
+                            </tr>
+                            {% if pedido.costo_envio > 0 %}
+                            <tr class="w3-light-blue">
+                                <th colspan="3" class="w3-right-align">
+                                    <i class="fas fa-truck"></i> Costo de Envío:
+                                </th>
+                                <th class="w3-right-align w3-text-blue">${{ pedido.costo_envio }}</th>
+                            </tr>
+                            {% endif %}
+                            <tr class="w3-secondary">
+                                <th colspan="3" class="w3-right-align">
+                                    <strong>Total:</strong>
+                                </th>
+                                <th class="w3-right-align w3-text-indigo">
+                                    <strong>${{ pedido.total_con_envio|default:pedido.total_precio }}</strong>
+                                </th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <!-- Botones de acción -->
+                <div class="w3-center w3-padding-32">
+                    <a href="{% url 'pedidos_panel' %}"
+                       class="w3-button w3-indigo w3-round-large w3-margin-right">
+                        <i class="fa fa-arrow-left"></i> Volver al Panel de Pedidos
+                    </a>
+                    <!-- Botón para generar PDF -->
+                    <a href="{% url 'generar_pdf_pedido' pedido.id %}"
+                       class="w3-button w3-green w3-round-large w3-margin-right"
+                       target="_blank">
+                        <i class="fa fa-file-pdf-o"></i> Descargar PDF
+                    </a>
+                    {% if perms.core.change_pedido %}
+                    <a href="{% url 'modificar_pedido' pedido.id %}"
+                       class="w3-button w3-blue w3-round-large w3-margin-right">
+                        <i class="fa fa-edit"></i> Modificar Pedido
+                    </a>
+                    {% endif %}
+
+                    {% if perms.core.delete_pedido %}
+                    <button onclick="document.getElementById('deletePedidoModal').style.display='block'"
+                            class="w3-button w3-red w3-round-large">
+                        <i class="fa fa-trash"></i> Eliminar Pedido
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+</div>
+
+<!-- Modal de confirmación para eliminar pedido -->
+<div id="deletePedidoModal" class="w3-modal">
+    <div class="w3-modal-content w3-card-4 w3-animate-zoom" style="max-width:500px">
+        <header class="w3-container w3-red">
+            <span onclick="closeModal('deletePedidoModal')"
+                  class="w3-button w3-display-topright">&times;</span>
+            <h3 class="w3-center"><i class="fa fa-exclamation-triangle"></i> Confirmar Eliminación</h3>
+        </header>
+
+        <div class="w3-container">
+            <div class="w3-section">
+                <p class="w3-center">¿Estás seguro de que deseas eliminar este pedido?</p>
+                <div class="w3-panel w3-light-grey w3-leftbar w3-border-grey w3-round-large">
+                    <p><strong>Pedido #:</strong> {{ pedido.id }}</p>
+                    <p><strong>Total:</strong> ${{ pedido.total_precio }}</p>
+                    <p><strong>Cliente:</strong> {{ pedido.user.username }}</p>
+                </div>
+                <p class="w3-text-red w3-center"><strong>¡Esta acción no se puede deshacer!</strong></p>
+            </div>
+        </div>
+
+        <footer class="w3-container w3-padding-16">
+            <div class="w3-center">
+                <form method="POST" action="{% url 'eliminar_pedido' pedido.id %}" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="w3-button w3-red w3-round-large w3-margin-right">
+                        <i class="fa fa-trash"></i> Eliminar
+                    </button>
+                </form>
+                <button onclick="closeModal('deletePedidoModal')"
+                        class="w3-button w3-gray w3-round-large">
+                    <i class="fa fa-times"></i> Cancelar
+                </button>
+            </div>
+        </footer>
+    </div>
+</div>
+
+<style>
+    .w3-card-4 {
+        border-radius: 15px;
+        overflow: hidden;
+    }
+
+    .w3-table th {
+        font-weight: bold;
+    }
+
+    .w3-table td, .w3-table th {
+        vertical-align: middle;
+    }
+
+    .w3-responsive {
+        overflow-x: auto;
+    }
+
+    @media screen and (max-width: 600px) {
+        .w3-third {
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        .w3-button {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+    }
+</style>
+
+<script>
+function closeModal(modalId) {
+    document.getElementById(modalId).style.display = 'none';
+}
+
+// Cerrar modal al hacer clic fuera
+window.onclick = function(event) {
+    if (event.target.classList.contains('w3-modal')) {
+        event.target.style.display = 'none';
+    }
+}
+
+// Cerrar con tecla ESC
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        const modals = document.getElementsByClassName('w3-modal');
+        for (let modal of modals) {
+            if (modal.style.display === 'block') {
+                modal.style.display = 'none';
+            }
+        }
+    }
+});
+
+// Cerrar todos los modales al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+    // Cerrar todos los modales para que no aparezcan visibles al recargar
+    const modals = document.querySelectorAll('.w3-modal');
+    modals.forEach(modal => {
+        modal.style.display = 'none';
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,42 @@
+<!-- agregar_producto.html -->
+
+{% extends 'base.html' %}
+{% block content %}
+{% load static %}
+    <main class="container-fullwidth pb-4">
+        <div class="container">
+            <div class="container py-5 h-100">
+                <div class="row d-flex justify-content-center align-items-center h-100">
+                    <div class="col-12">
+                        <div class="card card-registration card-registration-2" style="border-radius: 15px;">
+                            <div class="card-body p-0">
+                                <div class="row g-0">
+                                    <div class="col-lg-12 text-body-emphasis bg-body-tertiary rounded-start-4">
+                                        <div class="p-5">
+                                            <h3 class="fw-bold mb-0">Agregar Producto</h3>
+                                            <hr class="my-4">
+
+                                            <!-- Formulario para agregar un nuevo producto -->
+                                            <form method="post" action="{% url 'agregar_producto' pedido_id=pedido.id %}">
+                                                {% csrf_token %}
+                                                <div class="mb-3">
+                                                    <label for="nuevo_producto" class="form-label">Producto:</label>
+                                                    {{ form.nuevo_producto }}
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="nueva_cantidad_nuevo" class="form-label">Cantidad:</label>
+                                                    {{ form.nueva_cantidad_nuevo }}
+                                                </div>
+                                                <button type="submit" class="btn btn-primary">Agregar Producto</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+{% endblock %}

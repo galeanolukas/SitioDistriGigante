@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirmación de Pedido #{{ pedido.id }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #009EE3;
+        }
+        .header h1 {
+            color: #009EE3;
+            margin: 0;
+        }
+        .qr-section {
+            text-align: center;
+            margin: 20px 0;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        .qr-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+        .qr-image {
+            max-width: 200px;
+            height: auto;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 10px;
+            background-color: white;
+        }
+        .instructions {
+            font-size: 14px;
+            color: #666;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Confirmación de Pedido #{{ pedido.id }}</h1>
+            <p>Estado: <strong>{{ estado_pago }}</strong></p>
+        </div>
+
+        <!-- QR Section -->
+        {% if envio and qr_image %}
+        <div class="qr-section">
+            <h3>Código QR de Envío</h3>
+            <img src="data:image/png;base64,{{ qr_image }}" alt="QR del Envío" class="qr-image">
+            <p class="instructions">
+                Muestra este código QR al transportista para verificar la entrega.<br>
+                Código de envío: <strong>{{ envio.qr_code }}</strong>
+            </p>
+        </div>
+        {% endif %}
+        .status-exito { color: #28a745; }
+        .status-pendiente { color: #ffc107; }
+        .status-fallido { color: #dc3545; }
+        .pedido-info {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+        .pedido-info h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .productos-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        .productos-table th,
+        .productos-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        .productos-table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        .total {
+            text-align: right;
+            font-size: 18px;
+            font-weight: bold;
+            color: #009EE3;
+            margin-top: 20px;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: #009EE3;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Confirmación de Pedido</h1>
+            <p class="status-{{ estado_pago|lower }}">{{ estado_pago }}</p>
+        </div>
+
+        <div class="pedido-info">
+            <h3>Información del Pedido</h3>
+            <p><strong>N° de Pedido:</strong> #{{ pedido.id }}</p>
+            <p><strong>Fecha:</strong> {{ pedido.fecha_pedido|date:"d/m/Y H:i" }}</p>
+            <p><strong>Cliente:</strong> {{ cliente_nombre }}</p>
+            {% if pedido.user.perfil.direccion %}
+            <p><strong>Dirección de entrega:</strong> {{ pedido.user.perfil.direccion }}</p>
+            {% endif %}
+        </div>
+
+        <h3>Productos Comprados</h3>
+        <table class="productos-table">
+            <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th>Cantidad</th>
+                    <th>Precio Unitario</th>
+                    <th>Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for detalle in detalles %}
+                <tr>
+                    <td>{{ detalle.product.nombre }}</td>
+                    <td>{{ detalle.cantidad }}</td>
+                    <td>${{ detalle.subtotal|add:"0"|div:detalle.cantidad }}</td>
+                    <td>${{ detalle.subtotal }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="total">
+            <p>Subtotal: ${{ pedido.subtotal }}</p>
+            <p>Costo de Envío: ${{ pedido.costo_envio }}</p>
+            <p><strong>Total: ${{ pedido.total_precio }}</strong></p>
+        </div>
+
+        {% if estado_pago == "Pago Exitoso" %}
+        <div style="text-align: center; margin: 30px 0;">
+            <h3 style="color: #28a745;">¡Gracias por tu compra!</h3>
+            <p>Tu pedido ha sido procesado exitosamente y será enviado a la brevedad.</p>
+        </div>
+        {% elif estado_pago == "Pendiente" %}
+        <div style="text-align: center; margin: 30px 0;">
+            <h3 style="color: #ffc107;">Tu pago está siendo procesado</h3>
+            <p>Te notificaremos cuando el pago sea confirmado.</p>
+        </div>
+        {% else %}
+        <div style="text-align: center; margin: 30px 0;">
+            <h3 style="color: #dc3545;">Hubo un problema con tu pago</h3>
+            <p>Por favor, intenta realizar el pago nuevamente o contacta con soporte.</p>
+        </div>
+        {% endif %}
+
+        <div class="footer">
+            <p>Este es un correo automático. Por favor no responder.</p>
+            <p>Para cualquier consulta, contacta a nuestro equipo de soporte.</p>
+        </div>
+    </div>
+</body>
+</html>

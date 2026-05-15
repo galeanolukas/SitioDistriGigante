@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+    <style>
+
+      :root {
+        --primary: #2c3e50;
+        --secondary: #ec1c24;  /* Color secundario */
+        --accent: #e74c3c;
+        --text-light: #ffffff;
+        --text-dark: #2c3e50;
+        --light-grey: #f8f9fa;
+        --border-color: #e0e0e0;
+      }
+
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: var(--light-grey);
+      }
+
+      /* Estilos personalizados adicionales */
+      .w3-primary { background-color: var(--primary) !important; color: var(--white);}
+      .w3-secondary { background-color: var(--secondary) !important; }
+      .w3-tertiary { background-color: var(--tertiary) !important; }
+      .w3-text-primary { color: var(--primary) !important; }
+      .w3-text-secondary { color: var(--secondary) !important; }
+    </style>
+</head>
+<body>
+    <div class="w3-container w3-content" style="max-width:600px; margin-top:20px">
+        <!-- Encabezado -->
+        <div class="w3-container w3-center w3-secondary w3-text_white">
+            <h1>DISTRIBUIDORA GIGANTE</h1>
+            <p>Tu distribuidora de confianza</p>
+        </div>
+
+        <!-- Contenido principal -->
+        <div class="w3-container w3-white w3-padding-32">
+            <h2 class="w3-center">¡Hola {{ username }}!</h2>
+            <p class="w3-center">Gracias por registrarte en nuestro catálogo online</p>
+
+            <div class="w3-panel w3-leftbar w3-light-grey">
+                <p class="w3-large">Para completar tu registro, ingresa el siguiente código de verificación:</p>
+            </div>
+
+            <div class="w3-container w3-center">
+                <div class="w3-gray w3-monospace">
+                    {{ validation_code }}
+                </div>
+            </div>
+
+            <div class="w3-container w3-margin-top">
+                <p>O haz clic en el siguiente enlace para completar tu registro:</p>
+                <a href="{{ validation_link }}" class="w3-button w3-secondary w3-text-white">VALIDAR MI CUENTA</a>
+            </div>
+
+            <div class="w3-container w3-secondary w3-text-white">
+                <p>Si no has solicitado este registro, por favor ignora este mensaje.</p>
+            </div>
+        </div>
+
+        <!-- Pie de página -->
+        <div class="w3-container w3-center w3-secondary w3-text-white w3-padding-16">
+            <p>© 2025 Distribuidora Gigante - Todos los derechos reservados</p>
+            <p>Contacto: info@distribuidoragigante.com | Tel/Cel: 54 370 512-0682</p>
+        </div>
+    </div>
+</body>
+</html>

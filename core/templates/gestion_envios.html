@@ -1,0 +1,161 @@
+{% extends 'dashboard.html' %}
+{% load static %}
+{% block title %}Gestión de Envíos{% endblock %}
+{% block page_title %}<h4>Gestión de Envíos</h4>{% endblock %}
+{% block content %}
+<div class="w3-container w3-padding-32">
+    <div class="w3-row">
+        <div class="w3-col">
+            <!-- Header -->
+            <div class="w3-center w3-margin-bottom">
+                <h2 class="w3-text-teal"><i class="fas fa-truck"></i> Gestión de Opciones de Envío</h2>
+                <p class="w3-text-grey">Administra las opciones de envío disponibles para los clientes</p>
+                {% if not opciones_envio %}
+                <div class="w3-panel w3-orange w3-round-large w3-margin-top">
+                    <p><i class="fas fa-info-circle"></i> No hay opciones de envío configuradas. 
+                    <a href="{% url 'inicializar_envios' %}" class="w3-button w3-orange w3-round w3-small">Cargar opciones por defecto</a></p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Estadísticas -->
+            <div class="w3-row-padding w3-margin-bottom">
+                <div class="w3-half">
+                    <div class="w3-container w3-green w3-padding-16 w3-round">
+                        <div class="w3-left"><i class="fas fa-check-circle w3-xxlarge"></i></div>
+                        <div class="w3-right">
+                            <h3>{{ opciones_envio|length }}</h3>
+                        </div>
+                        <div class="w3-clear"></div>
+                        <h5>Total Opciones</h5>
+                    </div>
+                </div>
+                <div class="w3-half">
+                    <div class="w3-container w3-blue w3-padding-16 w3-round">
+                        <div class="w3-left"><i class="fas fa-dollar-sign w3-xxlarge"></i></div>
+                        <div class="w3-right">
+                            <h3>{{ opciones_envio.count }}</h3>
+                        </div>
+                        <div class="w3-clear"></div>
+                        <h5>Configuradas</h5>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Formulario para agregar nueva opción de envío -->
+            <div class="w3-card w3-margin-bottom">
+                <div class="w3-container w3-teal w3-text-white">
+                    <h3><i class="fas fa-plus-circle"></i> Agregar Nueva Opción de Envío</h3>
+                </div>
+                <div class="w3-container w3-padding">
+                    <form method="POST" action="{% url 'gestion_envios' %}">
+                        {% csrf_token %}
+                        <div class="w3-row-padding">
+                            <div class="w3-col m6 s12">
+                                <label class="w3-text-grey">Nombre *</label>
+                                <input type="text" name="nombre" class="w3-input w3-border w3-round" required>
+                            </div>
+                            <div class="w3-col m6 s12">
+                                <label class="w3-text-grey">Costo ($)</label>
+                                <input type="number" name="costo" step="0.01" min="0" value="0" class="w3-input w3-border w3-round">
+                            </div>
+                        </div>
+                        <div class="w3-row-padding">
+                            <div class="w3-col m12 s12">
+                                <label class="w3-text-grey">Descripción</label>
+                                <textarea name="descripcion" class="w3-input w3-border w3-round" rows="2"></textarea>
+                            </div>
+                        </div>
+                        <div class="w3-row-padding">
+                            <div class="w3-col m6 s12">
+                                <label class="w3-text-grey">Tiempo de Entrega</label>
+                                <input type="text" name="tiempo_entrega" placeholder="Ej: 2-3 días hábiles" class="w3-input w3-border w3-round">
+                            </div>
+                            <div class="w3-col m6 s12">
+                                <label class="w3-text-grey">
+                                    <input type="checkbox" name="activo" checked class="w3-check">
+                                    Activo
+                                </label>
+                            </div>
+                        </div>
+                        <div class="w3-center w3-margin-top">
+                            <button type="submit" class="w3-button w3-teal w3-round w3-large">
+                                <i class="fas fa-save"></i> Agregar Opción de Envío
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Lista de opciones de envío existentes -->
+            <div class="w3-card">
+                <div class="w3-container w3-teal w3-text-white">
+                    <h3><i class="fas fa-list"></i> Opciones de Envío Configuradas</h3>
+                </div>
+                <div class="w3-container w3-padding">
+                    {% if opciones_envio %}
+                        <div class="w3-responsive">
+                            <table class="w3-table-all w3-striped w3-bordered w3-hoverable">
+                                <thead class="w3-teal">
+                                    <tr>
+                                        <th>Nombre</th>
+                                        <th>Descripción</th>
+                                        <th>Costo</th>
+                                        <th>Tiempo</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for opcion in opciones_envio %}
+                                    <tr>
+                                        <td><strong>{{ opcion.nombre }}</strong></td>
+                                        <td>{{ opcion.descripcion|default:"-" }}</td>
+                                        <td>
+                                            {% if opcion.costo > 0 %}
+                                                <span class="w3-text-blue">${{ opcion.costo }}</span>
+                                            {% else %}
+                                                <span class="w3-text-green">Gratis</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ opcion.tiempo_entrega|default:"-" }}</td>
+                                        <td>
+                                            {% if opcion.activo %}
+                                                <span class="w3-tag w3-green w3-round">Activo</span>
+                                            {% else %}
+                                                <span class="w3-tag w3-red w3-round">Inactivo</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <button class="w3-button w3-small w3-blue w3-round" onclick="alert('Función de editar próximamente')">
+                                                <i class="fas fa-edit"></i> Editar
+                                            </button>
+                                            <button class="w3-button w3-small w3-red w3-round" onclick="alert('Función de eliminar próximamente')">
+                                                <i class="fas fa-trash"></i> Eliminar
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="w3-center w3-padding-32">
+                            <i class="fas fa-truck w3-xxxlarge w3-text-grey"></i>
+                            <h4 class="w3-text-grey">No hay opciones de envío configuradas</h4>
+                            <p class="w3-text-grey">Agrega tu primera opción de envío usando el formulario de arriba</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Botón de regreso -->
+            <div class="w3-center w3-margin-top">
+                <a href="{% url 'admin_panel' %}" class="w3-button w3-grey w3-round">
+                    <i class="fas fa-arrow-left"></i> Volver al Panel
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

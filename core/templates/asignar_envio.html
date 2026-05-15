@@ -1,0 +1,108 @@
+{% extends 'dashboard.html' %}
+{% load static %}
+{% block title %}Asignar Envío{% endblock %}
+{% block page_title %}<h4><i class="fas fa-truck"></i> ASIGNAR ENVÍO</h4>{% endblock %}
+{% block content %}
+
+<div class="w3-container w3-padding-32">
+    <div class="w3-card-4 w3-round-large">
+        <div class="w3-container w3-primary w3-text-white w3-padding">
+            <h3><i class="fas fa-clipboard-list"></i> Asignar Envío #{{ envio.id }}</h3>
+        </div>
+        
+        <div class="w3-container w3-padding-24">
+            <!-- Información del envío -->
+            <div class="w3-panel w3-light-grey w3-round-large w3-padding">
+                <h5><i class="fas fa-info-circle"></i> Información del Envío</h5>
+                <div class="w3-row-padding">
+                    <div class="w3-col m6 s12">
+                        <p><strong>Pedido #:</strong> {{ envio.pedido.id }}</p>
+                        <p><strong>Cliente:</strong> {{ envio.pedido.user.username }}</p>
+                        <p><strong>Estado Actual:</strong> 
+                            {% if envio.estado == 'pendiente' %}
+                                <span class="w3-tag w3-grey">Pendiente de Asignación</span>
+                            {% else %}
+                                <span class="w3-tag w3-blue">{{ envio.get_estado_display }}</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="w3-col m6 s12">
+                        <p><strong>Dirección de Entrega:</strong> {{ envio.direccion_entrega }}</p>
+                        <p><strong>Total del Pedido:</strong> ${{ envio.pedido.total_precio }}</p>
+                        <p><strong>Fecha del Pedido:</strong> {{ envio.pedido.fecha_pedido|date:"d/m/Y H:i" }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Formulario de asignación -->
+            {% if envio.estado == 'pendiente' %}
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="w3-section">
+                        <label class="w3-text-dark-grey"><b>Seleccionar Transportista:</b></label>
+                        <select name="transportista_id" class="w3-select w3-border w3-round" required>
+                            <option value="">Seleccionar transportista...</option>
+                            {% for transportista in transportistas %}
+                                <option value="{{ transportista.id }}">
+                                    {{ transportista.usuario.username }} - 
+                                    {{ transportista.vehiculo }} ({{ transportista.patente }})
+                                    - Tel: {{ transportista.telefono }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="w3-section">
+                        <label class="w3-text-dark-grey"><b>Observaciones para el transportista:</b></label>
+                        <textarea name="observaciones" class="w3-input w3-border w3-round" 
+                                  rows="3" placeholder="Instrucciones especiales para la entrega..."></textarea>
+                    </div>
+
+                    <div class="w3-section">
+                        <button type="submit" class="w3-button w3-green w3-round">
+                            <i class="fas fa-truck"></i> Asignar Envío
+                        </button>
+                        <a href="{% url 'gestion_envios' %}" class="w3-button w3-grey w3-round w3-margin-left">
+                            <i class="fas fa-arrow-left"></i> Cancelar
+                        </a>
+                    </div>
+                </form>
+            {% else %}
+                <div class="w3-panel w3-yellow w3-round-large w3-padding">
+                    <p class="w3-text-dark-grey">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Este envío ya está asignado a {{ envio.transportista.usuario.username }}.
+                    </p>
+                    <a href="{% url 'gestion_envios' %}" class="w3-button w3-grey w3-round">
+                        <i class="fas fa-arrow-left"></i> Volver a Gestión de Envíos
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .w3-card-4 {
+        box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+        transition: 0.3s;
+    }
+
+    .w3-card-4:hover {
+        box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2);
+    }
+
+    .w3-tag {
+        font-size: 12px;
+        padding: 4px 8px;
+    }
+
+    @media screen and (max-width: 768px) {
+        .w3-col.m6 {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+    }
+</style>
+
+{% endblock %}

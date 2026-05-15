@@ -1,0 +1,223 @@
+{% extends 'dashboard.html' %}
+{% load static %}
+{% block title %}Escanear QR Entrega{% endblock %}
+{% block page_title %}<h4><i class="fas fa-qrcode"></i> ESCANEAR QR ENTREGA</h4>{% endblock %}
+{% block content %}
+
+<div class="w3-container w3-padding-32">
+    <div class="w3-row">
+        <div class="w3-col l8 m12">
+            <!-- Panel de escaneo -->
+            <div class="w3-card-4 w3-round-large">
+                <div class="w3-container w3-primary w3-text-white w3-padding">
+                    <h3><i class="fas fa-qrcode"></i> Escanear Código QR</h3>
+                    <p>Escanea el código QR del cliente para confirmar la entrega</p>
+                </div>
+                
+                <div class="w3-container w3-padding-24">
+                    <form method="POST" id="qrForm">
+                        {% csrf_token %}
+                        
+                        <!-- Área de escaneo simulado -->
+                        <div class="w3-center w3-margin-bottom">
+                            <div class="w3-border w3-round" style="width:300px; height:300px; margin:0 auto; display:flex; align-items:center; justify-content:center; background:#f8f9fa;">
+                                <div class="w3-center">
+                                    <i class="fas fa-qrcode" style="font-size:80px; color:#6c757d;"></i>
+                                    <p class="w3-margin-top">Área de Escaneo</p>
+                                    <p class="w3-small w3-text-grey">Apunta la cámara aquí</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Input manual de QR (fallback) -->
+                        <div class="w3-section">
+                            <label class="w3-text-dark-grey"><b>O ingresa el código QR manualmente:</b></label>
+                            <input type="text" name="qr_data" class="w3-input w3-border w3-round" 
+                                   placeholder="ENVIO-123-ABCDEF12" required>
+                            <p class="w3-small w3-text-grey">Si no puedes escanear, puedes ingresar el código manualmente</p>
+                        </div>
+                        
+                        <!-- Observaciones -->
+                        <div class="w3-section">
+                            <label class="w3-text-dark-grey"><b>Observaciones de la entrega:</b></label>
+                            <textarea name="observaciones" class="w3-input w3-border w3-round" 
+                                      rows="3" placeholder="Notas sobre la entrega (opcional)"></textarea>
+                        </div>
+                        
+                        <!-- Botones -->
+                        <div class="w3-section">
+                            <button type="submit" class="w3-button w3-green w3-round w3-block">
+                                <i class="fas fa-check-circle"></i> Confirmar Entrega
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="w3-col l4 m12">
+            <!-- Panel de información -->
+            <div class="w3-card-4 w3-round-large w3-margin-left">
+                <div class="w3-container w3-light-grey w3-padding">
+                    <h5><i class="fas fa-info-circle"></i> ¿Cómo funciona?</h5>
+                </div>
+                <div class="w3-container w3-padding">
+                    <ol class="w3-ol">
+                        <li class="w3-margin-bottom">
+                            <strong>Escanea el QR</strong><br>
+                            <small class="w3-text-grey">Apunta la cámara al código QR que te muestra el cliente</small>
+                        </li>
+                        <li class="w3-margin-bottom">
+                            <strong>Verifica los datos</strong><br>
+                            <small class="w3-text-grey">Confirma que el envío pertenece a un cliente tuyo</small>
+                        </li>
+                        <li class="w3-margin-bottom">
+                            <strong>Agrega observaciones</strong><br>
+                            <small class="w3-text-grey">Registra notas importantes sobre la entrega</small>
+                        </li>
+                        <li>
+                            <strong>Confirma la entrega</strong><br>
+                            <small class="w3-text-grey">Presiona el botón para registrar la entrega completada</small>
+                        </li>
+                    </ol>
+                </div>
+            </div>
+            
+            <!-- Estadísticas rápidas -->
+            <div class="w3-card-4 w3-round-large w3-margin-left w3-margin-top">
+                <div class="w3-container w3-blue w3-text-white w3-padding">
+                    <h5><i class="fas fa-chart-line"></i> Mis Estadísticas</h5>
+                </div>
+                <div class="w3-container w3-padding">
+                    <div class="w3-row">
+                        <div class="w3-col s6">
+                            <p class="w3-center">
+                                <span class="w3-xxlarge w3-text-blue">0</span><br>
+                                <small>Entregas Hoy</small>
+                            </p>
+                        </div>
+                        <div class="w3-col s6">
+                            <p class="w3-center">
+                                <span class="w3-xxlarge w3-text-green">0</span><br>
+                                <small>Total Semana</small>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmación -->
+<div id="confirmModal" class="w3-modal">
+    <div class="w3-modal-content w3-card-4 w3-animate-zoom" style="max-width:500px">
+        <div class="w3-container w3-green w3-text-white">
+            <span onclick="document.getElementById('confirmModal').style.display='none'" 
+                  class="w3-button w3-display-topright">&times;</span>
+            <h3 class="w3-center"><i class="fas fa-check-circle"></i> ¡Entrega Confirmada!</h3>
+        </div>
+        <div class="w3-container w3-padding-24 w3-center">
+            <i class="fas fa-check-circle w3-xxxlarge w3-text-green"></i>
+            <h4>Entrega registrada exitosamente</h4>
+            <p class="w3-text-grey">El cliente ha sido notificado y el envío ha sido marcado como entregado.</p>
+            <button onclick="document.getElementById('confirmModal').style.display='none'; window.location.href='{% url 'gestion_envios_transportista' %}'" 
+                    class="w3-button w3-green w3-round">
+                <i class="fas fa-list"></i> Ver Mis Envíos
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+// Simulación de escaneo de QR (en producción usaríamos una librería real)
+function iniciarEscaneo() {
+    console.log('Iniciando escaneo de QR...');
+    // Aquí iría la implementación real con una librería como qr-scanner o similar
+}
+
+// Manejo del formulario
+document.getElementById('qrForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const qrData = document.querySelector('input[name="qr_data"]').value;
+    
+    // Validación básica del formato del QR
+    if (!qrData.startsWith('ENVIO-')) {
+        alert('El código QR no parece ser válido. Debe comenzar con "ENVIO-"');
+        return;
+    }
+    
+    // Simulación de procesamiento
+    const submitBtn = this.querySelector('button[type="submit"]');
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+    submitBtn.disabled = true;
+    
+    // En producción, aquí haríamos la petición AJAX
+    setTimeout(() => {
+        this.submit();
+    }, 1500);
+});
+
+// Iniciar escaneo automático al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+    // iniciarEscaneo(); // Descomentar cuando tengamos la librería de escaneo
+});
+
+// Función para simular escaneo (solo para demostración)
+function simularEscaneo() {
+    const qrInput = document.querySelector('input[name="qr_data"]');
+    qrInput.value = 'ENVIO-1-ABCDEF12';
+    qrInput.classList.add('w3-border-green');
+    setTimeout(() => {
+        qrInput.classList.remove('w3-border-green');
+    }, 2000);
+}
+</script>
+
+<style>
+    .w3-card-4 {
+        box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+        transition: 0.3s;
+    }
+
+    .w3-card-4:hover {
+        box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2);
+    }
+
+    @media screen and (max-width: 992px) {
+        .w3-col.l4 {
+            margin-left: 0 !important;
+            margin-top: 20px;
+        }
+        
+        .w3-border[style*="width:300px"] {
+            width: 250px !important;
+            height: 250px !important;
+        }
+    }
+
+    @media screen and (max-width: 600px) {
+        .w3-border[style*="width:300px"] {
+            width: 200px !important;
+            height: 200px !important;
+        }
+        
+        .w3-xxlarge {
+            font-size: 40px !important;
+        }
+    }
+
+    /* Animación de pulso para el área de escaneo */
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+
+    .w3-border[style*="width:300px"] {
+        animation: pulse 2s infinite;
+    }
+</style>
+
+{% endblock %}

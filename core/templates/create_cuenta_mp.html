@@ -1,0 +1,572 @@
+{% extends 'dashboard.html' %}
+{% load static %}
+
+{% block page_title %}
+<h4 class="page-title">
+    <i class="fas fa-credit-card"></i> {{ title }}
+</h4>
+{% endblock %}
+
+{% block content %}
+<!-- Modal para Formulario de MercadoPago -->
+<div id="mercadoPagoModal" class="w3-modal">
+    <div class="w3-modal-content w3-card-4 w3-animate-zoom" style="max-width:600px;">
+
+        <!-- Header del Modal -->
+        <div class="w3-container w3-primary w3-round-large">
+            <span onclick="closeMercadoPagoModal()"
+                  class="w3-button w3-display-topright w3-large w3-hover-red">&times;</span>
+            <h3 class="w3-center">
+                <i class="fas fa-credit-card"></i>
+                <span id="modalTitle">Agregar Cuenta MercadoPago</span>
+            </h3>
+        </div>
+
+        <!-- Formulario -->
+        <form method="post" class="w3-container" id="mercadoPagoForm" action="">
+            {% csrf_token %}
+            <input type="hidden" name="cuenta_id" id="cuentaId" value="">
+
+            <div class="w3-padding-24">
+                <div class="w3-section">
+                    <label class="w3-text-dark-gray"><b>Nombre de la Cuenta</b></label>
+                    <input type="text" name="nombre" id="id_nombre"
+                           class="w3-input w3-border w3-round"
+                           placeholder="Ej: Cuenta Principal, Tienda Online, etc. (Opcional)"
+                           maxlength="50"
+                           autocomplete="off">
+                    <div id="nombreErrors" class="w3-text-red w3-small"></div>
+                    <small class="w3-text-grey">Nombre descriptivo para identificar la cuenta (opcional)</small>
+                </div>
+
+                <div class="w3-section">
+                    <label class="w3-text-dark-gray"><b>Public Key *</b></label>
+                    <input type="text" name="public_key" id="id_public_key"
+                           class="w3-input w3-border w3-round" required
+                           placeholder="Cualquier formato de Public Key"
+                           maxlength="200">
+                    <div id="publicKeyErrors" class="w3-text-red w3-small"></div>
+                    <small class="w3-text-grey">Ingresa tu Public Key (sin restricciones de formato)</small>
+                </div>
+
+                <div class="w3-section">
+                    <label class="w3-text-dark-gray"><b>Access Token *</b></label>
+                    <input type="password" name="access_token" id="id_access_token"
+                           class="w3-input w3-border w3-round" required
+                           placeholder="Cualquier formato de Access Token"
+                           maxlength="200">
+                    <button type="button" class="w3-button w3-light-grey w3-round"
+                            style="margin-top:5px;" onclick="togglePassword('id_access_token')">
+                        <i class="fas fa-eye"></i> Mostrar
+                    </button>
+                    <div id="accessTokenErrors" class="w3-text-red w3-small"></div>
+                    <small class="w3-text-grey">Ingresa tu Access Token (sin restricciones de formato)</small>
+                </div>
+
+                <div class="w3-section">
+                    <label class="w3-text-dark-gray"><b>Client Secret</b></label>
+                    <input type="password" name="client_secret" id="id_client_secret"
+                           class="w3-input w3-border w3-round"
+                           placeholder="Tu client secret opcional"
+                           maxlength="100">
+                    <button type="button" class="w3-button w3-light-grey w3-round"
+                            style="margin-top:5px;" onclick="togglePassword('id_client_secret')">
+                        <i class="fas fa-eye"></i> Mostrar
+                    </button>
+                    <div id="clientSecretErrors" class="w3-text-red w3-small"></div>
+                    <small class="w3-text-grey">Opcional, para funcionalidades avanzadas</small>
+                </div>
+
+                <!-- Mensajes de estado -->
+                <div id="formMessages" class="w3-panel" style="display:none;">
+                    <!-- Los mensajes se mostrarán aquí -->
+                </div>
+
+                <div class="w3-section w3-center w3-padding-16">
+                    <button type="submit" class="w3-button w3-green w3-round-large w3-large">
+                        <i class="fas fa-save"></i> Guardar Cuenta
+                    </button>
+                </div>
+            </div>
+        </form>
+</div>
+</div>
+<div class="w3-container">
+  <div class="w3-card-4 w3-center w3-round-large w3-padding">
+          <div class="w3-container w3-primary w3-round-large">
+              <h3 class="w3-center">
+                  <i class="fas fa-list"></i> Cuentas Configuradas
+              </h3>
+          </div>
+
+          <div class="w3-container w3-padding-24">
+              {% if cuentas %}
+              <div class="w3-responsive">
+                  <table class="w3-table w3-bordered w3-striped w3-hoverable">
+                      <thead>
+                          <tr class="w3-light-grey">
+                              <th>Nombre</th>
+                              <th>Public Key</th>
+                              <th>Access Token</th>
+                              <th>Estado</th>
+                              <th>Acciones</th>
+                          </tr>
+                      </thead>
+                      <tbody>
+                          {% for cuenta in cuentas %}
+                          <tr>
+                              <td>
+                                  <strong>{{ cuenta.nombre }}</strong>
+                                  {% if cuenta.activa %}
+                                  <span class="w3-badge w3-green w3-small">Activa</span>
+                                  {% endif %}
+                              </td>
+                              <td>
+                                  <code class="w3-tooltip" title="Public Key">
+                                      {{ cuenta.public_key|truncatechars:20 }}
+                                  </code>
+                              </td>
+                              <td>
+                                  <code class="w3-tooltip" title="Access Token">
+                                      {{ cuenta.access_token|truncatechars:20 }}
+                                  </code>
+                              </td>
+                              <td>
+                                  <span class="w3-tag w3-round {% if cuenta.activa %}w3-green{% else %}w3-grey{% endif %}">
+                                      {% if cuenta.activa %}Activa{% else %}Inactiva{% endif %}
+                                  </span>
+                              </td>
+                              <td>
+                                  <div class="w3-dropdown-click">
+                                      <button class="w3-button w3-blue w3-small w3-round"
+                                              onclick="dropdownMenu('acciones-{{ cuenta.id }}')">
+                                          <i class="fas fa-cog"></i> Acciones
+                                      </button>
+                                      <div id="acciones-{{ cuenta.id }}" class="w3-dropdown-content w3-bar-block w3-card-4">
+                                          <a href="javascript:void(0);" 
+                                             data-cuenta-id="{{ cuenta.id }}"
+                                             data-action="edit"
+                                             class="w3-bar-item w3-button cuenta-action">
+                                              <i class="fas fa-edit"></i> Editar
+                                          </a>
+                                          <a href="javascript:void(0);" 
+                                             data-cuenta-id="{{ cuenta.id }}"
+                                             data-nombre="{{ cuenta.nombre|default:'Sin nombre'|escapejs }}"
+                                             data-activa="{{ cuenta.activa|lower }}"
+                                             data-action="toggle"
+                                             class="w3-bar-item w3-button {% if cuenta.activa %}w3-orange{% else %}w3-green{% endif %} cuenta-action">
+                                              <i class="fas {% if cuenta.activa %}fa-toggle-off{% else %}fa-toggle-on{% endif %}"></i> 
+                                              {% if cuenta.activa %}Desactivar{% else %}Activar{% endif %}
+                                          </a>
+                                          <a href="javascript:void(0);" 
+                                             data-cuenta-id="{{ cuenta.id }}"
+                                             data-nombre="{{ cuenta.nombre|default:'Sin nombre'|escapejs }}"
+                                             data-action="delete"
+                                             class="w3-bar-item w3-button w3-text-red cuenta-action">
+                                              <i class="fas fa-trash"></i> Eliminar
+                                          </a>
+                                      </div>
+                                  </div>
+                              </td>
+                          </tr>
+                          {% endfor %}
+                      </tbody>
+                  </table>
+              </div>
+              {% else %}
+              <div class="w3-panel w3-secondary w3-text-white w3-round-large">
+                  <p class="w3-center">
+                      <i class="fas fa-info-circle"></i>
+                      No hay cuentas de MercadoPago configuradas.
+                  </p>
+              </div>
+              {% endif %}
+          </div>
+          <!-- Para agregar nueva cuenta -->
+          <button onclick="openMercadoPagoModal()" class="w3-button w3-green w3-round">
+              <i class="fas fa-plus"></i> Nueva Cuenta
+          </button>
+      </div>
+
+    <!-- Información de ayuda -->
+    <div class="w3-container w3-margin-top">
+            <div class="w3-container w3-padding-16 w3-secondary w3-text-white w3-center">
+                <h4><i class="fas fa-question-circle"></i> ¿Dónde encuentro estas credenciales?</h4>
+                <ol class="w3-ul">
+                    <li>Inicia sesión en <a href="https://www.mercadopago.com.ar" target="_blank">MercadoPago</a></li>
+                    <li>Ve a <strong>Desarrolladores</strong> → <strong>Mis credenciales</strong></li>
+                    <li>Copia la <strong>Public Key</strong> y el <strong>Access Token</strong></li>
+                    <li>Pega las credenciales en los campos correspondientes</li>
+                </ol>
+                <p class="w3-center">
+                    <a href="https://www.mercadopago.com.ar/developers/es/docs"
+                       target="_blank" class="w3-button w3-blue w3-round">
+                        <i class="fas fa-external-link-alt"></i> Ver Documentación Oficial
+                    </a>
+                </p>
+            </div>
+    </div>
+</div>
+<script>
+// Variables globales
+let currentCuentaId = null;
+let isEditMode = false;
+
+// Función para abrir el modal
+function openMercadoPagoModal(cuentaId = null) {
+    const modal = document.getElementById('mercadoPagoModal');
+    const title = document.getElementById('modalTitle');
+    const form = document.getElementById('mercadoPagoForm');
+    const cuentaIdField = document.getElementById('cuentaId');
+
+    // Resetear formulario (excepto el nombre si existe)
+    const nombreValue = document.getElementById('id_nombre').value;
+    form.reset();
+    clearErrors();
+    hideMessages();
+    
+    // Restaurar el nombre si había uno
+    if (nombreValue && !cuentaId) {
+        document.getElementById('id_nombre').value = nombreValue;
+    }
+
+    if (cuentaId) {
+        // Modo edición
+        isEditMode = true;
+        currentCuentaId = cuentaId;
+        title.textContent = 'Editar Cuenta MercadoPago';
+        cuentaIdField.value = cuentaId;
+
+        // Cargar datos de la cuenta (aquí deberías hacer una llamada AJAX)
+        loadCuentaData(cuentaId);
+    } else {
+        // Modo creación
+        isEditMode = false;
+        currentCuentaId = null;
+        title.textContent = 'Nueva Cuenta MercadoPago';
+        cuentaIdField.value = '';
+    }
+
+    // Mostrar modal
+    modal.style.display = 'block';
+}
+
+// Función para cerrar el modal
+function closeMercadoPagoModal() {
+    document.getElementById('mercadoPagoModal').style.display = 'none';
+    // NO resetear el formulario al cerrar para preservar el nombre
+    // document.getElementById('mercadoPagoForm').reset();
+    clearErrors();
+    hideMessages();
+}
+
+// Cargar datos de la cuenta (ejemplo con AJAX)
+function loadCuentaData(cuentaId) {
+    // Aquí harías una llamada AJAX para obtener los datos
+    fetch(`/api/mercado-pago/cuentas/${cuentaId}/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const cuenta = data.cuenta;
+                document.getElementById('id_nombre').value = cuenta.nombre || '';
+                document.getElementById('id_public_key').value = cuenta.public_key || '';
+                document.getElementById('id_access_token').value = cuenta.access_token || '';
+                document.getElementById('id_client_secret').value = cuenta.client_secret || '';
+            }
+        })
+        .catch(error => {
+            showMessage('Error al cargar los datos de la cuenta', 'error');
+        });
+}
+
+// Función para alternar visibilidad de contraseñas
+function togglePassword(inputId) {
+    const input = document.getElementById(inputId);
+    const button = event.currentTarget;
+    const icon = button.querySelector('i');
+
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+        button.querySelector('span').textContent = 'Ocultar';
+    } else {
+        input.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+        button.querySelector('span').textContent = 'Mostrar';
+    }
+}
+
+// Validación del formulario
+function validateForm() {
+    let isValid = true;
+    clearErrors();
+
+    const nombreInput = document.getElementById('id_nombre');
+    const nombre = nombreInput.value.trim();
+    const publicKey = document.getElementById('id_public_key').value.trim();
+    const accessToken = document.getElementById('id_access_token').value.trim();
+
+    // Debug: mostrar valores capturados y estado del elemento
+    console.log('Validando formulario:');
+    console.log('Elemento nombre:', nombreInput);
+    console.log('Valor nombre:', nombre);
+    console.log('¿Existe elemento?', !!nombreInput);
+    console.log('¿Está vacío?', !nombre);
+    console.log('Longitud del valor:', nombre.length);
+    console.log('Public Key:', publicKey);
+    console.log('Access Token:', accessToken);
+
+    // El nombre ya no es obligatorio, solo validar si existe
+    if (nombre) {
+        console.log('Nombre proporcionado (opcional):', nombre);
+    } else {
+        console.log('Nombre no proporcionado (opcional)');
+    }
+
+    // Validar Public Key
+    if (!publicKey) {
+        showError('publicKeyErrors', 'La Public Key es obligatoria');
+        isValid = false;
+    }
+
+    // Validar Access Token
+    if (!accessToken) {
+        showError('accessTokenErrors', 'El Access Token es obligatorio');
+        isValid = false;
+    }
+
+    return isValid;
+}
+
+// Mostrar error
+function showError(elementId, message) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        element.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${message}`;
+        element.style.display = 'block';
+    }
+}
+
+// Limpiar errores
+function clearErrors() {
+    const errorElements = document.querySelectorAll('[id$="Errors"]');
+    errorElements.forEach(element => {
+        element.innerHTML = '';
+        element.style.display = 'none';
+    });
+    
+    // También limpiar cualquier estilo de error en los inputs
+    const inputs = document.querySelectorAll('.w3-input');
+    inputs.forEach(input => {
+        input.classList.remove('w3-border-red');
+    });
+}
+
+// Mostrar mensaje
+function showMessage(message, type = 'info') {
+    const messagesDiv = document.getElementById('formMessages');
+    messagesDiv.innerHTML = `
+        <div class="w3-panel w3-${type} w3-round-large">
+            <p>${message}</p>
+        </div>
+    `;
+    messagesDiv.style.display = 'block';
+}
+
+// Ocultar mensajes
+function hideMessages() {
+    document.getElementById('formMessages').style.display = 'none';
+}
+
+// Envío del formulario con AJAX
+document.getElementById('mercadoPagoForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    if (!validateForm()) {
+        return;
+    }
+
+    const formData = new FormData(this);
+    const url = isEditMode ? '/admin_panel/mercado-pago/agregar/' : '/admin_panel/mercado-pago/agregar/';
+
+    // Mostrar loading
+    showMessage('Guardando cuenta...', 'info');
+
+    fetch(url, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showMessage(data.message, 'success');
+            // Cerrar modal después de 2 segundos y recargar
+            setTimeout(() => {
+                closeMercadoPagoModal();
+                window.location.reload(); // O actualizar la lista dinámicamente
+            }, 2000);
+        } else {
+            showMessage(data.message, 'error');
+            // Mostrar errores específicos si existen
+            if (data.errors) {
+                for (const [field, error] of Object.entries(data.errors)) {
+                    showError(field + 'Errors', error);
+                }
+            }
+        }
+    })
+    .catch(error => {
+        showMessage('Error de conexión', 'error');
+    });
+});
+
+// Cerrar modal al hacer clic fuera
+window.onclick = function(event) {
+    const modal = document.getElementById('mercadoPagoModal');
+    if (event.target === modal) {
+        closeMercadoPagoModal();
+    }
+}
+
+// Cerrar con ESC
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        closeMercadoPagoModal();
+    }
+});
+
+// Event delegation for account actions
+document.addEventListener('DOMContentLoaded', function() {
+    // Add click listener for all cuenta-action elements
+    document.addEventListener('click', function(e) {
+        const actionElement = e.target.closest('.cuenta-action');
+        if (!actionElement) return;
+        
+        e.preventDefault();
+        
+        const action = actionElement.dataset.action;
+        const cuentaId = actionElement.dataset.cuentaId;
+        const nombre = actionElement.dataset.nombre || 'Sin nombre';
+        const activa = actionElement.dataset.activa === 'true';
+        
+        switch(action) {
+            case 'edit':
+                editarCuenta(cuentaId);
+                break;
+            case 'toggle':
+                toggleActivar(cuentaId, nombre, activa);
+                break;
+            case 'delete':
+                eliminarCuenta(cuentaId, nombre);
+                break;
+        }
+    });
+    
+    // Cerrar todos los modales para que no aparezcan visibles al recargar
+    const modals = document.querySelectorAll('.w3-modal');
+    modals.forEach(modal => {
+        modal.style.display = 'none';
+    });
+});
+
+// Función para activar/desactivar cuenta (toggle)
+function toggleActivar(cuentaId, nombreCuenta, estadoActual) {
+    const accion = estadoActual ? 'desactivar' : 'activar';
+    const confirmMessage = estadoActual 
+        ? `¿Estás seguro de que quieres desactivar la cuenta "${nombreCuenta}"?` 
+        : `¿Estás seguro de que quieres activar la cuenta "${nombreCuenta}"? Esto desactivará las otras cuentas.`;
+    
+    if (confirm(confirmMessage)) {
+        // Obtener CSRF token
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                          getCookie('csrftoken');
+        
+        fetch(`/admin_panel/mercado-pago/activar/${cuentaId}/`, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({toggle: true})
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showMessage(data.message, 'success');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            } else {
+                showMessage(data.message, 'error');
+            }
+        })
+        .catch(error => {
+            showMessage('Error de conexión al cambiar estado', 'error');
+        });
+    }
+}
+
+// Función para eliminar cuenta
+function eliminarCuenta(cuentaId, nombreCuenta) {
+    if (confirm(`¿Estás seguro de que quieres eliminar la cuenta "${nombreCuenta}"? Esta acción no se puede deshacer.`)) {
+        // Obtener CSRF token
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                          getCookie('csrftoken');
+        
+        fetch(`/admin_panel/mercado-pago/eliminar/${cuentaId}/`, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({delete: true})
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showMessage(data.message, 'success');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            } else {
+                showMessage(data.message, 'error');
+            }
+        })
+        .catch(error => {
+            showMessage('Error de conexión al eliminar la cuenta', 'error');
+        });
+    }
+}
+
+// Función para obtener cookie
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Función para editar cuenta (placeholder)
+function editarCuenta(cuentaId) {
+    showMessage('Función de edición en desarrollo', 'info');
+}
+
+// Función para probar conexión (placeholder)
+function probarConexion(cuentaId) {
+    showMessage('Función de prueba de conexión en desarrollo', 'info');
+}
+</script>
+{% endblock %}

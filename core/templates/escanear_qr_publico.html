@@ -1,0 +1,102 @@
+{% extends 'dashboard.html' %}
+{% load static %}
+{% block title %}Escanear QR de Entrega{% endblock %}
+{% block page_title %}<h4>ESCANEAR QR DE ENTREGA</h4>{% endblock %}
+{% block content %}
+<div class="w3-container w3-padding">
+    <div class="w3-card-4 w3-round-large w3-white">
+        <div class="w3-container w3-padding w3-blue">
+            <h3><i class="fas fa-qrcode"></i> Escanear Código QR</h3>
+        </div>
+        
+        <div class="w3-container w3-padding">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="w3-panel w3-{{ message.tags }} w3-round-large">
+                        <p>{{ message }}</p>
+                    </div>
+                {% endfor %}
+            {% endif %}
+            
+            <div class="w3-section">
+                <p class="w3-text-grey">
+                    <i class="fas fa-info-circle"></i> 
+                    Escanea el código QR del envío para verificar la entrega del pedido.
+                </p>
+            </div>
+
+            <form method="POST" id="qrForm">
+                {% csrf_token %}
+                <div class="w3-section">
+                    <label class="w3-text-grey"><b>Código QR (escaneado o manual)</b></label>
+                    <textarea name="qr_data" class="w3-input w3-border" rows="4" 
+                              placeholder="Escanea el código QR o ingrésalo manualmente..." required></textarea>
+                </div>
+
+                <div class="w3-section">
+                    <label class="w3-text-grey"><b>Observaciones (opcional)</b></label>
+                    <textarea name="observaciones" class="w3-input w3-border" rows="3" 
+                              placeholder="Notas sobre la entrega..."></textarea>
+                </div>
+
+                <div class="w3-section w3-center">
+                    <button type="submit" class="w3-button w3-green w3-round-large w3-large">
+                        <i class="fas fa-check"></i> Confirmar Entrega
+                    </button>
+                </div>
+            </form>
+
+            <!-- Scanner Section -->
+            <div class="w3-section w3-border-top w3-padding">
+                <h4><i class="fas fa-camera"></i> Escáner de Cámara</h4>
+                <div id="qr-reader" style="width: 100%;"></div>
+                <div id="qr-reader-results"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- HTML5 QR Scanner -->
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script>
+function onScanSuccess(decodedText, decodedResult) {
+    // Poner el resultado en el textarea
+    document.querySelector('textarea[name="qr_data"]').value = decodedText;
+    
+    // Detener el scanner
+    html5QrCode.stop();
+    
+    // Enviar formulario automáticamente
+    document.getElementById('qrForm').submit();
+}
+
+function onScanFailure(error) {
+    // Manejar errores de escaneo
+    console.warn(`Error al escanear: ${error}`);
+}
+
+// Configurar el scanner
+var html5QrCode = new Html5QrcodeScanner(
+    "qr-reader",
+    { 
+        fps: 10, 
+        qrbox: {width: 250, height: 250},
+        supportedScanTypes: [0] // 0 = QR_CODE
+    }
+);
+
+// Iniciar el scanner cuando la página carga
+document.addEventListener('DOMContentLoaded', function() {
+    html5QrCode.render(onScanSuccess, onScanFailure);
+});
+
+// Función para escanear manualmente si la cámara no funciona
+function startManualScan() {
+    const qrData = prompt('Ingresa el código QR manualmente:');
+    if (qrData) {
+        document.querySelector('textarea[name="qr_data"]').value = qrData;
+        document.getElementById('qrForm').submit();
+    }
+}
+</script>
+{% endblock %}

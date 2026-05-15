@@ -1,0 +1,53 @@
+{% extends 'admin_panel.html' %}
+{% block admin_content %}
+{% load static %}
+<div class="text-center">
+<h2>Categorias de Productos</h2>
+</div>
+<div class="table-responsive">
+  <div class="btn-group" role="group" aria-label="Basic example">
+  <a href="{% url 'create_product' %}" class="btn btn-primary btn-sm mb-4 ms-4" style="float:left;"><i class="bi bi-plus"></i>Producto</a>
+  <a href="{% url 'limpiar_precios' %}" class="btn btn-danger btn-sm mb-4" style="float:left;"><i class="bi bi-currency-dollar"></i>0</a>
+  </div>
+<table class="table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Categoria</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for product in product_list %}  <!-- Cambio de 'products' a 'product_list' -->
+        <tr>
+            <td>{{ product.id }}</td>
+            <td>{{ product.nombre }}</td>  <!-- Cambio de 'name' a 'nombre' -->
+            <td>{{ product.categoria }}</td>  <!-- Cambio de 'price' a 'precio' -->
+            <td>
+                {% if product.id %}
+                <input type="checkbox" name="{{ product.id }}" value="">
+                {% endif %}
+                <!-- <a href="{% url 'product_img_search_id' ID=product.id %}" class="btn btn-secondary" title="Editar imagenes"><i class="bi bi-images"></i></a>
+                <a href="{% url 'edit_product' product_id=product.id %}" class="btn btn-primary" title="Editar producto"><i class="bi bi-pencil-square"></i></a>
+                <a href="{% url 'crear_oferta' product_id=product.id %}" class="btn btn-success" title="Crear oferta"><i class="bi bi-tags"></i></a>
+                {% endif %}
+                <a href="{% url 'delete_product' product.id %}" class="btn btn-danger"title="Eliminar producto"><i class="bi bi-trash3-fill"></i></a> -->
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<script>
+// Cerrar todos los modales al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+    // Cerrar todos los modales para que no aparezcan visibles al recargar
+    const modals = document.querySelectorAll('.w3-modal');
+    modals.forEach(modal => {
+        modal.style.display = 'none';
+    });
+});
+</script>
+</div>
+{% endblock %}

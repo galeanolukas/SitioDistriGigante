@@ -1,0 +1,263 @@
+{% extends 'dashboard.html' %}
+{% load static %}
+{% block title %}Gestión de Transportistas{% endblock %}
+{% block page_title %}<h4><i class="fas fa-truck"></i> GESTIÓN DE TRANSPORTISTAS</h4>{% endblock %}
+{% block content %}
+
+<div class="w3-container w3-padding-32">
+    <!-- Formulario para agregar transportista -->
+    <div class="w3-card-4 w3-round-large w3-margin-bottom">
+        <div class="w3-container w3-primary w3-text-white w3-padding">
+            <h3><i class="fas fa-user-plus"></i> Agregar/Actualizar Transportista</h3>
+        </div>
+        <div class="w3-container w3-padding-24">
+            <form method="POST">
+                {% csrf_token %}
+                <div class="w3-row-padding">
+                    <div class="w3-col m6 s12">
+                        <div class="w3-section">
+                            <label class="w3-text-dark-grey"><b>Usuario existente:</b></label>
+                            <select name="username" class="w3-select w3-border w3-round" required>
+                                <option value="">Seleccionar usuario...</option>
+                                {% for user in users_disponibles %}
+                                    <option value="{{ user.username }}">{{ user.username }} - {{ user.email }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="w3-col m6 s12">
+                        <div class="w3-section">
+                            <label class="w3-text-dark-grey"><b>Teléfono de contacto:</b></label>
+                            <input type="tel" name="telefono" class="w3-input w3-border w3-round" 
+                                   placeholder="+54 370 123456" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="w3-row-padding">
+                    <div class="w3-col m6 s12">
+                        <div class="w3-section">
+                            <label class="w3-text-dark-grey"><b>Tipo de vehículo:</b></label>
+                            <input type="text" name="vehiculo" class="w3-input w3-border w3-round" 
+                                   placeholder="Moto, Auto, Camioneta, etc." required>
+                        </div>
+                    </div>
+                    <div class="w3-col m6 s12">
+                        <div class="w3-section">
+                            <label class="w3-text-dark-grey"><b>Patente:</b></label>
+                            <input type="text" name="patente" class="w3-input w3-border w3-round" 
+                                   placeholder="ABC123" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="w3-section">
+                    <button type="submit" class="w3-button w3-green w3-round">
+                        <i class="fas fa-save"></i> Guardar Transportista
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Lista de transportistas -->
+    <div class="w3-card-4 w3-round-large">
+        <div class="w3-container w3-light-grey w3-padding">
+            <h4><i class="fas fa-list"></i> Transportistas Registrados</h4>
+        </div>
+        <div class="w3-container w3-padding">
+            {% if transportistas %}
+                <div class="w3-responsive">
+                    <table class="w3-table-all w3-striped w3-bordered w3-hoverable">
+                        <thead>
+                            <tr class="w3-primary">
+                                <th>Usuario</th>
+                                <th>Teléfono</th>
+                                <th>Vehículo</th>
+                                <th>Patente</th>
+                                <th>Estado</th>
+                                <th>Fecha Creación</th>
+                                <th>Envíos Asignados</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for transportista in transportistas %}
+                            <tr>
+                                <td>
+                                    <strong>{{ transportista.usuario.username }}</strong><br>
+                                    <small class="w3-text-grey">{{ transportista.usuario.email }}</small>
+                                </td>
+                                <td>{{ transportista.telefono }}</td>
+                                <td>{{ transportista.vehiculo }}</td>
+                                <td>{{ transportista.patente }}</td>
+                                <td>
+                                    {% if transportista.activo %}
+                                        <span class="w3-tag w3-green">Activo</span>
+                                    {% else %}
+                                        <span class="w3-tag w3-red">Inactivo</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ transportista.fecha_creacion|date:"d/m/Y" }}</td>
+                                <td>
+                                    <span class="w3-badge w3-blue">
+                                        {{ transportista.envio_set.count }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="w3-bar">
+                                        <button onclick="verEnvios('{{ transportista.id }}')" 
+                                                class="w3-button w3-small w3-blue w3-round">
+                                            <i class="fas fa-box"></i> Ver Envíos
+                                        </button>
+                                        {% if transportista.activo %}
+                                            <button onclick="toggleEstado('{{ transportista.id }}', false)" 
+                                                    class="w3-button w3-small w3-red w3-round">
+                                                <i class="fas fa-pause"></i>
+                                            </button>
+                                        {% else %}
+                                            <button onclick="toggleEstado('{{ transportista.id }}', true)" 
+                                                    class="w3-button w3-small w3-green w3-round">
+                                                <i class="fas fa-play"></i>
+                                            </button>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="w3-panel w3-light-grey w3-round-large w3-padding">
+                    <p class="w3-text-grey w3-center">
+                        <i class="fas fa-users w3-xxlarge"></i><br>
+                        No hay transportistas registrados.
+                    </p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal de envíos del transportista -->
+<div id="enviosModal" class="w3-modal">
+    <div class="w3-modal-content w3-card-4 w3-animate-zoom" style="max-width:800px;">
+        <div class="w3-container w3-primary w3-text-white">
+            <span onclick="document.getElementById('enviosModal').style.display='none'" 
+                  class="w3-button w3-display-topright">&times;</span>
+            <h3 class="w3-center">Envíos del Transportista</h3>
+        </div>
+        <div class="w3-container w3-padding-24" id="enviosContainer">
+            <!-- Contenido dinámico -->
+        </div>
+    </div>
+</div>
+
+<script>
+function verEnvios(transportistaId) {
+    // Simulación - en producción haríamos una llamada AJAX
+    const container = document.getElementById('enviosContainer');
+    container.innerHTML = `
+        <div class="w3-center">
+            <i class="fas fa-spinner fa-spin w3-xxlarge"></i>
+            <p>Cargando envíos...</p>
+        </div>
+    `;
+    
+    // Simulación de carga
+    setTimeout(() => {
+        container.innerHTML = `
+            <div class="w3-responsive">
+                <table class="w3-table-all w3-striped w3-bordered">
+                    <thead>
+                        <tr class="w3-light-grey">
+                            <th>Envío #</th>
+                            <th>Pedido #</th>
+                            <th>Cliente</th>
+                            <th>Estado</th>
+                            <th>Fecha</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>123</td>
+                            <td>456</td>
+                            <td>cliente1</td>
+                            <td><span class="w3-tag w3-blue">Asignado</span></td>
+                            <td>12/12/2025</td>
+                        </tr>
+                        <tr>
+                            <td>124</td>
+                            <td>457</td>
+                            <td>cliente2</td>
+                            <td><span class="w3-tag w3-green">Entregado</span></td>
+                            <td>11/12/2025</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        `;
+        document.getElementById('enviosModal').style.display = 'block';
+    }, 1000);
+}
+
+function toggleEstado(transportistaId, nuevoEstado) {
+    const accion = nuevoEstado ? 'activar' : 'desactivar';
+    if (confirm(`¿Estás seguro de ${accion} este transportista?`)) {
+        // En producción haríamos una llamada AJAX
+        location.reload();
+    }
+}
+
+// Cerrar modal al hacer clic fuera
+window.onclick = function(event) {
+    const modal = document.getElementById('enviosModal');
+    if (event.target == modal) {
+        modal.style.display = 'none';
+    }
+}
+</script>
+
+<style>
+    .w3-card-4 {
+        box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+        transition: 0.3s;
+    }
+
+    .w3-card-4:hover {
+        box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2);
+    }
+
+    .w3-tag {
+        font-size: 12px;
+        padding: 4px 8px;
+    }
+
+    @media screen and (max-width: 768px) {
+        .w3-responsive {
+            overflow-x: auto;
+        }
+        
+        .w3-bar .w3-button {
+            display: block;
+            width: 100%;
+            margin: 2px 0;
+        }
+        
+        .w3-row-padding > .w3-col {
+            padding: 4px !important;
+        }
+    }
+</style>
+
+<script>
+// Cerrar todos los modales al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+    // Cerrar todos los modales para que no aparezcan visibles al recargar
+    const modals = document.querySelectorAll('.w3-modal');
+    modals.forEach(modal => {
+        modal.style.display = 'none';
+    });
+});
+</script>
+
+{% endblock %}

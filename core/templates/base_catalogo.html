@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  {% load static %}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="{% static 'img/icon.ico' %}" type="image/x-icon">
+  <title>GIGANTE DISTRIBUIDORA | {% block title %}CATÁLOGO{% endblock %}</title>
+
+  <!-- w3.css -->
+  <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://sdk.mercadopago.com/js/v2"></script>
+  <style>
+    :root {
+      --primary: #2c3e50;
+      --secondary: #ec1c24;  /* Color secundario */
+      --accent: #e74c3c;
+      --text-light: #ffffff;
+      --text-dark: #2c3e50;
+      --light-grey: #f8f9fa;
+      --border-color: #e0e0e0;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--light-grey);
+    }
+
+    /* Estilos personalizados adicionales */
+    .w3-primary { background-color: var(--primary) !important; color: var(--white);}
+    .w3-secondary { background-color: var(--secondary) !important; }
+    .w3-tertiary { background-color: var(--tertiary) !important; }
+    .w3-text-primary { color: var(--primary) !important; }
+    .w3-text-secondary { color: var(--secondary) !important; }
+
+    .catalog-topbar {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+      color: var(--text-light);
+      padding: 12px 20px;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+      border-bottom: 3px solid var(--secondary);
+    }
+
+    .catalog-content {
+      margin-top: 30px;
+      padding: 25px;
+      max-width: 1400px;
+    }
+
+    .product-card {
+      transition: all 0.3s ease;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      overflow: hidden;
+      background: white;
+    }
+
+    .product-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+      border-color: var(--secondary);
+    }
+
+    .btn-secondary {
+      background-color: var(--secondary) !important;
+      color: white !important;
+      border: none;
+      transition: all 0.3s ease;
+    }
+
+    .btn-secondary:hover {
+      background-color: #2980b9 !important;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    .category-menu {
+      background: linear-gradient(135deg, var(--secondary) 0%, #2980b9 100%);
+      color: white;
+      border-radius: 8px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+      border: none;
+    }
+
+    .category-menu a {
+      color: white !important;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      transition: background-color 0.3s ease;
+    }
+
+    .category-menu a:hover {
+      background-color: rgba(255,255,255,0.1) !important;
+    }
+
+    .topbar-btn {
+      border-radius: 25px;
+      padding: 8px 16px;
+      transition: all 0.3s ease;
+      border: 2px solid transparent;
+    }
+
+    .topbar-btn:hover {
+      background-color: rgba(255,255,255,0.2) !important;
+      border-color: rgba(255,255,255,0.3);
+    }
+
+    /* Nuevos estilos para el menú de categorías */
+       .categories-grid {
+         display: grid;
+         grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+         gap: 15px;
+         padding: 15px;
+       }
+
+       .main-category {
+         background: linear-gradient(135deg, var(--secondary) 0%, #2980b9 100%);
+         color: white;
+         border-radius: 8px;
+         padding: 15px;
+         box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+       }
+
+       .main-category h4 {
+         margin: 0 0 10px 0;
+         padding-bottom: 8px;
+         border-bottom: 2px solid rgba(255,255,255,0.3);
+       }
+
+       .subcategory-list {
+         list-style: none;
+         padding: 0;
+         margin: 0;
+       }
+
+       .subcategory-item {
+         padding: 8px 12px;
+         margin: 5px 0;
+         background: rgba(255,255,255,0.1);
+         border-radius: 4px;
+         transition: all 0.3s ease;
+       }
+
+       .subcategory-item:hover {
+         background: rgba(255,255,255,0.2);
+         transform: translateX(5px);
+       }
+
+       .subcategory-item a {
+         color: white;
+         text-decoration: none;
+         display: block;
+       }
+
+       .no-subcategories {
+         font-style: italic;
+         opacity: 0.8;
+       }
+
+       /* Responsive */
+    @media (max-width: 768px) {
+         .categories-grid {
+           grid-template-columns: 1fr;
+         }
+       }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .catalog-content {
+        padding: 15px;
+      }
+
+      .w3-col {
+        width: 100%;
+        margin-bottom: 20px;
+      }
+
+      .catalog-topbar {
+        padding: 10px 15px;
+      }
+
+      .category-dropdown-content {
+        position: static;
+        display: none;
+        width: 100%;
+        box-shadow: none;
+      }
+
+      .category-dropdown:hover .category-dropdown-content {
+        display: none;
+      }
+
+      .mobile-category-accordion {
+        display: block;
+      }
+
+      .desktop-category-menu {
+        display: none;
+      }
+    }
+
+    @media (min-width: 769px) {
+      .mobile-category-accordion {
+        display: none;
+      }
+
+      .desktop-category-menu {
+        display: block;
+      }
+    }
+
+    @media (min-width: 769px) and (max-width: 1024px) {
+      .w3-col {
+        width: 50%;
+      }
+    }
+
+    @media (min-width: 1025px) {
+      .w3-col {
+        width: 33.3333%;
+      }
+    }
+
+    /* Efectos de hover mejorados */
+    .w3-button {
+      transition: all 0.3s ease;
+    }
+
+    .social-btn {
+      transition: transform 0.3s ease;
+    }
+
+    .social-btn:hover {
+      transform: scale(1.2);
+    }
+  </style>
+
+</head>
+<body class="w3-light-grey">
+{% include 'modals.html' %}
+<!-- Topbar Refinada -->
+<div class="catalog-topbar w3-bar w3-animate-top">
+  <!-- Logo a la izquierda -->
+  <div class="w3-bar-item">
+    <a href="/" class="w3-round">
+      <img src="{% static 'img/Logo.png' %}" alt="Gigante Distribuidora" height="40" style="vertical-align: middle;">
+    </a>
+  </div>
+
+  <!-- Botón Mostrar/Ocultar Menú de Categorías -->
+  {% if products or resultados %}
+  <div class="w3-bar-item">
+    <button onclick="toggleCategories()" class="w3-button topbar-btn" style="background: rgba(255,255,255,0.1); margin-right: 15px;">
+      <i class="fas fa-bars w3-margin-right"></i> VER CATEGORÍAS
+    </button>
+  </div>
+  {% endif %}
+
+  <!-- Botones a la derecha -->
+  <div class="w3-bar-item w3-right">
+    <!-- Botón Volver a la derecha -->
+    <a href="/catalogo" class="w3-button topbar-btn" style="background: rgba(255,255,255,0.1); margin-right: 15px;">
+      <i class="fas fa-home"></i>
+    </a>
+    <!-- Carrito -->
+    {% if user.is_authenticated %}
+    <a href="{% url 'carrito' %}" class="w3-button topbar-btn" style="background: rgba(255,255,255,0.1); margin-right: 10px;">
+      <i class="fas fa-shopping-cart"></i>
+      {% if total_carrito > 0 %}
+      <span class="w3-badge w3-transparent" style="position: relative; top: -1px; right: -2px;">{{ total_carrito }}</span>
+      {% endif %}
+    </a>
+    {% endif %}
+
+    <!-- Usuario -->
+    {% if user.is_authenticated %}
+    <a href="{% url 'admin_panel' %}" class="w3-button topbar-btn" style="background: rgba(255,255,255,0.1);">
+        <i class="fas fa-user-circle"></i>
+        <span class="w3-hide-small">{{ user.username|truncatechars:12 }}</span>
+    </a>
+    {% else %}
+    <button type="button" class="w3-button topbar-btn" style="background: rgba(255,255,255,0.1);" onclick="document.getElementById('loginModal').style.display='block'">
+    Ingresar <i class="fas fa-user w3-margin-left" style="font-size: 20px;"></i>
+    </button>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Menú Categorías en Color Secundario -->
+<div class="w3-container w3-center w3-secondary w3-padding-16 w3-animate-top" id="categories-menu" style="display: none;">
+  <div class="w3-padding">
+
+    <!-- Menú de categorías con subcategorías -->
+    <div class="categories-grid">
+      {% for main_category, subcategories in categorias.items %}
+      <div class="main-category">
+        <h4>
+          <i class="fas fa-folder w3-margin-right"></i>
+          {{ main_category.nombre|upper }}
+        </h4>
+
+        <ul class="subcategory-list">
+          {% if subcategories %}
+            {% for subcategory in subcategories %}
+            <li class="subcategory-item">
+              <a href="{% url 'ordenar_x' subcategory.nombre %}">
+                <i class="fas fa-arrow-right w3-margin-right"></i>
+                {{ subcategory.nombre }}
+              </a>
+            </li>
+            {% endfor %}
+          {% else %}
+            <li class="subcategory-item no-subcategories">
+              <a href="{% url 'ordenar_x' tp=main_category.nombre %}">
+                <i class="fas fa-box w3-margin-right"></i>
+                Ver todos los productos
+              </a>
+            </li>
+          {% endif %}
+        </ul>
+      </div>
+      {% empty %}
+      <div class="w3-panel w3-white w3-round">
+        <p class="w3-text-dark-gray">
+          <i class="fas fa-exclamation-triangle"></i>
+          No hay categorías disponibles
+        </p>
+      </div>
+      {% endfor %}
+    </div>
+
+  </div>
+</div>
+<!-- Contenido Principal -->
+<main class="catalog-content" id="top_page">
+  {% block content %}
+  <!-- El contenido del catálogo se insertará aquí -->
+  {% endblock %}
+</main>
+<script>
+  // Función para scroll hacia arriba
+  function scrollToTop() {
+    window.scrollTo({top: 0, behavior: 'smooth'});
+  }
+  // Función para mostrar/ocultar categorías
+  function toggleCategories() {
+    var menu = document.getElementById('categories-menu');
+    var button = event.currentTarget;
+
+    if (menu.style.display === 'none') {
+      menu.style.display = 'block';
+      button.innerHTML = '<i class="fas fa-times w3-margin-right"></i> OCULTAR CATEGORÍAS';
+      scrollToTop();
+    } else {
+      menu.style.display = 'none';
+      button.innerHTML = '<i class="fas fa-bars w3-margin-right"></i> VER CATEGORÍAS';
+
+    }
+  }
+
+  // Función para acordeón móvil
+  function toggleAccordion(id) {
+    var content = document.getElementById(id);
+    if (content.style.display === 'block') {
+      content.style.display = 'none';
+    } else {
+      content.style.display = 'block';
+    }
+  }
+
+  // Cerrar menú al hacer clic fuera
+  document.addEventListener('click', function(event) {
+    var menu = document.getElementById('categories-menu');
+    var button = document.querySelector('button[onclick="toggleCategories()"]');
+
+    if (!menu.contains(event.target) && event.target !== button && !button.contains(event.target)) {
+      if (menu.style.display === 'block') {
+        menu.style.display = 'none';
+        button.innerHTML = '<i class="fas fa-bars w3-margin-right"></i> VER CATEGORÍAS';
+      }
+    }
+  });
+
+  // Auto-ocultar menú en móviles al seleccionar
+  if (window.innerWidth <= 768) {
+    document.querySelectorAll('#categories-menu a').forEach(function(link) {
+      link.addEventListener('click', function() {
+        var menu = document.getElementById('categories-menu');
+        var button = document.querySelector('button[onclick="toggleCategories()"]');
+        menu.style.display = 'none';
+        button.innerHTML = '<i class="fas fa-bars w3-margin-right"></i> VER CATEGORÍAS';
+      });
+    });
+  }
+
+  // Cerrar dropdowns al hacer clic fuera (solo desktop)
+  document.addEventListener('click', function(event) {
+    if (window.innerWidth > 768) {
+      var dropdowns = document.querySelectorAll('.category-dropdown-content');
+      dropdowns.forEach(function(dropdown) {
+        if (!event.target.closest('.category-dropdown')) {
+          dropdown.style.display = 'none';
+        }
+      });
+    }
+  });
+
+  // Cerrar todos los modales inmediatamente (antes de DOMContentLoaded)
+(function() {
+    const modals = document.querySelectorAll('.w3-modal');
+    modals.forEach(modal => {
+        modal.style.display = 'none';
+    });
+})();
+
+  // Función para mostrar automáticamente el modal de mensajes
+  document.addEventListener('DOMContentLoaded', function() {
+      // Cerrar todos los modales para que no aparezcan visibles al recargar
+      const modals = document.querySelectorAll('.w3-modal');
+      modals.forEach(modal => {
+          modal.style.display = 'none';
+      });
+      
+      {% if messages %}
+      // Mostrar el modal de mensajes si hay mensajes
+      document.getElementById('djangoMessagesModal').style.display = 'block';
+
+      // Configurar auto-cierre después de 7 segundos
+      setTimeout(function() {
+          document.getElementById('djangoMessagesModal').style.display = 'none';
+      }, 7000);
+      {% endif %}
+  });
+
+  function togglePassword(inputId) {
+      const input = document.getElementById(inputId);
+      const icon = input.nextElementSibling.querySelector('i');
+
+      if (input.type === 'password') {
+          input.type = 'text';
+          icon.classList.remove('fa-eye-slash');
+          icon.classList.add('fa-eye');
+      } else {
+          input.type = 'password';
+          icon.classList.remove('fa-eye');
+          icon.classList.add('fa-eye-slash');
+      }
+  }
+
+</script>
+</body>
+</html>

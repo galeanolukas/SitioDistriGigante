@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  {% load static %}
+  {% load user_tags %}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="{% static 'img/icon.ico' %}" type="image/x-icon">
+  <title>GIGANTE DISTRIBUIDORA | {% block title %}{% endblock %}</title>
+
+  <!-- w3.css -->
+  <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+  :root {
+      --primary: #2c3e50;
+      --secondary: #ec1c24;
+      --accent: #e74c3c;
+      --text-light: #ffffff;
+      --text-dark: #2c3e50;
+      --light-grey: #f8f9fa;
+      --border-color: #e0e0e0;
+      --sidebar-width: 280px;
+      --topbar-height: 70px; /* Altura fija para el topbar */
+  }
+
+  /* Estilos personalizados */
+  .w3-primary { background-color: var(--primary) !important; color: var(--text-light) !important; }
+  .w3-secondary { background-color: var(--secondary) !important; color: var(--text-light) !important; }
+  .w3-text-primary { color: var(--primary) !important; }
+  .w3-text-secondary { color: var(--secondary) !important; }
+
+
+  body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--light-grey);
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden; /* Prevenir scroll horizontal */
+  }
+
+  /* Topbar Fijo en la parte superior */
+  .dashboard-topbar {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+      color: var(--text-light);
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: var(--topbar-height);
+      z-index: 1000;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+      border-bottom: 3px solid var(--secondary);
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+  }
+
+  /* Sidebar posicionado correctamente */
+  .dashboard-sidebar {
+      width: var(--sidebar-width);
+      position: fixed;
+      top: var(--topbar-height); /* Debajo del topbar */
+      left: 0;
+      height: calc(100vh - var(--topbar-height)); /* Altura completa menos topbar */
+      z-index: 900;
+      overflow-y: auto;
+      transition: transform 0.3s ease;
+      box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+      background: white;
+  }
+
+  /* Contenido principal */
+  .dashboard-content {
+      margin-left: var(--sidebar-width);
+      padding: calc(var(--topbar-height) + 20px) 25px 25px 25px; /* Padding top considerando topbar */
+      min-height: 100vh;
+      transition: margin-left 0.3s ease, padding 0.3s ease;
+  }
+
+  /* Estados del sidebar */
+  .sidebar-hidden {
+      transform: translateX(-100%);
+  }
+
+  .sidebar-visible {
+      transform: translateX(0);
+  }
+
+  /* Cuando el sidebar está oculto */
+  .content-fullwidth {
+      margin-left: 0;
+      padding-left: 25px;
+      padding-right: 25px;
+  }
+
+  /* Overlay para móviles */
+  .sidebar-overlay {
+      display: none;
+      position: fixed;
+      top: var(--topbar-height);
+      left: 0;
+      width: 100%;
+      height: calc(100vh - var(--topbar-height));
+      background-color: rgba(0,0,0,0.5);
+      z-index: 800;
+  }
+
+  .sidebar-overlay-active {
+      display: block;
+  }
+
+  /* Responsive para tablets y móviles */
+  @media screen and (max-width: 992px) {
+      .dashboard-sidebar {
+          width: 280px;
+          transform: translateX(-100%);
+          top: var(--topbar-height);
+          height: calc(100vh - var(--topbar-height));
+      }
+
+      .dashboard-sidebar.sidebar-visible {
+          transform: translateX(0);
+      }
+
+      .dashboard-content {
+          margin-left: 0;
+          padding: calc(var(--topbar-height) + 15px) 15px 15px 15px;
+          width: 100%;
+      }
+
+      .sidebar-visible {
+          transform: translateX(0);
+      }
+  }
+
+  @media screen and (min-width: 993px) and (max-width: 1200px) {
+      .dashboard-sidebar {
+          width: 250px;
+      }
+
+      .dashboard-content {
+          margin-left: 250px;
+      }
+  }
+
+  /* Estilos para el topbar responsive */
+  .dashboard-topbar .w3-row {
+      display: flex;
+      width: 100%;
+      align-items: center;
+  }
+
+  .dashboard-topbar .w3-quarter {
+      flex: 1;
+      display: flex;
+      align-items: center;
+  }
+
+  .dashboard-topbar .w3-half {
+      flex: 2;
+      text-align: center;
+  }
+
+  /* Asegurar que los botones del topbar sean visibles */
+  .topbar-btn {
+      border-radius: 25px;
+      padding: 8px 16px;
+      transition: all 0.3s ease;
+      border: 2px solid transparent;
+      background: rgba(255,255,255,0.1) !important;
+      color: white !important;
+  }
+
+  .topbar-btn:hover {
+      background-color: rgba(255,255,255,0.2) !important;
+      border-color: rgba(255,255,255,0.3);
+  }
+
+  /* Ajustes específicos para el contenido */
+  .w3-container {
+      max-width: 100%;
+      overflow-x: hidden;
+  }
+
+  /* Prevenir desbordamiento en móviles */
+  @media screen and (max-width: 768px) {
+      .dashboard-topbar {
+          padding: 0 10px;
+          height: 60px;
+      }
+
+      .dashboard-topbar .w3-bar-item {
+          padding: 5px !important;
+      }
+
+      .dashboard-content {
+          padding: 70px 10px 10px 10px;
+      }
+
+      :root {
+          --topbar-height: 60px;
+      }
+  }
+
+  /* Smooth transitions */
+  * {
+      transition: all 0.3s ease;
+  }
+
+  /* Scroll personalizado para sidebar */
+  .dashboard-sidebar::-webkit-scrollbar {
+      width: 6px;
+  }
+
+  .dashboard-sidebar::-webkit-scrollbar-track {
+      background: #f1f1f1;
+  }
+
+  .dashboard-sidebar::-webkit-scrollbar-thumb {
+      background: #c1c1c1;
+      border-radius: 3px;
+  }
+
+  .dashboard-sidebar::-webkit-scrollbar-thumb:hover {
+      background: #a8a8a8;
+  }
+
+  </style>
+</head>
+<body class="w3-light-grey">
+{% include 'modals.html' %}
+<!-- Overlay para móviles -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+  <!-- Topbar del Dashboard -->
+<div class="dashboard-topbar w3-row">
+  <div class="w3-quarter w3-bar">
+    <!-- Botón para toggle sidebar -->
+    <div class="w3-bar-item">
+      <button class="w3-button topbar-btn" onclick="toggleSidebar()" style="background: rgba(255,255,255,0.1);">
+        <i class="fas fa-bars"></i>
+      </button>
+    </div>
+    <!-- Logo y título -->
+    <div class="w3-bar-item">
+      <a href="/" class="w3-round">
+        <img src="{% static 'img/Logo.png' %}" alt="Gigante Distribuidora" height="40" style="vertical-align: middle;">
+      </a>
+    </div>
+  </div>
+  <!-- Espacio central -->
+  <div class="w3-half w3-center w3-margin-top">
+    {% block page_title %}{% endblock %}
+  </div>
+  <!-- Botones derecha -->
+  <div class="w3-quarter w3-bar w3-padding">
+      <!-- Notificaciones -->
+      <button class="w3-button topbar-btn" style="background: rgba(255,255,255,0.1); margin-right: 10px;" onclick="abrirModalNotificaciones()">
+        <i class="fas fa-bell"></i>
+        {% if notificaciones_no_leidas > 0 %}
+        <span class="w3-badge w3-red">{{ notificaciones_no_leidas }}</span>
+        {% endif %}
+      </button>
+      <!-- Usuario -->
+      {% if user.is_authenticated %}
+      <a href="{% url 'admin_panel' %}" class="w3-button topbar-btn" style="background: rgba(255,255,255,0.1);">
+          <i class="fas fa-user-circle"></i>
+          <span class="w3-hide-small">{{ user.username|truncatechars:12 }}</span>
+      </a>
+      {% else %}
+      <button class="w3-button topbar-btn" style="background: rgba(255,255,255,0.1);" onclick="openLoginModal()">
+        Ingresar
+        <i class="fas fa-user"></i>
+      </button>
+      {% endif %}
+  </div>
+</div>
+<!-- Sidebar -->
+<div class="dashboard-sidebar w3-light-grey w3-card sidebar-hidden" id="dashboardSidebar">
+  <div class="w3-container w3-padding">
+    <ul class="w3-ul">
+      <li class="w3-padding">
+          <a href="{% url 'admin_panel' %}" class="w3-button w3-block w3-left-align w3-light-grey">
+            <i class="fas fa-home"></i> HOME
+          </a>
+      </li>
+      {% if user.is_superuser or request.user|has_group:"admin" %}
+        <!-- Gestión de Usuarios -->
+        <li class="w3-padding">
+            <a href="{% url 'user_panel' %}" class="w3-button w3-block w3-left-align w3-light-grey">
+              <i class="fas fa-users"></i> USUARIOS
+            </a>
+        </li>
+        <li class="w3-padding">
+          <a href="{% url 'product_panel' %}" class="w3-button w3-block w3-left-align w3-light-grey">
+            <i class="fas fa-box"></i> PRODUCTOS
+          </a>
+        </li>
+
+        <li class="w3-padding">
+          <a href="{% url 'create_flayer' %}" class="w3-button w3-block w3-left-align w3-light-grey">
+            <i class="fas fa-images"></i> CARTEL/FLAYER
+          </a>
+        </li>
+
+        <li class="w3-padding">
+          <a href="{% url 'pedidos_panel' %}" class="w3-button w3-block w3-left-align w3-light-grey">
+            <i class="fas fa-shopping-cart"></i> PEDIDOS
+          </a>
+        </li>
+
+        <li class="w3-padding">
+          <a href="{% url 'gestion_clientes' %}" class="w3-button w3-block w3-left-align w3-light-grey">
+            <i class="fas fa-users"></i> MIS CLIENTES
+          </a>
+        </li>
+
+        <li class="w3-padding">
+          <a href="{% url 'catalogo_a_pdf' %}" class="w3-button w3-block w3-left-align w3-light-grey">
+            <i class="fas fa-file-pdf"></i> CATALOGO PDF
+          </a>
+        </li>
+
+        <li class="w3-padding">
+          <a href="{% url 'cargar_archivo' %}" class="w3-button w3-block w3-left-align w3-light-grey">
+            <i class="fas fa-file-excel"></i> CARGAR EXCEL/CSV
+          </a>
+        </li>
+
+        <li class="w3-padding">
+          <a href="{% url 'agregar_cuenta_mercado_pago' %}" class="w3-button w3-block w3-left-align w3-light-grey">
+            <i class="fas fa-bank"></i> CUENTAS MP
+          </a>
+        </li>
+
+        <li class="w3-padding">
+          <a href="{% url 'confirm_register' ID=user.id %}" class="w3-button w3-block w3-left-align w3-light-grey">
+            <i class="fas fa-user-edit"></i> MI PERFIL/DATOS
+          </a>
+        </li>
+
+        <li class="w3-padding">
+          <a href="{% url 'gestion_transportistas' %}" class="w3-button w3-block w3-left-align w3-light-grey">
+            <i class="fas fa-truck"></i> TRANSPORTISTAS
+          </a>
+        </li>
+
+        <li class="w3-padding">
+          <a href="/admin/db/" class="w3-button w3-block w3-left-align w3-light-grey">
+            <i class="fas fa-database"></i> ACCEDER A DB
+          </a>
+        </li>
+
+      {% elif request.user|has_group:"transportista" %}
+        <!-- Menú para Transportistas -->
+        <li class="w3-padding">
+          <a href="{% url 'panel_transportista' %}" class="w3-button w3-block w3-left-align w3-light-grey">
+            <i class="fas fa-truck"></i> PANEL TRANSPORTISTA
+          </a>
+        </li>
+
+        <li class="w3-padding">
+          <a href="{% url 'gestion_envios_transportista' %}" class="w3-button w3-block w3-left-align w3-light-grey">
+            <i class="fas fa-box"></i> MIS ENVÍOS
+          </a>
+        </li>
+
+        <li class="w3-padding">
+          <a href="{% url 'escanear_qr_entrega' %}" class="w3-button w3-block w3-left-align w3-light-grey">
+            <i class="fas fa-qrcode"></i> ESCANEAR QR ENTREGA
+          </a>
+        </li>
+
+        <li class="w3-padding">
+          <a href="{% url 'confirm_register' ID=user.id %}" class="w3-button w3-block w3-left-align w3-light-grey">
+            <i class="fas fa-user-edit"></i> MI PERFIL
+          </a>
+        </li>
+
+      {% elif request.user|has_group:"vendedor" %}
+        <!-- Menú para Vendedores/Preventistas -->
+        <li class="w3-padding">
+          <a href="{% url 'gestion_clientes' %}" class="w3-button w3-block w3-left-align w3-light-grey">
+            <i class="fas fa-users"></i> MIS CLIENTES
+          </a>
+        </li>
+
+        <li class="w3-padding">
+          <a href="{% url 'pedidos_panel' %}" class="w3-button w3-block w3-left-align w3-light-grey">
+            <i class="fas fa-shopping-cart"></i> MIS PEDIDOS
+          </a>
+        </li>
+
+        <li class="w3-padding">
+          <a href="{% url 'confirm_register' ID=user.id %}" class="w3-button w3-block w3-left-align w3-light-grey">
+            <i class="fas fa-user-edit"></i> MI PERFIL/DATOS
+          </a>
+        </li>
+
+      {% else %}
+        <!-- Menú para Clientes Regulares -->
+        <li class="w3-padding">
+          <a href="{% url 'pedidos_panel' %}" class="w3-button w3-block w3-left-align w3-light-grey">
+            <i class="fas fa-shopping-cart"></i> MIS PEDIDOS
+          </a>
+        </li>
+
+        <li class="w3-padding">
+          <a href="{% url 'confirm_register' ID=user.id %}" class="w3-button w3-block w3-left-align w3-light-grey">
+            <i class="fas fa-user-edit"></i> MI PERFIL/DATOS
+          </a>
+        </li>
+      {% endif %}
+
+      <!-- Cerrar Sesión -->
+      <li class="w3-padding">
+        <div class="w3-border-top"></div>
+      </li>
+
+      <li class="w3-padding">
+        <a href="{% url 'logout' %}" class="w3-btn w3-secondary w3-margin" style="text-decoration: none; background: rgba(255,255,255,0.1);">
+          <i class="fas fa-sign-out-alt"></i> CERRAR SESIÓN
+        </a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<!-- Contenido Principal -->
+<main class="dashboard-content" id="dashboardContent">
+  {% block content %}
+  <!-- El contenido del dashboard se insertará aquí -->
+  {% endblock %}
+</main>
+
+<script>
+// Funciones para controlar el sidebar
+function toggleSidebar() {
+  const sidebar = document.getElementById('dashboardSidebar');
+  const content = document.getElementById('dashboardContent');
+  const overlay = document.getElementById('sidebarOverlay');
+
+  if (sidebar.classList.contains('sidebar-hidden')) {
+    sidebar.classList.remove('sidebar-hidden');
+    sidebar.classList.add('sidebar-visible');
+    overlay.classList.add('sidebar-overlay-active');
+    if (window.innerWidth < 993) {
+      content.classList.add('content-fullwidth');
+    }
+  } else {
+    sidebar.classList.remove('sidebar-visible');
+    sidebar.classList.add('sidebar-hidden');
+    overlay.classList.remove('sidebar-overlay-active');
+    if (window.innerWidth < 993) {
+      content.classList.remove('content-fullwidth');
+    }
+  }
+}
+
+function dropdownMenu(id) {
+  var x = document.getElementById(id);
+  if (x.className.indexOf("w3-show") == -1) {
+    x.className += " w3-show";
+  } else {
+    x.className = x.className.replace(" w3-show", "");
+  }
+}
+
+// Cerrar dropdowns al hacer clic fuera
+window.onclick = function(event) {
+  if (!event.target.matches('.w3-dropdown-click button')) {
+    var dropdowns = document.getElementsByClassName("w3-dropdown-content");
+    for (var i = 0; i < dropdowns.length; i++) {
+      var openDropdown = dropdowns[i];
+      if (openDropdown.classList.contains('w3-show')) {
+        openDropdown.classList.remove('w3-show');
+      }
+    }
+  }
+}
+
+// Auto cerrar sidebar en móviles al seleccionar opción
+if (window.innerWidth <= 992) {
+  document.querySelectorAll('.dashboard-sidebar a').forEach(function(link) {
+    link.addEventListener('click', function() {
+      toggleSidebar();
+    });
+  });
+}
+
+// Inicializar sidebar según el tamaño de pantalla
+document.addEventListener('DOMContentLoaded', function() {
+  const sidebar = document.getElementById('dashboardSidebar');
+  const content = document.getElementById('dashboardContent');
+  
+  console.log('Initializing sidebar, width:', window.innerWidth);
+  console.log('Sidebar element:', sidebar);
+  console.log('Sidebar classes:', sidebar ? sidebar.className : 'not found');
+
+  if (window.innerWidth >= 993) {
+    sidebar.classList.remove('sidebar-hidden');
+    sidebar.classList.add('sidebar-visible');
+    content.classList.remove('content-fullwidth');
+    console.log('Sidebar should be visible now');
+  }
+});
+
+// Ajustar en redimensionamiento
+window.addEventListener('resize', function() {
+  const sidebar = document.getElementById('dashboardSidebar');
+  const content = document.getElementById('dashboardContent');
+  const overlay = document.getElementById('sidebarOverlay');
+
+  if (window.innerWidth >= 993) {
+    sidebar.classList.remove('sidebar-hidden');
+    sidebar.classList.add('sidebar-visible');
+    content.classList.remove('content-fullwidth');
+    overlay.classList.remove('sidebar-overlay-active');
+  } else {
+    if (!sidebar.classList.contains('sidebar-hidden')) {
+      sidebar.classList.add('sidebar-hidden');
+      sidebar.classList.remove('sidebar-visible');
+      content.classList.add('content-fullwidth');
+      overlay.classList.remove('sidebar-overlay-active');
+    }
+  }
+});
+
+// Cerrar todos los modales inmediatamente (antes de cualquier otro script)
+(function() {
+    const modals = document.querySelectorAll('.w3-modal');
+    modals.forEach(modal => {
+        modal.style.display = 'none';
+        modal.classList.remove('show');
+    });
+})();
+
+// Función UNIFICADA para manejar mensajes de Django
+function handleDjangoMessages() {
+    // Primero cerrar TODOS los modales para evitar conflictos
+    const allModals = document.querySelectorAll('.w3-modal');
+    allModals.forEach(modal => {
+        modal.style.display = 'none';
+        modal.classList.remove('show');
+    });
+    
+    {% if messages %}
+    // Mostrar notificaciones individuales en lugar del modal principal
+    {% for message in messages %}
+        showSystemNotification('{{ message|safe }}', '{{ message.tags }}', 7000);
+    {% endfor %}
+    {% endif %}
+}
+
+// Función para mostrar automáticamente el modal de mensajes (solo para casos específicos)
+function showDjangoMessagesModal() {
+    // Cerrar otros modales primero
+    const allModals = document.querySelectorAll('.w3-modal');
+    allModals.forEach(modal => {
+        if (modal.id !== 'djangoMessagesModal') {
+            modal.style.display = 'none';
+        }
+    });
+    
+    {% if messages %}
+    const messagesModal = document.getElementById('djangoMessagesModal');
+    if (messagesModal) {
+        messagesModal.style.display = 'block';
+        setTimeout(function() {
+            messagesModal.style.display = 'none';
+        }, 7000);
+    }
+    {% endif %}
+}
+
+// Función para mostrar notificaciones del sistema
+function showSystemNotification(message, type = 'info', duration = 5000) {
+    // Eliminar notificaciones existentes
+    const existingNotifications = document.querySelectorAll('.system-notification');
+    existingNotifications.forEach(notif => notif.remove());
+    
+    const notification = document.createElement('div');
+    const iconClass = type === 'success' ? 'fa-check-circle' :
+                     type === 'error' ? 'fa-exclamation-circle' :
+                     type === 'warning' ? 'fa-exclamation-triangle' : 'fa-info-circle';
+
+    const bgColor = type === 'success' ? 'w3-green' :
+                   type === 'error' ? 'w3-red' :
+                   type === 'warning' ? 'w3-orange' : 'w3-blue';
+
+    notification.className = `system-notification w3-panel w3-round ${bgColor} w3-text-white w3-card-4 w3-animate-top`;
+    notification.style.cssText = 'position:fixed; top:20px; right:20px; z-index:10000; max-width:400px; min-width:300px;';
+    notification.innerHTML = `
+        <span onclick="this.parentElement.style.display='none'" class="w3-button w3-display-topright w3-hover-none">&times;</span>
+        <div class="w3-row">
+            <div class="w3-col" style="width:40px">
+                <i class="fas ${iconClass} fa-2x"></i>
+            </div>
+            <div class="w3-rest">
+                <h4 class="w3-margin-0">${type === 'success' ? 'Éxito' : type === 'error' ? 'Error' : type === 'warning' ? 'Advertencia' : 'Información'}</h4>
+                <p class="w3-margin-0">${message}</p>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(notification);
+
+    // Auto-eliminar después del tiempo especificado
+    setTimeout(() => {
+        if (notification.parentElement) {
+            notification.style.opacity = '0';
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.parentElement.removeChild(notification);
+                }
+            }, 300);
+        }
+    }, duration);
+
+    return notification;
+}
+
+// UN SOLO event listener para manejar todo al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+    // Cerrar todos los modales (doble seguro)
+    const modals = document.querySelectorAll('.w3-modal');
+    modals.forEach(modal => {
+        modal.style.display = 'none';
+        modal.classList.remove('show');
+    });
+    
+    // Procesar mensajes de Django UNA SOLA VEZ
+    handleDjangoMessages();
+    
+    // Resto del código del dashboard...
+    const sidebar = document.getElementById('dashboardSidebar');
+    const content = document.getElementById('dashboardContent');
+    
+    console.log('Initializing sidebar, width:', window.innerWidth);
+    console.log('Sidebar element:', sidebar);
+    console.log('Sidebar classes:', sidebar ? sidebar.className : 'not found');
+
+    if (window.innerWidth >= 993) {
+        sidebar.classList.remove('sidebar-hidden');
+        sidebar.classList.add('sidebar-visible');
+        content.classList.remove('content-fullwidth');
+    } else {
+        sidebar.classList.add('sidebar-hidden');
+        sidebar.classList.remove('sidebar-visible');
+        content.classList.add('content-fullwidth');
+    }
+});
+
+// Eliminar el DOMContentLoaded duplicado que estaba causando el problema
+// document.addEventListener('DOMContentLoaded', function() {
+//     // Cerrar todos los modales para que no aparezcan visibles al recargar
+//     const modals = document.querySelectorAll('.w3-modal');
+//     modals.forEach(modal => {
+//         modal.style.display = 'none';
+//     });
+//     
+//     {% if messages %}
+//     // Mostrar el modal de mensajes si hay mensajes del sistema
+//     var messagesModal = document.getElementById('djangoMessagesModal');
+//     if (messagesModal) {
+//         messagesModal.style.display = 'block';
+//
+//         // Configurar auto-cierre después de 7 segundos
+//         setTimeout(function() {
+//             messagesModal.style.display = 'none';
+//         }, 7000);
+//     }
+//     {% endif %}
+// });
+
+function closeModal(modalId) {
+  document.getElementById(modalId).style.display = 'none';
+}
+</script>
+
+</body>
+</html>

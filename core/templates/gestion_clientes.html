@@ -1,0 +1,380 @@
+{% extends 'dashboard.html' %}
+{% load static %}
+{% block page_title %}
+<h4 class="w3-center">
+    <i class="fa fa-users"></i>
+    {% if es_administrador %}CLIENTES Y VENDEDORES{% else %}MIS CLIENTES{% endif %}
+</h4>
+{% endblock %}
+{% block content %}
+
+<!-- Formularios en línea -->
+<div class="w3-row-padding w3-margin-bottom">
+    <!-- Formulario Crear Cliente -->
+    <div class="w3-half w3-margin-bottom">
+        <div class="w3-card w3-round-large w3-white w3-padding">
+            <h3 class="w3-text-red w3-center"><i class="fa fa-user-plus"></i> Nuevo Cliente</h3>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="crear_cliente" value="true">
+                
+                <div class="w3-margin-bottom">
+                    <label class="w3-text-dark-gray">Nombre de usuario *</label>
+                    {{ form.username }}
+                    {% if form.username.errors %}
+                    <div class="w3-text-red w3-small">{{ form.username.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="w3-margin-bottom">
+                    <label class="w3-text-dark-gray">Contraseña *</label>
+                    {{ form.password1 }}
+                    {% if form.password1.errors %}
+                    <div class="w3-text-red w3-small">{{ form.password1.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="w3-margin-bottom">
+                    <label class="w3-text-dark-gray">Confirmar contraseña *</label>
+                    {{ form.password2 }}
+                    {% if form.password2.errors %}
+                    <div class="w3-text-red w3-small">{{ form.password2.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <button type="submit" class="w3-button w3-secondary w3-round-large w3-block">
+                    <i class="fa fa-save"></i> Crear Cliente
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Formulario Asignar Cliente -->
+    <div class="w3-half w3-margin-bottom">
+        <div class="w3-card w3-round-large w3-white w3-padding">
+            <h3 class="w3-text-red w3-center">
+                <i class="fa fa-link"></i>
+                {% if es_administrador %}Cliente a Vendedor{% else %}Asignar Cliente a Mí{% endif %}
+            </h3>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="asignar_cliente" value="true">
+
+                <div class="w3-margin-bottom">
+                    <label class="w3-text-dark-gray">Buscar Cliente</label>
+                    <input type="text" id="busquedaCliente" placeholder="Escriba para buscar cliente..." 
+                           class="w3-input w3-border w3-round" onkeyup="filtrarClientes()">
+                </div>
+                
+                <div class="w3-margin-bottom">
+                    <label class="w3-text-dark-gray">Seleccionar Cliente</label>
+                    <select name="cliente_id" id="clienteSelect" class="w3-select w3-border w3-round" required>
+                        <option value="">-- Seleccionar cliente --</option>
+                        {% for cliente in todos_clientes %}
+                        <option value="{{ cliente.id }}" 
+                                data-nombre="{{ cliente.user.username|lower }}"
+                                data-email="{{ cliente.user.email|lower }}"
+                                data-nombre-completo="{{ cliente.user.get_full_name|lower }}">
+                            {{ cliente.user.username }}
+                            {% if cliente.user.get_full_name %} - {{ cliente.user.get_full_name }}{% endif %}
+                        </option>
+                        {% empty %}
+                        <option value="">No hay clientes disponibles</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                {% if es_administrador %}
+                <div class="w3-margin-bottom">
+                    <label class="w3-text-dark-gray">Asignar a Vendedor</label>
+                    <select name="vendedor_id" class="w3-select w3-border w3-round" required>
+                        {% for vendedor in todos_vendedores %}
+                        <option value="{{ vendedor.id }}">
+                            {{ vendedor.user.username }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% else %}
+                <input type="hidden" name="vendedor_id" value="{{ perfil_usuario.id }}">
+                {% endif %}
+
+                <button type="submit" class="w3-button w3-secondary w3-round-large w3-block">
+                    <i class="fa fa-user-plus"></i> Asignar Cliente
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+            <!-- Tabla de clientes asignados (solo para vendedores) -->
+{% if not es_administrador %}
+<div class="w3-card w3-round-large w3-white w3-margin-top">
+    <div class="w3-container w3-padding">
+        <h3 class="w3-text-red w3-center">
+            <i class="fa fa-list"></i> Mis Clientes Asignados
+        </h3>
+        
+        <div class="w3-responsive" style="max-height: 300px; overflow-y: auto;">
+            <table class="w3-table w3-bordered w3-striped w3-hoverable">
+                <thead>
+                    <tr class="w3-light-grey">
+                        <th>Cliente</th>
+                        <th>Vendedor</th>
+                        <th>Fecha Asignación</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for asignacion in clientes_asignados %}
+                    <tr>
+                        <td>
+                            <strong>{{ asignacion.cliente.user.username }}</strong>
+                            {% if asignacion.cliente.nombre %}
+                            <br><small class="w3-text-gray">{{ asignacion.cliente.nombre }}</small>
+                            {% endif %}
+                        </td>
+                        <td>{{ asignacion.vendedor.user.username }}</td>
+                        <td>{{ asignacion.fecha_asignacion|date:"d/m/Y" }}</td>
+                        <td>
+                            <form method="post" style="display:inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="eliminar_asignacion" value="true">
+                                <input type="hidden" name="asignacion_id" value="{{ asignacion.id }}">
+                                <button type="submit" class="w3-button w3-red w3-small w3-round"
+                                        onclick="return confirm('¿Eliminar esta asignación?')">
+                                    <i class="fa fa-trash"></i> Eliminar
+                                </button>
+                            </form>
+                            <a href="{% url 'confirm_register' asignacion.cliente.id %}"
+                               class="w3-button w3-blue w3-small w3-round w3-margin-left">
+                                <i class="fa fa-edit"></i> Ver/Editar
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="w3-center w3-padding-16">
+                            <p class="w3-text-gray">No hay clientes asignados</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+            <!-- Tabla de todas las asignaciones (solo para administradores) -->
+{% if es_administrador %}
+<div class="w3-card w3-round-large w3-white w3-margin-top">
+    <div class="w3-container w3-padding">
+        <h3 class="w3-text-red w3-center">
+            <i class="fa fa-eye"></i> Todas las Asignaciones
+        </h3>
+        
+        <div class="w3-responsive" style="max-height: 300px; overflow-y: auto;">
+            <table class="w3-table w3-bordered w3-striped w3-hoverable">
+                <thead>
+                    <tr class="w3-light-grey">
+                        <th>Cliente</th>
+                        <th>Vendedor</th>
+                        <th>Fecha Asignación</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for asignacion in todas_asignaciones %}
+                    <tr>
+                        <td>
+                            <strong>{{ asignacion.cliente.user.username }}</strong>
+                            {% if asignacion.cliente.nombre %}
+                            <br><small class="w3-text-gray">{{ asignacion.cliente.nombre }}</small>
+                            {% endif %}
+                        </td>
+                        <td>{{ asignacion.vendedor.user.username }}</td>
+                        <td>{{ asignacion.fecha_asignacion|date:"d/m/Y" }}</td>
+                        <td>
+                            <form method="post" style="display:inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="eliminar_asignacion" value="true">
+                                <input type="hidden" name="asignacion_id" value="{{ asignacion.id }}">
+                                <button type="submit" class="w3-button w3-red w3-small w3-round"
+                                        onclick="return confirm('¿Eliminar esta asignación?')">
+                                    <i class="fa fa-trash"></i> Eliminar
+                                </button>
+                            </form>
+                            <a href="{% url 'confirm_register' asignacion.cliente.id %}"
+                               class="w3-button w3-blue w3-small w3-round w3-margin-left">
+                                <i class="fa fa-edit"></i> Ver/Editar
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="w3-center w3-padding-16">
+                            <p class="w3-text-gray">No hay asignaciones registradas</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+<style>
+    /* Estilos mejorados para las tablas */
+    .w3-table th {
+        font-weight: bold;
+        position: sticky;
+        top: 0;
+        background-color: #f1f1f1 !important;
+        z-index: 10;
+    }
+
+    .w3-table td {
+        vertical-align: middle;
+    }
+
+    /* Estilos para formularios */
+    form select, form input {
+        width: 100%;
+        margin-bottom: 8px;
+    }
+
+    /* Estilos para el campo de búsqueda */
+    #busquedaCliente {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23666'%3E%3Cpath d='M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: 10px center;
+        background-size: 20px;
+        padding-left: 40px !important;
+        transition: border-color 0.3s ease;
+    }
+
+    #busquedaCliente:focus {
+        border-color: #2196F3 !important;
+        box-shadow: 0 0 5px rgba(33, 150, 243, 0.3);
+    }
+
+    /* Contenedores de tablas */
+    .w3-responsive {
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+    }
+
+    /* Cards mejoradas */
+    .w3-card {
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        transition: box-shadow 0.3s ease;
+    }
+
+    .w3-card:hover {
+        box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+    }
+
+    /* Botones mejorados */
+    .w3-button {
+        transition: all 0.3s ease;
+    }
+
+    .w3-button:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+    }
+
+    /* Responsive */
+    @media screen and (max-width: 992px) {
+        .w3-half {
+            width: 100%;
+            margin-bottom: 16px;
+        }
+    }
+
+    @media screen and (max-width: 600px) {
+        .w3-margin-left {
+            margin-left: 4px !important;
+        }
+        
+        .w3-button {
+            font-size: 12px;
+            padding: 6px 10px;
+        }
+    }
+</style>
+
+<script>
+// Función para filtrar clientes dinámicamente
+function filtrarClientes() {
+    const busqueda = document.getElementById('busquedaCliente').value.toLowerCase();
+    const select = document.getElementById('clienteSelect');
+    const opciones = select.getElementsByTagName('option');
+    
+    // Guardar la selección actual
+    const seleccionActual = select.value;
+    
+    // Mostrar/ocultar opciones según la búsqueda
+    for (let i = 1; i < opciones.length; i++) { // Empezar en 1 para omitir la opción placeholder
+        const opcion = opciones[i];
+        const nombre = opcion.getAttribute('data-nombre') || '';
+        const email = opcion.getAttribute('data-email') || '';
+        const nombreCompleto = opcion.getAttribute('data-nombre-completo') || '';
+        const textoOpcion = opcion.textContent.toLowerCase();
+        
+        // Buscar en todos los campos relevantes
+        const coincide = nombre.includes(busqueda) || 
+                        email.includes(busqueda) || 
+                        nombreCompleto.includes(busqueda) || 
+                        textoOpcion.includes(busqueda);
+        
+        opcion.style.display = coincide ? '' : 'none';
+    }
+    
+    // Si la selección actual está oculta, limpiar la selección
+    if (seleccionActual) {
+        const opcionSeleccionada = select.querySelector(`option[value="${seleccionActual}"]`);
+        if (opcionSeleccionada && opcionSeleccionada.style.display === 'none') {
+            select.value = '';
+        }
+    }
+    
+    // Mostrar mensaje si no hay resultados visibles
+    const opcionesVisibles = Array.from(opciones).filter(op => op.style.display !== 'none');
+    const placeholder = opciones[0]; // La primera opción es el placeholder
+    
+    if (opcionesVisibles.length <= 1 && busqueda.length > 0) {
+        placeholder.textContent = `No se encontraron clientes para "${busqueda}"`;
+    } else {
+        placeholder.textContent = '-- Seleccionar cliente --';
+    }
+}
+
+// Función para confirmar eliminaciones
+function confirmarEliminacion(event) {
+    if (!confirm('¿Está seguro de que desea eliminar esta asignación?')) {
+        event.preventDefault();
+    }
+}
+
+// Agregar confirmación a todos los formularios de eliminación
+document.addEventListener('DOMContentLoaded', function() {
+    const formsEliminacion = document.querySelectorAll('form[action*="eliminar_asignacion"]');
+    formsEliminacion.forEach(form => {
+        form.addEventListener('submit', confirmarEliminacion);
+    });
+    
+    // Limpiar búsqueda cuando se selecciona un cliente
+    const clienteSelect = document.getElementById('clienteSelect');
+    const busquedaInput = document.getElementById('busquedaCliente');
+    
+    if (clienteSelect && busquedaInput) {
+        clienteSelect.addEventListener('change', function() {
+            if (this.value) {
+                busquedaInput.value = '';
+                filtrarClientes(); // Restablecer todas las opciones
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

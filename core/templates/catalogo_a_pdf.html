@@ -1,0 +1,56 @@
+{% extends 'dashboard.html' %}
+{% block page_title %}<h4>CATALOGO PDF</h4>{% endblock %}
+{% load static %}
+{% block content %}
+<div class="w3-container w3-padding-32">
+  <hr>
+  <div class="w3-row">
+    <div class="w3-half">
+      <div class="w3-display-container w3-center w3-margin-top">
+        <div class="w3-content w3-section w3-card-4" style="max-width:400px">
+          <img class="mySlides w3-animate-fading" src="{% static 'img/catalogo.png' %}" style="width:100%; max-height:300px; object-fit:contain;">
+        </div>
+      </div>
+      <br>
+    </div>
+    <div class="w3-half">
+      <p class="w3-small">Selecciona las categorias a incluir</p>
+      <form id="SelecForm" method="POST" enctype="multipart/form-data" action="" class="w3-container">
+        {% csrf_token %}
+        <div class="w3-container w3-border" style="height:200px; overflow:auto;">
+          {% for categoria in categorias %}
+          <p>
+            <input class="w3-check" type="checkbox" value="{{ categoria }}" name="lista-categorias">
+            <label class="w3-margin-left">{{ categoria | upper }}</label>
+          </p>
+          {% endfor %}
+        </div>
+        <br>
+        {% if msj %}<p class="w3-text-blue" style="font-size:12px;">{{ msj }}</p>{% else %}<p></p>{% endif %}
+        <br>
+        <button type="submit" class="w3-button w3-blue w3-padding-small">
+          <i class="fa fa-file-pdf-o"></i> GENERAR CATALOGO
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+// Script para el carrusel automático
+var myIndex = 0;
+carousel();
+
+function carousel() {
+  var i;
+  var x = document.getElementsByClassName("mySlides");
+  for (i = 0; i < x.length; i++) {
+    x[i].style.display = "none";
+  }
+  myIndex++;
+  if (myIndex > x.length) {myIndex = 1}
+  x[myIndex-1].style.display = "block";
+  setTimeout(carousel, 4000); // Cambia imagen cada 4 segundos
+}
+</script>
+{% endblock %}

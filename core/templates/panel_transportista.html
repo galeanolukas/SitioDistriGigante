@@ -1,0 +1,172 @@
+{% extends 'dashboard.html' %}
+{% load static %}
+{% block title %}Panel Transportista{% endblock %}
+{% block page_title %}<h4><i class="fas fa-truck"></i> PANEL TRANSPORTISTA</h4>{% endblock %}
+{% block content %}
+
+<div class="w3-container w3-padding-32">
+    <!-- Bienvenida y estadísticas -->
+    <div class="w3-center w3-margin-bottom">
+        <h3 class="w3-text-dark-grey">
+            <i class="fas fa-user-t12></i> ¡Hola, {{ transportista.usuario.username }}!
+        </h3>
+        <p class="w3-text-grey">Vehículo: {{ transportista.vehiculo }} | Patente: {{ transportista.patente }}</p>
+    </div>
+
+    <!-- Tarjetas de estadísticas -->
+    <div class="w3-row-padding w3-margin-bottom">
+        <div class="w3-third">
+            <div class="w3-container w3-blue w3-padding-16 w3-round">
+                <div class="w3-left"><i class="fas fa-clipboard-list w3-xxlarge"></i></div>
+                <div class="w3-right">
+                    <h3>{{ envios_pendientes }}</h3>
+                </div>
+                <div class="w3-clear"></div>
+                <h5>Envíos Asignados</h5>
+                <p>Pendientes de retiro</p>
+            </div>
+        </div>
+
+        <div class="w3-third">
+            <div class="w3-container w3-orange w3-padding-16 w3-round">
+                <div class="w3-left"><i class="fas fa-shipping-fast w3-xxlarge"></i></div>
+                <div class="w3-right">
+                    <h3>{{ envios_en_transito }}</h3>
+                </div>
+                <div class="w3-clear"></div>
+                <h5>En Tránsito</h5>
+                <p>En camino</p>
+            </div>
+        </div>
+
+        <div class="w3-third">
+            <div class="w3-container w3-green w3-padding-16 w3-round">
+                <div class="w3-left"><i class="fas fa-check-circle w3-xxlarge"></i></div>
+                <div class="w3-right">
+                    <h3>{{ envios_entregados }}</h3>
+                </div>
+                <div class="w3-clear"></div>
+                <h5>Entregados</h5>
+                <p>Completados</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Acciones rápidas -->
+    <div class="w3-center w3-padding-16">
+        <div class="w3-bar">
+            <a href="{% url 'gestion_envios_transportista' %}" class="w3-button w3-blue w3-round w3-margin">
+                <i class="fas fa-list"></i> Ver Todos los Envíos
+            </a>
+            <a href="{% url 'escanear_qr_entrega' %}" class="w3-button w3-green w3-round w3-margin">
+                <i class="fas fa-qrcode"></i> Escanear QR Entrega
+            </a>
+        </div>
+    </div>
+
+    <!-- Últimos envíos -->
+    <div class="w3-margin-top">
+        <h4 class="w3-text-dark-grey"><i class="fas fa-clock"></i> Últimos Envíos Asignados</h4>
+        
+        {% if envios %}
+            <div class="w3-responsive">
+                <table class="w3-table-all w3-striped w3-bordered">
+                    <thead>
+                        <tr class="w3-primary">
+                            <th>Envío #</th>
+                            <th>Pedido #</th>
+                            <th>Cliente</th>
+                            <th>Estado</th>
+                            <th>Fecha Asignación</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for envio in envios %}
+                        <tr>
+                            <td><strong>{{ envio.id }}</strong></td>
+                            <td>{{ envio.pedido.id }}</td>
+                            <td>{{ envio.pedido.user.username }}</td>
+                            <td>
+                                {% if envio.estado == 'asignado' %}
+                                    <span class="w3-tag w3-blue">Asignado</span>
+                                {% elif envio.estado == 'en_transito' %}
+                                    <span class="w3-tag w3-orange">En Tránsito</span>
+                                {% elif envio.estado == 'entregado' %}
+                                    <span class="w3-tag w3-green">Entregado</span>
+                                {% else %}
+                                    <span class="w3-tag w3-grey">{{ envio.get_estado_display }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if envio.fecha_asignacion %}
+                                    {{ envio.fecha_asignacion|date:"d/m/Y H:i" }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if envio.estado != 'entregado' %}
+                                    <a href="{% url 'escanear_qr_entrega' %}" class="w3-button w3-small w3-green w3-round">
+                                        <i class="fas fa-qrcode"></i> Confirmar
+                                    </a>
+                                {% else %}
+                                    <span class="w3-text-green"><i class="fas fa-check"></i> Completado</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="w3-panel w3-light-grey w3-round-large w3-padding">
+                <p class="w3-text-grey w3-center">
+                    <i class="fas fa-info-circle w3-xxlarge"></i><br>
+                    No tienes envíos asignados actualmente.
+                </p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    .w3-card-4 {
+        box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+        transition: 0.3s;
+    }
+
+    .w3-card-4:hover {
+        box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2);
+    }
+
+    .w3-third {
+        margin-bottom: 15px;
+    }
+
+    @media screen and (max-width: 768px) {
+        .w3-third {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        
+        .w3-bar .w3-button {
+            display: block;
+            width: 100%;
+            margin: 5px 0;
+        }
+    }
+</style>
+
+<script>
+// Cerrar todos los modales al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+    // Cerrar todos los modales para que no aparezcan visibles al recargar
+    const modals = document.querySelectorAll('.w3-modal');
+    modals.forEach(modal => {
+        modal.style.display = 'none';
+    });
+});
+</script>
+
+{% endblock %}

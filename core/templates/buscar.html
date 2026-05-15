@@ -1,0 +1,179 @@
+{% extends 'base_catalogo.html' %}
+{% block title %}RESULTADOS DE BÚSQUEDA{% endblock %}
+{% load static %}
+
+{% block content %}
+<div class="w3-container">
+  <!-- Encabezado de resultados -->
+  {% if resultados %}
+  <div class="catalogo-grid">
+    {% for product in resultados %}
+    <div class="product-card">
+      <!-- Admin actions -->
+      {% if user.is_superuser %}
+      <div class="admin-actions">
+        <a href="{% url 'product_img_search_id' ID=product.id %}" class="admin-btn" title="Gestionar imágenes"><i class="fas fa-images"></i></a>
+        <a href="{% url 'edit_product' product_id=product.id %}" class="admin-btn" title="Editar producto"><i class="fas fa-edit"></i></a>
+        <a href="{% url 'delete_product' product_id=product.id %}" class="admin-btn delete" title="Eliminar producto"><i class="fas fa-times-circle"></i></a>
+        <button onclick="abrirModalOferta({{ product.id }})" class="admin-btn offer" title="Crear Oferta">
+          <i class="fas fa-tag"></i>
+        </button>
+      </div>
+      {% endif %}
+
+      <!-- Product image -->
+      <div class="product-image-container">
+        <a href="{% url 'product_detail' product.id %}">
+          {% if product.imagenurl %}
+            <img src="{{ product.imagenurl }}" alt="{{ product.nombre }}" class="product-image">
+          {% else %}
+            <img src="{{ product.imagen1.url }}" alt="{{ product.nombre }}" class="product-image">
+          {% endif %}
+        </a>
+        
+        <!-- Offer badge -->
+        {% if product.en_oferta %}
+          {% if product.en_oferta.tipo_oferta == 'descuento' %}
+            <span class="offer-badge discount">{{ product.en_oferta.descuento }}% OFF</span>
+          {% elif product.en_oferta.tipo_oferta == 'combinar' %}
+            <span class="offer-badge combo">COMBO</span>
+          {% elif product.en_oferta.tipo_oferta == 'multiplicidad' %}
+            <span class="offer-badge multiplicity">{{ product.en_oferta.get_tipo_multiplicidad_display }}</span>
+          {% else %}
+            <span class="offer-badge default">OFERTA!</span>
+          {% endif %}
+        {% endif %}
+      </div>
+
+      <!-- Product info -->
+      <div class="product-info">
+        <a href="{% url 'product_detail' product.id %}" class="product-link">
+          <h3 class="product-title">{{ product.nombre|truncatechars:45 }}</h3>
+        </a>
+
+        <!-- Stock status -->
+        <div class="stock-status">
+          {% if product.stock > 0 %}
+            {% if product.en_oferta %}
+              {% if product.en_oferta.stock_oferta > 0 %}
+                <span class="stock-available">✓ {{ product.en_oferta.stock_restante }}/{{ product.en_oferta.stock_oferta }} disponible</span>
+              {% else %}
+                <span class="stock-available">✓ {{ product.stock }} disponible</span>
+              {% endif %}
+            {% else %}
+              <span class="stock-available">✓ {{ product.stock }} disponible</span>
+            {% endif %}
+          {% else %}
+            <span class="stock-unavailable">✗ No disponible</span>
+          {% endif %}
+        </div>
+
+        <!-- Price -->
+        <div class="price-section">
+          {% if product.en_oferta %}
+            {% if product.en_oferta.tipo_oferta == 'descuento' %}
+              <div class="price-discount">
+                <span class="original-price">${{ product.precio }}</span>
+                <span class="final-price">${{ product.en_oferta.precio_final }}</span>
+              </div>
+            {% elif product.en_oferta.tipo_oferta == 'combinar' %}
+              <div class="price-combo">
+                <span class="combo-label">Combo desde:</span>
+                <span class="final-price">${{ product.en_oferta.precio_final }}</span>
+                <span class="combo-product">+ {{ product.en_oferta.producto_combinar.nombre|truncatechars:20 }}</span>
+              </div>
+            {% elif product.en_oferta.tipo_oferta == 'multiplicidad' %}
+              <div class="price-multiplicity">
+                <span class="multiplicity-label">{{ product.en_oferta.get_tipo_multiplicidad_display }}</span>
+                <span class="final-price">${{ product.en_oferta.precio_final }} c/u</span>
+              </div>
+            {% else %}
+              <div class="price-discount">
+                <span class="original-price">${{ product.precio }}</span>
+                <span class="final-price">${{ product.en_oferta.precio_final }}</span>
+              </div>
+            {% endif %}
+          {% else %}
+            <div class="price-normal">
+              <span class="final-price">${{ product.precio }}</span>
+            </div>
+          {% endif %}
+        </div>
+
+        <!-- Actions -->
+        <div class="product-actions">
+          {% if user.is_authenticated %}
+            <form action="{% url 'agregar_al_carrito' product.id %}" method="POST" class="add-to-cart-form">
+              {% csrf_token %}
+              <input type="hidden" name="cantidad" value="1">
+              <button type="submit" class="btn-add-cart">
+                <i class="fas fa-cart-plus"></i> Agregar
+              </button>
+            </form>
+          {% else %}
+            <a href="{% url 'product_detail' product.id %}" class="btn-view-detail">
+              <i class="fas fa-eye"></i> Ver detalle
+            </a>
+          {% endif %}
+        </div>
+
+        <!-- Share and code -->
+        <div class="product-footer">
+          <div class="share-buttons">
+            <span class="share-label">Compartir:</span>
+            <a href="https://wa.me/?text=Comparti%20este%20producto%20{{ host_link }}{% url 'product_detail' product.id %}"
+               target="_blank" class="share-btn whatsapp">
+              <i class="fab fa-whatsapp"></i>
+            </a>
+            <a href="https://www.facebook.com/sharer/sharer.php?u={{ host_link }}{% url 'product_detail' product.id %}"
+               target="_blank" class="share-btn facebook">
+              <i class="fab fa-facebook"></i>
+            </a>
+          </div>
+          <div class="product-code">Art: {{ product.numero }}</div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Paginación -->
+  {% if resultados.has_other_pages %}
+  <div class="pagination-container">
+    <div class="pagination">
+      {% if resultados.has_previous %}
+        <a class="pagination-btn" href="?q={{ query }}&page={{ resultados.previous_page_number }}">« Anterior</a>
+      {% endif %}
+
+      {% for i in resultados.paginator.page_range %}
+        {% if resultados.number == i %}
+          <span class="pagination-btn active">{{ i }}</span>
+        {% elif i > resultados.number|add:'-3' and i < resultados.number|add:'3' %}
+          <a class="pagination-btn" href="?q={{ query }}&page={{ i }}">{{ i }}</a>
+        {% endif %}
+      {% endfor %}
+
+      {% if resultados.has_next %}
+        <a class="pagination-btn" href="?q={{ query }}&page={{ resultados.next_page_number }}">Siguiente »</a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-icon">🔍</div>
+    <h3>No se encontraron resultados</h3>
+    <p>Intenta con otros términos de búsqueda o explora nuestro catálogo completo</p>
+    <a href="{% url 'catalogo' %}" class="catalogo-btn">
+      <i class="fas fa-store"></i> Ver catálogo completo
+    </a>
+  </div>
+  {% endif %}
+</div>
+
+<style>
+/* Importar estilos del catálogo */
+@import url('{% static "css/catalogo_template.css" %}');
+</style>
+{% endblock %}

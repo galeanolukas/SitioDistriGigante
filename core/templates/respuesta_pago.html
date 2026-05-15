@@ -1,0 +1,91 @@
+{% extends 'base_catalogo.html' %}
+{% load static %}
+{% block page_title %}Respuesta de Pago{% endblock %}
+{% block title %}Respuesta de Pago - Pedido #{{ pedido_id.id }}{% endblock %}
+{% block content %}
+<div class="w3-container w3-padding">
+    <div class="w3-card-4 w3-white w3-round-large" style="max-width:800px; margin:0 auto;">
+        
+        <!-- Header del resultado -->
+        <div class="w3-container w3-center w3-padding-32">
+            {% if estado == "exito" %}
+                <div class="w3-panel w3-green w3-round-large w3-padding-32">
+                    <i class="fas fa-check-circle w3-jumbo w3-text-white"></i>
+                    <h2 class="w3-text-white w3-margin-top">¡Pago Exitoso!</h2>
+                    <p class="w3-text-white w3-large">Tu pedido ha sido procesado correctamente</p>
+                </div>
+            {% elif estado == "pendiente" %}
+                <div class="w3-panel w3-orange w3-round-large w3-padding-32">
+                    <i class="fas fa-clock w3-jumbo w3-text-white"></i>
+                    <h2 class="w3-text-white w3-margin-top">Pago Pendiente</h2>
+                    <p class="w3-text-white w3-large">Estamos procesando tu pago</p>
+                </div>
+            {% else %}
+                <div class="w3-panel w3-red w3-round-large w3-padding-32">
+                    <i class="fas fa-times-circle w3-jumbo w3-text-white"></i>
+                    <h2 class="w3-text-white w3-margin-top">Pago Fallido</h2>
+                    <p class="w3-text-white w3-large">No pudimos procesar tu pago</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Información del pedido -->
+        <div class="w3-container w3-padding-32">
+            <h3 class="w3-text-blue"><i class="fas fa-shopping-bag w3-margin-right"></i>Detalles del Pedido</h3>
+            
+            <div class="w3-row w3-margin-top">
+                <div class="w3-half">
+                    <p><strong>N° de Pedido:</strong> #{{ pedido_id.id }}</p>
+                    <p><strong>Fecha:</strong> {{ pedido_id.fecha_pedido|date:"d/m/Y H:i" }}</p>
+                    <p><strong>Estado:</strong> 
+                        <span class="w3-tag w3-round-large 
+                            {% if estado == 'exito' %}w3-green
+                            {% elif estado == 'pendiente' %}w3-orange
+                            {% else %}w3-red{% endif %}">
+                            {{ estado|title }}
+                        </span>
+                    </p>
+                </div>
+                <div class="w3-half">
+                    <p><strong>Cliente:</strong> {{ pedido_id.user.username }}</p>
+                    {% if pedido_id.user.perfil.nombre %}
+                    <p><strong>Nombre:</strong> {{ pedido_id.user.perfil.nombre }}</p>
+                    {% endif %}
+                    {% if pedido_id.user.perfil.telefono %}
+                    <p><strong>Teléfono:</strong> {{ pedido_id.user.perfil.telefono }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Total del pedido -->
+            <div class="w3-panel w3-light-grey w3-round-large w3-margin-top">
+                <h4 class="w3-text-blue">Resumen del Pedido</h4>
+                <div class="w3-row">
+                    <div class="w3-col s6">
+                        <p><strong>Subtotal:</strong> ${{ pedido_id.subtotal }}</p>
+                        <p><strong>Envío:</strong> ${{ pedido_id.costo_envio }}</p>
+                    </div>
+                    <div class="w3-col s6 w3-right-align">
+                        <p class="w3-xlarge w3-text-blue"><strong>Total:</strong> ${{ pedido_id.total_precio }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mensaje del sistema -->
+            <div class="w3-panel w3-round-large w3-margin-top">
+                {{ mensaje|safe }}
+            </div>
+
+            <!-- Acciones -->
+            <div class="w3-center w3-margin-top">
+                <a href="{% url 'detalle_pedido' pedido_id.id %}" class="w3-button w3-blue w3-round-large w3-margin-right">
+                    <i class="fas fa-eye"></i> Ver Detalles
+                </a>
+                <a href="{% url 'index' %}" class="w3-button w3-secondary w3-round-large">
+                    <i class="fas fa-home"></i> Ir al Inicio
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,523 @@
+{% extends 'dashboard.html' %}
+{% load static %}
+{% block title %}PRODUCTOS{% endblock %}
+{% block page_title %}<h4><b>PANEL PRODUCTOS</b></h4>{% endblock %}
+{% block content %}
+<div class="w3-container w3-padding">
+    <div class="w3-container w3-light-grey w3-round-large w3-padding">
+
+        <!-- Botones de Gestión Masiva de Stock -->
+        <div class="w3-container w3-white w3-round-large w3-padding-16 w3-margin-bottom">
+            <h5 class="w3-text-secondary"><i class="fas fa-boxes"></i> Gestión Masiva de Stock</h5>
+            <div class="w3-row-padding">
+                <!-- Botón para abrir modal de agregar stock -->
+                <div class="w3-col m3 s6 w3-margin-bottom">
+                    <button class="w3-button w3-green w3-round-large w3-block" onclick="openStockModal()">
+                        <i class="fas fa-plus-circle"></i> Agregar Stock
+                    </button>
+                </div>
+
+                <!-- Botón para vaciar stock existente -->
+                <div class="w3-col m3 s6 w3-margin-bottom">
+                    <form method="POST" action="{% url 'modif_stock' %}" style="display: inline; width: 100%;">
+                        {% csrf_token %}
+                        <input type="hidden" name="unidad" value="0">
+                        <input type="hidden" name="vaciar_stock" value="true">
+                        <button type="submit" class="w3-button w3-orange w3-round-large w3-block"
+                                onclick="return confirm('¿Vaciar stock de productos con stock actual?')">
+                            <i class="fas fa-eraser"></i> Vaciar Stock
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Botón para limpiar todo el stock -->
+                <div class="w3-col m3 s6 w3-margin-bottom">
+                    <form method="POST" action="{% url 'modif_stock' %}" style="display: inline; width: 100%;">
+                        {% csrf_token %}
+                        <input type="hidden" name="unidad" value="0">
+                        <input type="hidden" name="limpiar_todo" value="true">
+                        <button type="submit" class="w3-button w3-red w3-round-large w3-block"
+                                onclick="return confirm('⚠️ ¿ESTÁS SEGURO? Esto pondrá el stock de TODOS los productos a 0.')">
+                            <i class="fas fa-trash-alt"></i> Limpiar Todo
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Botón para stock mínimo -->
+                <div class="w3-col m3 s6 w3-margin-bottom">
+                    <form method="POST" action="{% url 'modif_stock' %}" style="display: inline; width: 100%;">
+                        {% csrf_token %}
+                        <input type="hidden" name="unidad" value="5">
+                        <input type="hidden" name="stock_minimo" value="true">
+                        <button type="submit" class="w3-button w3-blue w3-round-large w3-block"
+                                onclick="return confirm('¿Establecer stock mínimo de 5 unidades?')">
+                            <i class="fas fa-layer-group"></i> Stock Mínimo
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="w3-row">
+            <!-- Columna izquierda - Selector de Ordenamiento -->
+            <div class="w3-half w3-panel">
+                <div class="w3-white w3-center w3-round-large w3-padding-16" style="max-width: 100%; margin: 0 auto 20px auto;">
+                    <h5 class="w3-text-secondary"><i class="fa fa-sort"></i> Ordenar Catálogo</h5>
+                    <form method="POST" action="{% url 'cambiar_orden_catalogo' %}" class="w3-container">
+                        {% csrf_token %}
+                        <div class="w3-row">
+                            <div class="w3-col m8 s12 w3-padding">
+                                <select name="campo_orden" class="w3-select w3-border w3-round-large" required>
+                                    <option value="">Seleccionar ordenamiento...</option>
+                                    {% for valor, etiqueta in opciones_orden %}
+                                    <option value="{{ valor }}"
+                                            {% if orden_actual.campo_orden == valor %}selected{% endif %}>
+                                        {{ etiqueta }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="w3-col m4 s12 w3-padding">
+                                <button type="submit" class="w3-button w3-green w3-round-large w3-block">
+                                    <i class="fa fa-refresh"></i> Aplicar
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                    {% if orden_actual %}
+                    <p class="w3-small w3-text-gray">
+                        <i class="fa fa-info-circle"></i>
+                        Orden actual: <strong>{{ orden_actual.get_campo_orden_display }}</strong>
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Columna derecha - Formulario de búsqueda -->
+            <div class="w3-half w3-panel">
+                <div class="w3-white w3-center w3-round-large w3-padding-16" style="max-width: 100%; margin: 0 auto 20px auto;">
+                    <h5 class="w3-text-secondary"><i class="fa fa-search"></i> Buscar Productos</h5>
+                    <form method="GET" action="{{ search_action }}" class="w3-container">
+                        <div class="w3-row">
+                            <div class="w3-col m10 s9 w3-padding">
+                                <input class="w3-input w3-border w3-round-large" type="text"
+                                       name="{{ search_name }}" placeholder="{{ placeholder }}"
+                                       value="{{ request.GET.p }}">
+                            </div>
+                            <div class="w3-col m2 s3 w3-padding">
+                                <button type="submit" class="w3-button w3-secondary w3-round-large w3-block">
+                                    <i class="fa fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Información del ordenamiento actual -->
+        <div class="w3-panel w3-pale-blue w3-leftbar w3-border-blue w3-round-large">
+            <p class="w3-small">
+                <i class="fa fa-sort-amount-asc"></i>
+                <strong>Ordenamiento actual:</strong>
+                {% if orden_actual %}
+                    {{ orden_actual.get_campo_orden_display }}
+                {% else %}
+                    Por defecto (Categoría A-Z)
+                {% endif %}
+                |
+                <strong>Productos mostrados:</strong> {{ product_list.paginator.count }}
+                |
+                <strong>Página:</strong> {{ product_list.number }} de {{ product_list.paginator.num_pages }}
+            </p>
+        </div>
+
+        <!-- Tabla de productos -->
+        <div class="w3-responsive">
+            <table class="w3-table w3-bordered w3-striped w3-hoverable">
+                <thead>
+                    <tr class="w3-secondary w3-text-white">
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Marca</th>
+                        <th>Precio</th>
+                        <th>Stock</th>
+                        <th>Categoría</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in product_list %}
+                    <tr>
+                        <td>{{ product.id }}</td>
+                        <td>{{ product.nombre }}</td>
+                        <td>{{ product.marca }}</td>
+                        <td>${{ product.precio }}</td>
+                        <td>
+                            <span class="{% if product.stock > 0 %}w3-text-green{% else %}w3-text-red{% endif %}">
+                                {{ product.stock }}
+                            </span>
+                        </td>
+                        <td>{{ product.categoria.nombre }}</td>
+                        <td>
+                            <a href="{% url 'edit_product' product.id %}" class="w3-button w3-blue w3-small" title="Editar producto">
+                                <i class="fa fa-edit"></i>
+                            </a>
+                            <button onclick="abrirModalOferta('{{ product.id }}')" class="w3-button w3-green w3-small" title="Crear Oferta Modal">
+                                <i class="fas fa-tag"></i> Ofertar
+                            </button>
+                            <a href="{% url 'delete_product' product.id %}" class="w3-button w3-red w3-small" title="Eliminar producto">
+                                <i class="fa fa-trash"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="w3-center w3-padding-16">
+                            No se encontraron productos
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Paginación -->
+        {% if product_list.has_other_pages %}
+        <div class="w3-center w3-padding-32">
+          <div class="w3-bar">
+            {% if product_list.has_previous %}
+              <a class="w3-button w3-primary" href="?page={{ product_list.previous_page_number }}">« Anterior</a>
+            {% endif %}
+
+            {% for i in product_list.paginator.page_range %}
+              {% if product_list.number == i %}
+                <a class="w3-button w3-red">{{ i }}</a>
+              {% elif i > product_list.number|add:'-3' and i < product_list.number|add:'3' %}
+                <a class="w3-button w3-hover-primary" href="?page={{ i }}">{{ i }}</a>
+              {% endif %}
+            {% endfor %}
+
+            {% if product_list.has_next %}
+              <a class="w3-button w3-primary w3-text-white" href="?page={{ product_list.next_page_number }}">Siguiente »</a>
+            {% endif %}
+          </div>
+        </div>
+        {% endif %}
+
+        <br>
+        <div class="w3-row">
+            <div class="w3-half">
+                <a href="{% url 'create_product' %}" class="w3-button w3-secondary w3-round-large">
+                    <i class="fa fa-plus"></i> Nuevo Producto
+                </a>
+            </div>
+            <div class="w3-half w3-right-align">
+                <a href="{% url 'modif_stock' %}" class="w3-button w3-indigo w3-round-large">
+                    <i class="fas fa-cogs"></i> Gestión Avanzada de Stock
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para agregar stock -->
+<div id="stockModal" class="w3-modal">
+    <div class="w3-modal-content w3-card-4 w3-animate-zoom" style="max-width:500px">
+        <div class="w3-container w3-indigo">
+            <span onclick="closeStockModal()" class="w3-button w3-display-topright w3-hover-red">&times;</span>
+            <h4><i class="fas fa-plus-circle"></i> Agregar Stock Masivo</h4>
+        </div>
+
+        <form method="POST" action="{% url 'modif_stock' %}" class="w3-container w3-padding-16">
+            {% csrf_token %}
+
+            <div class="w3-section">
+                <label class="w3-text-gray"><b>Cantidad de Stock:</b></label>
+                <input class="w3-input w3-border w3-round-large"
+                       type="number"
+                       name="unidad"
+                       min="1"
+                       max="10000"
+                       value="10"
+                       required>
+            </div>
+
+            <div class="w3-section">
+                <label class="w3-text-gray"><b>Aplicar a:</b></label>
+                <div class="w3-padding">
+                    <label class="w3-radio">
+                        <input type="radio" name="aplicar_a" value="todos" checked>
+                        <span class="w3-text-gray">Todos los productos</span>
+                    </label>
+                    <br>
+                    <label class="w3-radio">
+                        <input type="radio" name="aplicar_a" value="sin_stock">
+                        <span class="w3-text-gray">Solo productos sin stock (stock = 0)</span>
+                    </label>
+                    <br>
+                    <label class="w3-radio">
+                        <input type="radio" name="aplicar_a" value="con_stock">
+                        <span class="w3-text-gray">Solo productos con stock existente</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="w3-section w3-center">
+                <button type="button" class="w3-button w3-gray w3-round-large" onclick="closeStockModal()">
+                    <i class="fas fa-times"></i> Cancelar
+                </button>
+                <button type="submit" class="w3-button w3-green w3-round-large" name="modif_stock">
+                    <i class="fas fa-check"></i> Aplicar Stock
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .w3-hoverable tbody tr:hover {
+        background-color: #f0f0f0;
+        transition: background-color 0.3s;
+    }
+
+    .stock-buttons .w3-button {
+        margin: 2px;
+        padding: 8px 12px;
+    }
+
+    @media screen and (max-width: 600px) {
+        .w3-responsive table {
+            font-size: 11px;
+        }
+
+        .w3-button {
+            padding: 5px 8px;
+            margin: 2px;
+        }
+
+        .w3-bar-item {
+            padding: 5px 8px;
+            font-size: 12px;
+        }
+
+        .stock-buttons .w3-col {
+            margin-bottom: 5px;
+        }
+    }
+</style>
+
+<script>
+    // Funciones para el modal de stock
+    function openStockModal() {
+        document.getElementById('stockModal').style.display = 'block';
+    }
+
+    function closeStockModal() {
+        document.getElementById('stockModal').style.display = 'none';
+    }
+
+    // Cerrar modal al hacer click fuera
+    window.onclick = function(event) {
+        const modal = document.getElementById('stockModal');
+        if (event.target === modal) {
+            closeStockModal();
+        }
+    }
+
+    // Confirmación para acciones peligrosas
+    document.addEventListener('DOMContentLoaded', function() {
+        const dangerousButtons = document.querySelectorAll('form button[onclick*="confirm"]');
+        dangerousButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                if (this.textContent.includes('Limpiar Todo')) {
+                    if (!confirm('⚠️ ADVERTENCIA CRÍTICA:\n\nEstá a punto de establecer el stock de TODOS los productos a 0.\n\n¿Está absolutamente seguro?')) {
+                        e.preventDefault();
+                    }
+                }
+            });
+        });
+    });
+</script>
+
+<!-- Modal para Crear Oferta -->
+<div id="modalOferta" class="w3-modal">
+    <div class="w3-modal-content w3-card-4 w3-animate-zoom" style="max-width: 600px;">
+        <div class="w3-center w3-padding w3-green">
+            <span onclick="document.getElementById('modalOferta').style.display='none'" 
+                  class="w3-button w3-green w3-xlarge w3-display-topright">×</span>
+            <h3>Crear Oferta para Producto</h3>
+        </div>
+        
+        <form id="formOferta" method="POST" action="{% url 'crear_oferta' product_id=0 %}" class="w3-container">
+            {% csrf_token %}
+            <input type="hidden" id="producto_id" name="producto_id" value="">
+            
+            <div class="w3-section">
+                <label class="w3-text-grey"><b>Tipo de Oferta</b></label>
+                <select id="tipo_oferta" name="tipo_oferta" class="w3-select w3-border" onchange="mostrarOpcionesOferta()">
+                    <option value="">Selecciona un tipo de oferta</option>
+                    <option value="descuento">1. Descuento porcentual</option>
+                    <option value="combinar">2. Combinar con otro producto</option>
+                    <option value="multiplicidad">3. 2x1, 3x2, etc.</option>
+                </select>
+            </div>
+
+            <!-- Opción 1: Descuento porcentual -->
+            <div id="opcion_descuento" class="w3-section" style="display: none;">
+                <label class="w3-text-grey"><b>Descuento (%)</b></label>
+                <input type="number" name="descuento" class="w3-input w3-border" min="1" max="90" placeholder="Ej: 20">
+            </div>
+
+            <!-- Opción 2: Combinar con producto -->
+            <div id="opcion_combinar" class="w3-section" style="display: none;">
+                <label class="w3-text-grey"><b>Producto a combinar</b></label>
+                <select id="producto_combinar" name="producto_combinar" class="w3-select w3-border">
+                    <option value="">Selecciona un producto</option>
+                </select>
+                <label class="w3-text-grey"><b>Monto del combo</b></label>
+                <input type="number" name="monto_combinar" class="w3-input w3-border" min="0" step="0.01" placeholder="Ej: 1500">
+            </div>
+
+            <!-- Opción 3: Multiplicidad -->
+            <div id="opcion_multiplicidad" class="w3-section" style="display: none;">
+                <label class="w3-text-grey"><b>Tipo de multiplicidad</b></label>
+                <select name="tipo_multiplicidad" class="w3-select w3-border">
+                    <option value="2x1">2x1 - Lleva 2, paga 1</option>
+                    <option value="3x2">3x2 - Lleva 3, paga 2</option>
+                    <option value="4x3">4x3 - Lleva 4, paga 3</option>
+                    <option value="5x4">5x4 - Lleva 5, paga 4</option>
+                </select>
+            </div>
+
+            <!-- Campo de duración -->
+            <div class="w3-section">
+                <label class="w3-text-grey"><b>Duración (días)</b></label>
+                <input type="number" name="duracion_dias" class="w3-input w3-border" min="1" max="365" value="30">
+            </div>
+
+            <!-- Campo de stock de oferta -->
+            <div class="w3-section">
+                <label class="w3-text-grey"><b>Stock de la oferta</b></label>
+                <input type="number" name="stock_oferta" class="w3-input w3-border" min="0" placeholder="0 = ilimitado">
+                <small class="w3-text-grey">Deja en 0 para stock ilimitado, o ingresa un número para stock limitado</small>
+            </div>
+
+            <div class="w3-section w3-center">
+                <button type="submit" class="w3-button w3-green w3-round">
+                    <i class="fas fa-check"></i> Crear Oferta
+                </button>
+                <button type="button" onclick="document.getElementById('modalOferta').style.display='none'" 
+                        class="w3-button w3-red w3-round">
+                    <i class="fas fa-times"></i> Cancelar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function abrirModalOferta(productoId) {
+    document.getElementById('producto_id').value = productoId;
+    
+    // Actualizar la acción del formulario con el ID del producto
+    const form = document.getElementById('formOferta');
+    form.action = `/producto/ofertar/${productoId}/`;
+    
+    document.getElementById('modalOferta').style.display = 'block';
+    
+    // Cargar productos para la opción de combinar
+    cargarProductos();
+}
+
+function mostrarOpcionesOferta() {
+    const tipo = document.getElementById('tipo_oferta').value;
+    
+    // Ocultar todas las opciones
+    document.getElementById('opcion_descuento').style.display = 'none';
+    document.getElementById('opcion_combinar').style.display = 'none';
+    document.getElementById('opcion_multiplicidad').style.display = 'none';
+    
+    // Mostrar la opción seleccionada
+    if (tipo === 'descuento') {
+        document.getElementById('opcion_descuento').style.display = 'block';
+    } else if (tipo === 'combinar') {
+        document.getElementById('opcion_combinar').style.display = 'block';
+    } else if (tipo === 'multiplicidad') {
+        document.getElementById('opcion_multiplicidad').style.display = 'block';
+    }
+}
+
+function cargarProductos() {
+    fetch('/api/productos/')
+        .then(response => response.json())
+        .then(data => {
+            const select = document.getElementById('producto_combinar');
+            select.innerHTML = '<option value="">Selecciona un producto</option>';
+            
+            data.forEach(producto => {
+                const option = document.createElement('option');
+                option.value = producto.id;
+                option.textContent = producto.nombre;
+                select.appendChild(option);
+            });
+        })
+        .catch(error => console.error('Error cargando productos:', error));
+}
+
+// Enviar formulario con AJAX
+document.getElementById('formOferta').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const submitBtn = this.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    
+    fetch(this.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': formData.get('csrfmiddlewaretoken'),
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Mostrar mensaje de éxito
+            alert('Oferta creada exitosamente');
+            // Cerrar el modal
+            document.getElementById('modalOferta').style.display = 'none';
+            // Recargar la página para mostrar la nueva oferta
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al crear la oferta');
+    })
+    .finally(() => {
+        submitBtn.disabled = false;
+    });
+});
+
+// Cerrar todos los modales al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+    // Cerrar todos los modales para que no aparezcan visibles al recargar
+    const modals = document.querySelectorAll('.w3-modal');
+    modals.forEach(modal => {
+        modal.style.display = 'none';
+    });
+});
+
+// Cerrar modal al hacer clic fuera
+window.onclick = function(event) {
+    const modal = document.getElementById('modalOferta');
+    if (event.target == modal) {
+        modal.style.display = 'none';
+    }
+}
+</script>
+{% endblock %}
+

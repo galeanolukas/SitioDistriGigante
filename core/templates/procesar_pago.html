@@ -1,0 +1,296 @@
+{% extends 'base_catalogo.html' %}
+{% load static %}
+{% block page_title %}PROCESAR PAGO{% endblock %}
+{% block title %}Pago Pedido #{{ pedido.id }}{% endblock %}
+{% block content %}
+<div class="w3-container w3-padding">
+    <div class="w3-card-4 w3-white" style="max-width:1200px; margin:0 auto;">
+        <!-- Encabezado -->
+        <div class="w3-container w3-secondary w3-text-white w3-round-large w3-center">
+            <h3><i class="fa fa-credit-card"></i> PAGAR PEDIDO</h3>
+            <p class="w3-large">Pedido #{{ pedido.id }}</p>
+        </div>
+
+        <div class="w3-container w3-padding-24">
+            <!-- Información del pedido -->
+            <div class="w3-panel w3-round-large">
+                <div class="w3-row">
+                    <div class="w3-half w3-center">
+                        <h4 class="w3-text-red"><i class="fa fa-info-circle"></i> Información del Pedido</h4>
+                        <p><strong>Fecha:</strong> {{ pedido.fecha_pedido|date:"d/m/Y H:i" }}</p>
+                        <p><strong>Estado:</strong>
+                            <span class="w3-tag w3-round-large
+                                {% if pedido.estado == 'completado' %}w3-green
+                                {% elif pedido.estado == 'pendiente' %}w3-yellow
+                                {% elif pedido.estado == 'cancelado' %}w3-red
+                                {% else %}w3-blue{% endif %}">
+                                {{ pedido.estado|title }}
+                            </span>
+                        </p>
+                    </div>
+                    <div class="w3-half w3-center">
+                        <h4 class="w3-text-red"><i class="fa fa-user"></i> Información de Entrega</h4>
+                        <p><strong>Cliente:</strong> {{ pedido.user.username }} ({{ pedido.user.perfil.nombre }})</p>
+                        {% if pedido.user.perfil.telefono %}
+                        <p><strong>Teléfono:</strong> {{ pedido.user.perfil.telefono }}</p>
+                        {% endif %}
+                        {% if pedido.user.perfil.direccion %}
+                        <p><strong>Dirección:</strong> {{ pedido.user.perfil.direccion }}
+                        {% endif %}{% if pedido.user.perfil.localidad %} - {{ pedido.user.perfil.localidad }}{% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resumen de productos -->
+            <div class="w3-panel w3-round-large w3-light-grey">
+                <h4 class="w3-center w3-text-red"><i class="fa fa-shopping-cart"></i> Resumen del Pedido</h4>
+                <div class="w3-responsive">
+                    <table class="w3-table w3-striped w3-bordered w3-card">
+                        <thead class="w3-secondary w3-text-white">
+                            <tr>
+                                <th>Producto</th>
+                                <th class="w3-center">Cantidad</th>
+                                <th class="w3-right">Precio Unit.</th>
+                                <th class="w3-right">Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for detalle in pedido.detalles_pedido.all %}
+                            <tr>
+                                <td>
+                                    <strong>{{ detalle.producto.nombre }}</strong>
+                                    {% if detalle.producto.marca %}
+                                    <br><small class="w3-text-grey">Marca: {{ detalle.producto.marca }}</small>
+                                    {% endif %}
+                                </td>
+                                <td class="w3-center">{{ detalle.cantidad }}</td>
+                                <td class="w3-right">${{ detalle.producto.precio }}</td>
+                                <td class="w3-right w3-text-red">
+                                    <strong class="subtotal" data-precio="{{ detalle.producto.precio }}" data-cantidad="{{ detalle.cantidad }}">
+                                        ${{ detalle.producto.precio }}
+                                    </strong>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="w3-center w3-text-grey">
+                                    <i class="fa fa-exclamation-triangle"></i> No hay productos en este pedido
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot class="w3-secondary w3-text-white">
+                            <tr>
+                                <th colspan="3">Subtotal Productos:</th>
+                                <th class="w3-right">${{ pedido.total_precio }}</th>
+                            </tr>
+                            {% if pedido.costo_envio %}
+                            <tr>
+                                <th colspan="3">Costo de Envío:</th>
+                                <th class="w3-right">${{ pedido.costo_envio }}</th>
+                            </tr>
+                            {% endif %}
+                            <tr style="font-size: 1.2em; font-weight: bold;">
+                                <th colspan="3">TOTAL A PAGAR:</th>
+                                <th class="w3-right w3-text-yellow" id="total-pagar">
+                                    ${{ pedido.total_precio }}
+                                </th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Opciones de pago -->
+            <div class="w3-container w3-center w3-margin-top">
+                <div class="w3-row-padding w3-margin-top">
+                    <!-- Solo MercadoPago -->
+                    <div class="w3-container w3-center">
+                        <div class="w3-margin-bottom">
+                            <img src="https://imgmp.mercadolibrestatic.com/power-glove/images/logos/mp-logo-on-white.svg" 
+                                 alt="MercadoPago" style="height: 40px; margin-bottom: 10px;">
+                        </div>
+                        <p class="w3-text-gray">Paga de forma segura con tarjeta de crédito, débito, Pago Fácil, RapiPago o otros medios</p>
+                        <div class="w3-panel w3-light-blue w3-round-small w3-small w3-margin-top">
+                            <i class="fa fa-info-circle"></i> <strong>Haz clic en el botón de MercadoPago para realizar el pago</strong>
+                        </div>
+                        {% if boton_mp %}
+                        <div class="w3-margin-top">
+                            <div id="boton_mp" class="w3-btn w3-round-large"></div>
+                            <script>{{ boton_mp|safe }}</script>
+                        </div>
+                        {% else %}
+                        <button class="w3-btn w3-round-large w3-small w3-margin-top" disabled>
+                                <i class="fa fa-exclamation-triangle"></i> MercadoPago no disponible
+                        </button>
+                      {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Información adicional -->
+            <div class="w3-panel w3-secondary w3-text-white w3-center w3-margin-top">
+                <h5><i class="fa fa-info-circle"></i> Información importante:</h5>
+                <ul class="w3-ul w3-small">
+                    <li><i class="fa fa-clock-o"></i> Los pedidos se procesan dentro de las 24-48 horas hábiles</li>
+                    <li><i class="fa fa-phone"></i> Te contactaremos para coordinar la entrega</li>
+                    <li><i class="fa fa-shield"></i> Todos los pagos son seguros y garantizados</li>
+                </ul>
+            </div>
+
+            <!-- Información de Verificación por QR -->
+            <div class="w3-panel w3-green w3-text-white w3-center w3-margin-top">
+                <h5><i class="fa fa-qrcode"></i> Verificación de Entrega por QR</h5>
+                <div class="w3-row-padding">
+                    <div class="w3-half">
+                        <p class="w3-small"><strong>¿Cómo funciona?</strong></p>
+                        <ul class="w3-ul w3-tiny">
+                            <li>Al confirmar tu pago, generaremos un código QR único</li>
+                            <li>Recibirás el QR en tu email de confirmación</li>
+                            <li>El transportista escaneará el QR al entregar</li>
+                            <li>La entrega se confirma instantáneamente</li>
+                        </ul>
+                    </div>
+                    <div class="w3-half">
+                        <p class="w3-small"><strong>Ventajas del sistema QR:</strong></p>
+                        <ul class="w3-ul w3-tiny">
+                            <li><i class="fa fa-check"></i> Confirmación instantánea de entrega</li>
+                            <li><i class="fa fa-check"></i> Registro exacto de fecha y hora</li>
+                            <li><i class="fa fa-check"></i> Mayor seguridad para tu pedido</li>
+                            <li><i class="fa fa-check"></i> Seguimiento en tiempo real</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="w3-margin-top">
+                    <p class="w3-small"><i class="fa fa-info-circle"></i> 
+                    <strong>Importante:</strong> Guarda el código QR que recibirás por email. El transportista lo necesitará para confirmar la entrega.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Botones de navegación -->
+            <div class="w3-center w3-padding">
+                <a href="{% url 'carrito' %}" class="w3-button w3-gray w3-round-large">
+                    <i class="fa fa-arrow-left"></i> Volver al Carrito
+                </a>
+                <a href="{% url 'detalle_pedido' pedido.id %}" class="w3-button w3-secondary w3-text-white w3-round-large">
+                    <i class="fa fa-eye"></i> Ver Detalles del Pedido
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .w3-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .w3-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+    }
+
+    .mp-button {
+        margin: 10px 0;
+        padding: 15px;
+        border-radius: 8px;
+        background-color: #009EE3;
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-size: 16px;
+        width: 100%;
+        transition: background-color 0.3s;
+    }
+
+    .mp-button:hover {
+        background-color: #0080C0;
+    }
+
+    @media screen and (max-width: 600px) {
+        .w3-half {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .w3-button {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        
+        /* Fix para scroll en móvil */
+        .w3-container {
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+        
+        .w3-card-4 {
+            margin: 0;
+            max-width: 100%;
+            min-height: 100vh;
+        }
+        
+        body {
+            overflow-x: hidden;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .w3-panel {
+            margin-bottom: 15px;
+        }
+        
+        .w3-margin-top {
+            margin-top: 15px !important;
+        }
+    }
+</style>
+
+<script>
+// Función para mostrar loading al seleccionar método de pago
+document.addEventListener('DOMContentLoaded', function() {
+    // Calcular subtotales
+    const subtotales = document.querySelectorAll('.subtotal');
+    subtotales.forEach(element => {
+        const precio = parseFloat(element.dataset.precio);
+        const cantidad = parseInt(element.dataset.cantidad);
+        const subtotal = precio * cantidad;
+        element.textContent = `$${subtotal.toFixed(2)}`;
+    });
+
+    // Calcular total final
+    const totalProductos = parseFloat('{{ pedido.total_precio }}');
+    const costoEnvio = parseFloat('{{ pedido.costo_envio|default:0 }}');
+    const totalFinal = totalProductos + costoEnvio;
+    
+    // Actualizar total en la tabla si existe
+    const totalElement = document.getElementById('total-pagar');
+    if (totalElement) {
+        totalElement.textContent = `$${totalFinal.toFixed(2)}`;
+    }
+
+    const forms = document.querySelectorAll('form');
+    forms.forEach(form => {
+        form.addEventListener('submit', function() {
+            // Mostrar spinner de loading
+            const button = this.querySelector('button[type="submit"]');
+            if (button) {
+                button.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Procesando...';
+                button.disabled = true;
+            }
+        });
+    });
+
+    // Auto-click en MercadoPago después de 5 segundos (opcional)
+    // setTimeout(function() {
+    //     const mpButton = document.querySelector('.mp-button');
+    //     if (mpButton) {
+    //         mpButton.style.backgroundColor = '#ff9900';
+    //         mpButton.innerHTML = '¡Oferta especial! Click aquí para 5% de descuento';
+    //     }
+    // }, 5000);
+});
+</script>
+{% endblock %}

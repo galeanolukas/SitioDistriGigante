@@ -1,0 +1,944 @@
+<!-- Modales para Login y Register -->
+<!-- Modal Login -->
+{% load static %}
+<div id="loginModal" class="w3-modal">
+    <div class="w3-modal-content w3-card-4 w3-animate-zoom" style="max-width:500px; padding:0;">
+        <div class="w3-center">
+            <span onclick="document.getElementById('loginModal').style.display='none'"
+                  class="w3-button w3-display-topright w3-large w3-text-white">&times;</span>
+            <div class="w3-container w3-secondary w3-text-white w3-padding-16">
+                <h3 class="w3-large"><i class="fas fa-sign-in-alt"></i> INICIAR SESIÓN</h3>
+            </div>
+
+            <form class="w3-container" id="loginFormModal" method="POST" action="{% url 'login' %}" style="padding:16px 24px;">
+                {% csrf_token %}
+
+                <div class="w3-section">
+                    <div class="w3-input-wrapper">
+                        <input type="text" class="w3-input w3-border w3-round-large" id="usernameModal"
+                               name="username" placeholder=" " required>
+                        <label for="usernameModal" class="w3-label">Nombre de usuario</label>
+                    </div>
+                </div>
+
+                <div class="w3-section">
+                    <div class="w3-input-wrapper" style="position:relative;">
+                        <input type="password" class="w3-input w3-border w3-round-large" id="passwordModal"
+                               name="password" placeholder=" " required>
+                        <label for="passwordModal" class="w3-label">Contraseña</label>
+                        <span class="w3-button w3-transparent" style="position:absolute; right:10px; top:1px;"
+                              onclick="togglePassword('passwordModal')">
+                            <i class="fas fa-eye-slash"></i>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="w3-section">
+                    <button type="submit" class="w3-button w3-secondary w3-text-white w3-round-large w3-block">
+                        <i class="fas fa-sign-in-alt"></i> INGRESAR
+                    </button>
+                </div>
+
+                <!-- Botón de Google OAuth -->
+                <div class="w3-section">
+                    <a href="{% url 'google_login' %}" class="w3-button w3-white w3-border w3-round-large w3-block w3-center" style="text-decoration:none;">
+                        <svg width="18" height="18" viewBox="0 0 18 18" class="w3-margin-right" style="vertical-align:middle;">
+                            <path fill="#4285F4" d="M16.51 9H9v3.14h4.38c-.18 1-.74 1.86-1.58 2.44v2.02h2.56c1.5-1.38 2.36-3.42 2.36-5.86 0-.57-.06-1.13-.15-1.74z"/>
+                            <path fill="#34A853" d="M9 18c2.16 0 3.97-.71 5.29-1.93l-2.56-2.02c-.71.48-1.62.76-2.73.76-2.1 0-3.87-1.42-4.5-3.32H1.87v2.08C3.18 15.83 5.93 18 9 18z"/>
+                            <path fill="#FBBC05" d="M4.5 11.49c-.16-.48-.25-1-.25-1.49s.09-1.01.25-1.49V6.43H1.87C1.33 7.5 1 8.73 1 9.99s.33 2.49.87 3.56l2.63-2.06z"/>
+                            <path fill="#EA4335" d="M9 5.38c1.18 0 2.24.43 3.06 1.17l2.27-2.27C12.97 2.69 11.16 2 9 2 5.93 2 3.18 4.17 1.87 7.43l2.63 2.06C5.13 7.59 6.9 5.38 9 5.38z"/>
+                        </svg>
+                        Continuar con Google
+                    </a>
+                </div>
+
+                <div class="w3-center w3-padding-16">
+                    <a onclick="document.getElementById('registerModal').style.display='block'" class="w3-text-blue" style="text-decoration:none;">
+                        ¿No tienes cuenta? <strong>Regístrate aquí</strong>
+                    </a>
+                    <br>
+                    <a onclick="document.getElementById('resetPassModal').style.display='block'" class="w3-text-red w3-margin" id="openModalBtn">
+                        ¿Olvidaste tu contraseña?
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Register -->
+<div id="registerModal" class="w3-modal">
+    <div class="w3-modal-content w3-card-4 w3-animate-zoom" style="max-width:600px; padding:0;">
+        <div class="w3-center">
+            <span onclick="document.getElementById('registerModal').style.display='none'"
+                  class="w3-button w3-display-topright w3-large w3-text-white">&times;</span>
+            <div class="w3-container w3-secondary w3-text-white w3-padding-16">
+                <h3 class="w3-large"><i class="fas fa-user-plus"></i> CREAR CUENTA</h3>
+            </div>
+
+            <form class="w3-container" id="registerFormModal" method="POST" action="{% url 'register' %}" style="padding:16px 24px;">
+                {% csrf_token %}
+
+                <div class="w3-section">
+                    <div class="w3-input-wrapper">
+                        <input type="text" class="w3-input w3-border w3-round-large" id="regUsername"
+                               name="username" placeholder=" " minlength="2" maxlength="30" required>
+                        <label for="regUsername" class="w3-label">Nombre de usuario</label>
+                    </div>
+                </div>
+
+                <div class="w3-section">
+                    <div class="w3-input-wrapper">
+                        <input type="email" class="w3-input w3-border w3-round-large" id="regEmail"
+                               name="email" placeholder=" " required>
+                        <label for="regEmail" class="w3-label">Email</label>
+                    </div>
+                </div>
+
+                <div class="w3-panel w3-light-grey w3-round w3-small">
+                    <p>La contraseña debe contener al menos 8 caracteres, 1 letra mayúscula y un símbolo (#$%&).</p>
+                </div>
+
+                <div class="w3-section">
+                    <div class="w3-input-wrapper" style="position:relative;">
+                        <input type="password" class="w3-input w3-border w3-round-large" id="regPassword"
+                               name="password" placeholder=" " required>
+                        <label for="regPassword" class="w3-label">Contraseña</label>
+                        <span class="w3-button w3-transparent" style="position:absolute; right:10px; top:1px;"
+                              onclick="togglePassword('regPassword')">
+                            <i class="fas fa-eye-slash"></i>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="w3-section">
+                    <div class="w3-input-wrapper" style="position:relative;">
+                        <input type="password" class="w3-input w3-border w3-round-large" id="regConfirmPassword"
+                               name="confirm_password" placeholder=" " required>
+                        <label for="regConfirmPassword" class="w3-label">Confirmar contraseña</label>
+                        <span class="w3-button w3-transparent" style="position:absolute; right:10px; top:1px"
+                              onclick="togglePassword('regConfirmPassword')">
+                            <i class="fas fa-eye-slash"></i>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="w3-section w3-center">
+                    <div class="g-recaptcha" data-sitekey="6Ldwm-YsAAAAAKtyV9bL7frQb1NKdvSI549UB0iG"></div>
+                    <div id="modalCaptchaError" class="w3-text-red w3-small" style="display: none;">
+                        Por favor, completa el CAPTCHA para continuar.
+                    </div>
+                </div>
+
+                <div class="w3-section">
+                    <button type="submit" class="w3-button w3-secondary w3-text-white w3-round-large w3-block">
+                        <i class="fas fa-user-plus"></i> REGISTRARME
+                    </button>
+                </div>
+
+                <!-- Botón de Google OAuth para registro -->
+                <div class="w3-section">
+                    <a href="{% url 'google_login' %}" class="w3-button w3-white w3-border w3-round-large w3-block w3-center" style="text-decoration:none;">
+                        <svg width="18" height="18" viewBox="0 0 18 18" class="w3-margin-right" style="vertical-align:middle;">
+                            <path fill="#4285F4" d="M16.51 9H9v3.14h4.38c-.18 1-.74 1.86-1.58 2.44v2.02h2.56c1.5-1.38 2.36-3.42 2.36-5.86 0-.57-.06-1.13-.15-1.74z"/>
+                            <path fill="#34A853" d="M9 18c2.16 0 3.97-.71 5.29-1.93l-2.56-2.02c-.71.48-1.62.76-2.73.76-2.1 0-3.87-1.42-4.5-3.32H1.87v2.08C3.18 15.83 5.93 18 9 18z"/>
+                            <path fill="#FBBC05" d="M4.5 11.49c-.16-.48-.25-1-.25-1.49s.09-1.01.25-1.49V6.43H1.87C1.33 7.5 1 8.73 1 9.99s.33 2.49.87 3.56l2.63-2.06z"/>
+                            <path fill="#EA4335" d="M9 5.38c1.18 0 2.24.43 3.06 1.17l2.27-2.27C12.97 2.69 11.16 2 9 2 5.93 2 3.18 4.17 1.87 7.43l2.63 2.06C5.13 7.59 6.9 5.38 9 5.38z"/>
+                        </svg>
+                        Registrarse con Google
+                    </a>
+                </div>
+
+                <div class="w3-center w3-padding-16">
+                    <a onclick="openLoginModal()"
+                       class="w3-text-blue" style="text-decoration:none;">
+                        ¿Ya tienes cuenta? <strong>Ingresa aquí</strong>
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Recuperación de Contraseña -->
+<div id="resetPassModal" class="w3-modal">
+    <div class="w3-modal-content w3-card-4 w3-animate-zoom" style="max-width:500px">
+        <div class="w3-center w3-padding-16 w3-secondary">
+            <span onclick="document.getElementById('resetPassModal').style.display='none'"
+                class="w3-button w3-secondary w3-text-white w3-xlarge w3-display-topright">&times;</span>
+            <h3 class="w3-text-white">RECUPERA TU CONTRASEÑA</h3>
+        </div>
+
+        <form class="w3-container" id="formulario" name="form" autocomplete="off" action="#" method="POST">
+            {% csrf_token %}
+
+            <div class="w3-section">
+                {% if error %}
+                <div class="w3-panel w3-pale-red w3-round-large w3-border">
+                    <p class="w3-text-red">{{ error }}</p>
+                </div>
+                {% endif %}
+
+                <label class="w3-text-dark-gray"><b>Ingresa correo registrado</b></label>
+                <input type="email" class="w3-input w3-border w3-round-large"
+                       name="email" placeholder="tu@email.com" required
+                       style="padding: 12px;">
+                <div class="w3-text-red w3-small" id="emailError" style="display: none;">
+                    Ingrese un email válido.
+                </div>
+            </div>
+
+            <div class="w3-section w3-center">
+                <button type="submit" class="w3-button w3-secondary w3-round-large w3-padding w3-text-white"
+                        style="width: 100%;">
+                    <i class="fas fa-key"></i> Recuperar
+                </button>
+            </div>
+        </form>
+
+        <div class="w3-container w3-center w3-padding-16 w3-light-grey">
+            <hr class="w3-border-grey">
+            <small class="w3-text-dark-gray">
+                <strong>Se te enviará un código para verificar tu cuenta.</strong>
+            </small>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para preventista -->
+<div id="preventistaModal" class="w3-modal">
+    <div class="w3-modal-content w3-card-4 w3-animate-zoom" style="max-width:800px">
+        <div class="w3-container w3-red">
+            <span onclick="document.getElementById('preventistaModal').style.display='none'"
+                  class="w3-button w3-display-topright w3-large">&times;</span>
+            <h3 class="w3-center w3-padding-16"><i class="fas fa-user-tie"></i> Pedí tu preventista</h3>
+        </div>
+
+        <div class="w3-container w3-padding-0">
+            <div class="w3-row">
+                <!-- Columna de la imagen -->
+                <div class="w3-half w3-red w3-padding-24 w3-center">
+                    <div class="w3-padding-16">
+                        <img src="{% static 'img/preventista.png' %}" class="w3-image" alt="Preventista" style="max-height:300px;">
+                    </div>
+                    <h4 class="w3-text-white">¡Contacta con nuestro equipo!</h4>
+                    <p class="w3-text-white">Un preventista te visitará para asesorarte personalmente</p>
+                </div>
+
+                <!-- Columna del formulario -->
+                <div class="w3-half w3-padding-24">
+                    <form class="w3-container" id="formulario" name="form" action="" method="POST">
+                        {% csrf_token %}
+                        {{ form.media }}
+
+                        <div class="w3-center w3-margin-bottom">
+                            <h4><b>Completá tus datos</b></h4>
+                        </div>
+
+                        <div class="w3-section" id="form_box">
+                            <label class="w3-text-dark-grey"><b>Nombre</b></label>
+                            {{ form.nombre }}
+                        </div>
+
+                        <div class="w3-section" id="form_box">
+                            <label class="w3-text-dark-grey"><b>Teléfono</b></label>
+                            {{ form.telefono }}
+                        </div>
+
+                        <div class="w3-section w3-center" id="form_box">
+                            <label class="w3-text-dark-grey"><b>Ubicación</b></label>
+                            <p class="w3-small w3-text-grey">* Ubica tu dirección en el mapa</p>
+                            {{ form.ubicacion }}
+                        </div>
+
+                        <div class="w3-section">
+                            <label class="w3-check">
+                                <input type="checkbox" required>
+                                <span class="w3-checkmark"></span> Acepto los términos y condiciones
+                            </label>
+                        </div>
+
+                        <div class="w3-center">
+                            <button class="w3-button w3-red w3-round-large w3-block" type="submit">
+                                <i class="fas fa-paper-plane"></i> ENVIAR SOLICITUD
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Mensajes de Django -->
+<div id="djangoMessagesModal" class="w3-modal">
+    <div class="w3-modal-content w3-card-4 w3-animate-zoom" style="max-width:600px">
+        <header class="w3-container w3-secondary w3-text-white">
+            <span onclick="document.getElementById('djangoMessagesModal').style.display='none'"
+                  class="w3-button w3-display-topright">&times;</span>
+            <h3 class="w3-center"><i class="fas fa-comment-alt"></i> Mensajes del Sistema</h3>
+        </header>
+
+        <div class="w3-container w3-padding-24">
+            {% for message in messages %}
+            <div class="w3-panel w3-leftbar
+                {% if message.tags == 'success' %}w3-pale-green w3-border-green
+                {% elif message.tags == 'error' %}w3-pale-red w3-border-red
+                {% elif message.tags == 'warning' %}w3-pale-yellow w3-border-yellow
+                {% else %}w3-pale-blue w3-border-blue
+                {% endif %} w3-round-large w3-padding">
+
+                <div class="w3-row w3-center">
+                    <div class="w3-col" style="width:40px">
+                        <i class="fas
+                            {% if message.tags == 'success' %}fa-check-circle w3-text-green
+                            {% elif message.tags == 'error' %}fa-exclamation-circle w3-text-red
+                            {% elif message.tags == 'warning' %}fa-exclamation-triangle w3-text-yellow
+                            {% else %}fa-info-circle
+                            {% endif %} fa-2x"></i>
+                    </div>
+                    <div class="w3-rest">
+                        <h4 class="w3-margin-0">
+                            {% if message.tags == 'success' %}Éxito
+                            {% elif message.tags == 'error' %}Error
+                            {% elif message.tags == 'warning' %}Advertencia
+                            {% else %}Información
+                            {% endif %}
+                        </h4>
+                        <p class="w3-margin-0">{{ message|safe }}</p>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <footer class="w3-container w3-padding-16 w3-center">
+            <button onclick="document.getElementById('djangoMessagesModal').style.display='none'"
+                    class="w3-button w3-secondary w3-text-white w3-round-large">
+                <i class="fas fa-times"></i> Cerrar
+            </button>
+        </footer>
+    </div>
+</div>
+
+<!-- Modal de Verificación de Código -->
+<div id="verificationModal" class="w3-modal">
+    <div class="w3-modal-content w3-card-4 w3-animate-zoom" style="max-width:450px">
+        <header class="w3-container w3-secondary w3-text-white">
+            <span onclick="closeModal()" class="w3-button w3-display-topright">&times;</span>
+            <h3 class="w3-center">VALIDAR REGISTRO</h3>
+        </header>
+
+        <div class="w3-container w3-padding-24">
+            <div class="w3-center w3-margin-bottom">
+                <i class="fa fa-envelope-open-o w3-text-blue" style="font-size:48px;"></i>
+                <p class="w3-small w3-text-gray">Copia y pega el código de 6 caracteres que recibiste en el mail</p>
+            </div>
+
+            <form id="verificationForm" method="POST" action="">
+                {% csrf_token %}
+                <div class="w3-section">
+                    <label class="w3-text-dark-gray"><b>Código de verificación</b></label>
+                    <input class="w3-input w3-border w3-margin-bottom w3-code-input"
+                           type="text" name="vcode"
+                           {% if email_validate_code %}value="{{ email_validate_code }}"{% endif %}
+                           placeholder="ABCDEF" maxlength="6" required>
+
+                    <button class="w3-button w3-block w3-secondary w3-section w3-padding" type="submit">
+                        Validar Código
+                    </button>
+                </div>
+            </form>
+
+            <div class="w3-container w3-border-top w3-light-grey w3-padding-16">
+                <button type="button" class="w3-button w3-gray" onclick="closeModal()">Cancelar</button>
+                <span class="w3-right w3-text-dark-gray">¿No recibiste el código? <a href="#" class="w3-text-blue">Reenviar</a></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Mensajes de Contacto -->
+<div id="contactMessagesModal" class="w3-modal">
+    <div class="w3-modal-content w3-card-4 w3-animate-zoom" style="max-width:800px; max-height:90vh;">
+
+        <!-- Header del Modal -->
+        <div class="w3-container w3-primary">
+            <span onclick="closeModal('contactMessagesModal')"
+                  class="w3-button w3-display-topright w3-large w3-hover-red">&times;</span>
+            <h3 class="w3-center">
+                <i class="fas fa-envelope w3-margin-right"></i>
+                Mensajes de Contacto
+            </h3>
+        </div>
+
+        <!-- Filtros y Búsqueda -->
+        <div class="w3-container w3-padding-16 w3-light-grey">
+            <div class="w3-row-padding">
+                <div class="w3-col s8">
+                    <input type="text" id="contactSearch" class="w3-input w3-border w3-round"
+                           placeholder="Buscar en mensajes..." onkeyup="filterContacts()">
+                </div>
+                <div class="w3-col s4">
+                    <select id="contactFilter" class="w3-select w3-border w3-round" onchange="filterContacts()">
+                        <option value="all">Todos los mensajes</option>
+                        <option value="unread">No leídos</option>
+                        <option value="read">Leídos</option>
+                        <option value="today">Hoy</option>
+                        <option value="week">Esta semana</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lista de Mensajes -->
+        <div class="w3-container" style="max-height:400px; overflow-y:auto;">
+            <div id="contactMessagesList">
+                <!-- Los mensajes se cargarán aquí dinámicamente -->
+                <div class="w3-center w3-padding-32">
+                    <div class="w3-spinner"></div>
+                    <p>Cargando mensajes...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer con estadísticas -->
+        <div class="w3-container w3-light-grey w3-padding-16">
+            <div class="w3-row">
+                <div class="w3-third w3-center">
+                    <span class="w3-large" id="totalMessages">0</span>
+                    <br>
+                    <small>Total</small>
+                </div>
+                <div class="w3-third w3-center">
+                    <span class="w3-large w3-text-green" id="unreadMessages">0</span>
+                    <br>
+                    <small>No leídos</small>
+                </div>
+                <div class="w3-third w3-center">
+                    <span class="w3-large" id="todayMessages">0</span>
+                    <br>
+                    <small>Hoy</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Ver Mensaje Completo -->
+<div id="viewMessageModal" class="w3-modal">
+    <div class="w3-modal-content w3-card-4" style="max-width:700px;">
+        <div class="w3-container w3-primary">
+            <span onclick="closeModal('viewMessageModal')"
+                  class="w3-button w3-display-topright w3-large w3-hover-red">&times;</span>
+            <h4 class="w3-center">
+                <i class="fas fa-envelope-open w3-margin-right"></i>
+                Mensaje Completo
+            </h4>
+        </div>
+
+        <div class="w3-container w3-padding-24" id="messageDetailContent">
+            <!-- Contenido del mensaje se cargará aquí -->
+        </div>
+
+        <div class="w3-container w3-light-grey w3-padding-16">
+            <button class="w3-button w3-red w3-round" onclick="closeModal('viewMessageModal')">
+                <i class="fas fa-times"></i> Cerrar
+            </button>
+            <button class="w3-button w3-green w3-round w3-right" onclick="markAsRead()">
+                <i class="fas fa-check"></i> Marcar como leído
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmación de Pedido con Envío -->
+<div id="confirmarPedidoModal" class="w3-modal">
+    <div class="w3-modal-content w3-card-4 w3-animate-zoom" style="max-width:800px;">
+        <div class="w3-container w3-primary">
+            <span onclick="closeModal('confirmarPedidoModal')"
+                  class="w3-button w3-display-topright w3-large">&times;</span>
+            <h3 class="w3-center w3-padding-16">
+                <i class="fas fa-shopping-cart"></i> Confirmar Pedido
+            </h3>
+        </div>
+
+        <form id="confirmarPedidoForm" method="POST" action="{% url 'confirmar_pedido' %}">
+            {% csrf_token %}
+            
+            <div class="w3-container w3-padding-24">
+                <!-- Resumen del carrito -->
+                <div class="w3-panel w3-light-grey w3-round-large w3-margin-bottom">
+                    <h4 class="w3-text-primary"><i class="fas fa-list"></i> Resumen del Pedido</h4>
+                    <div id="resumenCarrito">
+                        <!-- Se cargará dinámicamente -->
+                    </div>
+                    <div class="w3-row w3-margin-top">
+                        <div class="w3-half">
+                            <strong>Subtotal productos:</strong>
+                            <span class="w3-right" id="subtotalProductos">$0</span>
+                        </div>
+                        <div class="w3-half">
+                            <strong>Costo de envío:</strong>
+                            <span class="w3-right" id="costoEnvio">$0</span>
+                        </div>
+                    </div>
+                    <hr class="w3-border-grey">
+                    <div class="w3-center">
+                        <h4 class="w3-text-secondary">
+                            <strong>Total a pagar:</strong>
+                            <span class="w3-text-secondary" id="totalPagar">$0</span>
+                        </h4>
+                    </div>
+                </div>
+
+                <!-- Opciones de envío -->
+                <div class="w3-panel w3-border w3-round-large">
+                    <h4 class="w3-text-primary"><i class="fas fa-truck"></i> Seleccionar Método de Envío</h4>
+                    <div id="opcionesEnvio">
+                        <!-- Las opciones de envío se cargarán dinámicamente con JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Dirección de envío (solo para envío a domicilio) -->
+                <div id="direccionEnvio" class="w3-panel w3-border w3-round-large" style="display:none;">
+                    <h4 class="w3-text-primary"><i class="fas fa-map-marker-alt"></i> Dirección de Envío</h4>
+                    <div class="w3-section">
+                        <label class="w3-text-dark-grey"><b>Calle y Número</b></label>
+                        <input type="text" name="direccion_calle" class="w3-input w3-border w3-round" 
+                               placeholder="Ej: Av. Principal 123">
+                    </div>
+                    <div class="w3-section">
+                        <label class="w3-text-dark-grey"><b>Barrio</b></label>
+                        <input type="text" name="direccion_barrio" class="w3-input w3-border w3-round" 
+                               placeholder="Ej: Centro">
+                    </div>
+                    <div class="w3-section">
+                        <label class="w3-text-dark-grey"><b>Código Postal</b></label>
+                        <input type="text" name="direccion_cp" class="w3-input w3-border w3-round" 
+                               placeholder="Ej: 3000">
+                    </div>
+                    <div class="w3-section">
+                        <label class="w3-text-dark-grey"><b>Referencias</b></label>
+                        <textarea name="direccion_referencias" class="w3-input w3-border w3-round" 
+                                  placeholder="Ej: Entre calles, color de casa, etc."></textarea>
+                    </div>
+                </div>
+
+                <!-- Observaciones -->
+                <div class="w3-section">
+                    <label class="w3-text-dark-grey"><b>Observaciones del pedido (opcional)</b></label>
+                    <textarea name="observaciones" class="w3-input w3-border w3-round" 
+                              placeholder="Alguna nota especial sobre tu pedido..."></textarea>
+                </div>
+
+                <!-- Términos y condiciones -->
+                <div class="w3-section">
+                    <label class="w3-checkbox">
+                        <input type="checkbox" name="terminos" required>
+                        <span class="w3-checkmark"></span> 
+                        Acepto los términos y condiciones y la política de privacidad
+                    </label>
+                </div>
+            </div>
+
+            <!-- Botones de acción -->
+            <div class="w3-container w3-padding-16 w3-light-grey">
+                <div class="w3-center">
+                    <button type="button" onclick="closeModal('confirmarPedidoModal')"
+                            class="w3-button w3-grey w3-round-large w3-margin-right">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                    <button type="submit" class="w3-button w3-secondary w3-round-large">
+                        <i class="fas fa-check"></i> Confirmar Pedido
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+/* Estilos para los modales */
+.w3-modal {
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.w3-modal-content {
+    border-radius: 12px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    margin: auto !important;
+    position: relative !important;
+    top: auto !important;
+    transform: none !important;
+}
+
+.w3-input-wrapper {
+    position: relative;
+    display: block;
+    width: 100%;
+}
+
+/* Make inputs take full width in modals */
+.w3-modal .w3-input {
+    width: 100% !important;
+    box-sizing: border-box;
+}
+
+/* Responsive improvements */
+@media screen and (max-width: 768px) {
+    .w3-modal-content {
+        width: 95% !important;
+        margin: 10px !important;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+    
+    .w3-container.w3-padding-24 {
+        padding: 16px !important;
+    }
+    
+    .w3-row-padding > .w3-col {
+        margin-bottom: 8px;
+    }
+    
+    .w3-input {
+        font-size: 0.9em !important;
+    }
+}
+
+@media screen and (max-width: 600px) {
+    #confirmarPedidoModal .w3-modal-content {
+        max-height: 85vh !important;
+        overflow-y: auto !important;
+        margin: 5px !important;
+        padding: 10px !important;
+    }
+    
+    #confirmarPedidoModal .w3-container.w3-padding-24 {
+        padding: 12px !important;
+    }
+    
+    #confirmarPedidoModal .w3-section {
+        margin-bottom: 12px !important;
+    }
+    
+    #confirmarPedidoModal .w3-panel {
+        margin-bottom: 12px !important;
+        padding: 12px !important;
+    }
+    
+    #confirmarPedidoModal .w3-button {
+        font-size: 0.9em !important;
+        padding: 12px 16px !important;
+        margin: 5px 0 !important;
+        min-height: 48px !important; /* Touch-friendly */
+        width: 100% !important;
+    }
+    
+    #confirmarPedidoModal .w3-input, 
+    #confirmarPedidoModal textarea {
+        font-size: 16px !important; /* Prevents zoom on iOS */
+        padding: 12px !important;
+        min-height: 48px !important; /* Touch-friendly */
+        border-radius: 8px !important;
+    }
+    
+    #confirmarPedidoModal textarea {
+        min-height: 80px !important;
+    }
+    
+    #confirmarPedidoModal .w3-row {
+        margin-bottom: 15px !important;
+    }
+    
+    #confirmarPedidoModal .w3-half {
+        width: 100% !important;
+        margin-bottom: 10px !important;
+    }
+    
+    #confirmarPedidoModal h4 {
+        font-size: 1.1em !important;
+        margin-bottom: 10px !important;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    #confirmarPedidoModal .w3-modal-content {
+        max-height: 90vh !important;
+        margin: 2px !important;
+        padding: 8px !important;
+    }
+    
+    #confirmarPedidoModal .w3-container.w3-padding-24 {
+        padding: 8px !important;
+    }
+    
+    #confirmarPedidoModal .w3-panel {
+        padding: 8px !important;
+        margin-bottom: 8px !important;
+    }
+    
+    #confirmarPedidoModal .w3-button {
+        width: 100% !important;
+        margin-bottom: 10px !important;
+        font-size: 0.85em !important;
+        padding: 14px 16px !important;
+    }
+    
+    #confirmarPedidoModal .w3-input,
+    #confirmarPedidoModal textarea {
+        padding: 10px !important;
+        font-size: 16px !important;
+    }
+    
+    #confirmarPedidoModal h3 {
+        font-size: 1.2em !important;
+        padding: 12px !important;
+    }
+    
+    #confirmarPedidoModal h4 {
+        font-size: 1em !important;
+        margin-bottom: 8px !important;
+    }
+}
+
+.w3-input-wrapper {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.w3-label {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    transition: 0.2s;
+    pointer-events: none;
+    color: #757575;
+}
+
+.w3-input:focus + .w3-label,
+.w3-input:not(:placeholder-shown) + .w3-label {
+    top: -18px;
+    left: 8px;
+    font-size: 12px;
+    background-color: white;
+    padding: 0 4px;
+    color: #2196F3;
+}
+
+/* Checkbox personalizado */
+.w3-checkbox {
+    display: block;
+    position: relative;
+    padding-left: 35px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.w3-checkmark {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 25px;
+    width: 25px;
+    background-color: #eee;
+    border-radius: 4px;
+}
+
+.w3-checkbox input:checked ~ .w3-checkmark {
+    background-color: var(--primary);
+}
+
+.w3-checkmark:after {
+    content: "";
+    position: absolute;
+    display: none;
+}
+
+.w3-checkbox input:checked ~ .w3-checkmark:after {
+    display: block;
+}
+
+.w3-checkbox .w3-checkmark:after {
+    left: 9px;
+    top: 5px;
+    width: 5px;
+    height: 10px;
+    border: solid white;
+    border-width: 0 3px 3px 0;
+    transform: rotate(45deg);
+}
+</style>
+
+<!-- Modal de Notificaciones Administrativas -->
+<div id="notificacionesModal" class="w3-modal">
+    <div class="w3-modal-content w3-card-4 w3-animate-zoom" style="max-width:600px; margin: 20px;">
+        <div class="w3-container w3-primary">
+            <span onclick="closeModal('notificacionesModal')"
+                  class="w3-button w3-display-topright w3-large">&times;</span>
+            <h3 class="w3-center w3-padding-16">
+                <i class="fas fa-bell"></i> Notificaciones Administrativas
+            </h3>
+        </div>
+
+        <div class="w3-container w3-padding-24">
+            <div id="notificacionesContainer">
+                <!-- Las notificaciones se cargarán dinámicamente -->
+                <div class="w3-center w3-padding-32">
+                    <i class="fas fa-spinner fa-spin w3-xxlarge w3-text-grey"></i>
+                    <p class="w3-text-grey">Cargando notificaciones...</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="w3-container w3-padding-16 w3-light-grey">
+            <div class="w3-center">
+                <button type="button" onclick="closeModal('notificacionesModal')"
+                        class="w3-button w3-grey w3-round-large">
+                    <i class="fas fa-times"></i> Cerrar
+                </button>
+                <button type="button" onclick="marcarTodasComoLeidas()"
+                        class="w3-button w3-secondary w3-round-large">
+                    <i class="fas fa-check"></i> Marcar todas como leídas
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function abrirModalNotificaciones() {
+    document.getElementById('notificacionesModal').style.display='block';
+    cargarNotificaciones();
+}
+
+function cargarNotificaciones() {
+    fetch('/api/notificaciones/')
+        .then(response => response.json())
+        .then(data => {
+            renderizarNotificaciones(data.notificaciones);
+        })
+        .catch(error => {
+            console.error('Error al cargar notificaciones:', error);
+            document.getElementById('notificacionesContainer').innerHTML = 
+                '<div class="w3-center w3-padding-32"><p class="w3-text-red">Error al cargar notificaciones</p></div>';
+        });
+}
+
+function renderizarNotificaciones(notificaciones) {
+    const container = document.getElementById('notificacionesContainer');
+    
+    if (notificaciones.length === 0) {
+        container.innerHTML = `
+            <div class="w3-center w3-padding-32">
+                <i class="fas fa-bell-slash w3-xxlarge w3-text-grey"></i>
+                <p class="w3-text-grey">No tienes notificaciones nuevas</p>
+            </div>
+        `;
+        return;
+    }
+    
+    let html = '';
+    notificaciones.forEach(notificacion => {
+        const icono = obtenerIconoNotificacion(notificacion.tipo);
+        const claseLeido = notificacion.leido ? 'w3-light-grey' : 'w3-white';
+        const bordeLeido = notificacion.leido ? '' : 'w3-border-left w3-border-red';
+        
+        html += `
+            <div class="w3-panel ${claseLeido} ${bordeLeido} w3-round-large w3-margin-bottom" 
+                 data-id="${notificacion.id}" style="cursor: pointer;" 
+                 onclick="verDetallesNotificacion(${notificacion.id})">
+                <div class="w3-row">
+                    <div class="w3-col s2">
+                        <i class="${icono} w3-xxlarge w3-text-primary"></i>
+                    </div>
+                    <div class="w3-col s10">
+                        <h5 class="w3-margin-top"><b>${notificacion.titulo}</b></h5>
+                        <p class="w3-small w3-text-grey">${notificacion.mensaje}</p>
+                        <small class="w3-text-grey">
+                            <i class="fas fa-clock"></i> ${formatearFecha(notificacion.fecha_creacion)}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+}
+
+function obtenerIconoNotificacion(tipo) {
+    const iconos = {
+        'pedido': 'fas fa-shopping-cart',
+        'compra': 'fas fa-credit-card',
+        'contacto': 'fas fa-envelope',
+        'producto': 'fas fa-box',
+        'oferta': 'fas fa-tag',
+        'usuario': 'fas fa-user-plus',
+        'sistema': 'fas fa-exclamation-triangle'
+    };
+    return iconos[tipo] || 'fas fa-info-circle';
+}
+
+function formatearFecha(fechaStr) {
+    const fecha = new Date(fechaStr);
+    const ahora = new Date();
+    const diffMs = ahora - fecha;
+    const diffMins = Math.floor(diffMs / 60000);
+    
+    if (diffMins < 1) return 'Ahora';
+    if (diffMins < 60) return `Hace ${diffMins} minuto${diffMins > 1 ? 's' : ''}`;
+    
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `Hace ${diffHours} hora${diffHours > 1 ? 's' : ''}`;
+    
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays < 7) return `Hace ${diffDays} día${diffDays > 1 ? 's' : ''}`;
+    
+    return fecha.toLocaleDateString('es-ES');
+}
+
+function marcarTodasComoLeidas() {
+    fetch('/api/notificaciones/marcar-leidas/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload(); // Recargar para actualizar contador
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+
+<!-- Script de reCAPTCHA para modales -->
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+

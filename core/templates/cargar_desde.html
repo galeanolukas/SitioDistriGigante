@@ -1,0 +1,135 @@
+{% extends 'dashboard.html' %}
+{% load static %}
+{% block page_title %}
+<h4>CARGAR X EXCEL/CSV</h4>
+{% endblock %}
+{% block content %}
+<div class="w3-container w3-padding">
+    <div class="w3-light-grey w3-round-large w3-padding">
+        <div class="w3-center">
+            <p class="w3-small"><strong>1)</strong> Selecciona un archivo de excel para cargar al sistema</p>
+            <form method="POST" enctype="multipart/form-data" action="" class="w3-container">
+                <div class="w3-section">
+                    {% csrf_token %}
+                    <div class="w3-responsive">
+                        {{ form.as_p }}
+                    </div>
+                    {% if fecha %}
+                    <br>
+                    <p class="w3-small">Actualizado el dia {{ fecha }}</p>
+                    {% else %}
+                    <br>
+                    {% endif %}
+                    <button type="submit" class="w3-button w3-secondary w3-text-white">CARGAR</button>
+                </div>
+            </form>
+
+
+            <div class="w3-responsive">
+                <!-- Tabla donde se muestran los archivos cargados -->
+                {% if planillas %}
+                <table class="w3-table w3-bordered w3-striped">
+                    <thead>
+                        <tr class="w3-secondary w3-text-white">
+                            <th>Cargados</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+
+                        {% for p in planillas %}
+                        <tr>
+                            <td><strong>{{ p.archivo }}</strong></td>
+                            <td>
+                                <a href="{% url 'cargar_archivo_id' ID=p.id %}">
+                                    <button class="w3-button w3-blue w3-small" title="Editar Config">
+                                        <i class="fa fa-cog"></i>
+                                    </button>
+                                </a>
+                                <a href="{% url 'eliminar_archivo_id' ID=p.id%}">
+                                    <button class="w3-button w3-red w3-small" title="Eliminar archivo">
+                                        <i class="fa fa-trash"></i>
+                                    </button>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% endif %}
+            </div>
+            <hr>
+            {% if planilla %}
+            <h5 class="w3-text-black w3-center"><b>CONFIGURAR DATOS A CARGAR</b></h5>
+            <form method="POST" enctype="multipart/form-data" action="" class="w3-container">
+                {% csrf_token %}
+                <div class="w3-responsive">
+                    <table class="w3-table w3-bordered">
+                        <tbody>
+                            {% for key, list in selec_dict.items %}
+                            <tr>
+                                <th>{{ key }}</th>
+                                <td>
+                                    <select class="w3-select w3-border" name="{{ key }}-selec" id="{{ key }}-selec">
+                                        {% for item in list %}
+                                        <option value="{{ item }}">{{ item }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="w3-center w3-margin-top">
+                    {% if config %}
+                    <a href="{% url 'cargar_productos' ID=planilla.id %}" class="w3-button w3-red">CARGAR PRODUCTOS</a>
+                    {% else %}
+                    <button type="submit" class="w3-button w3-indigo">GUARDAR CONF</button>
+                    {% endif %}
+                </div>
+            </form>
+            {% else %}
+            <!--  Aca va una excepcion -->
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Estilos para mejorar la apariencia de los formularios */
+    form p {
+        margin: 10px 0;
+    }
+
+    select.w3-select {
+        width: 100%;
+        padding: 8px;
+        margin: 5px 0;
+    }
+
+    .w3-button {
+        margin: 5px;
+    }
+
+    /* Estilos para los tooltips */
+    .w3-button {
+        position: relative;
+    }
+
+    .w3-button:hover::after {
+        content: attr(title);
+        position: absolute;
+        bottom: -30px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: #333;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 4px;
+        font-size: 12px;
+        white-space: nowrap;
+        z-index: 1;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% block title %}VALIDAR REGISTRO{% endblock %}
+{% block content %}
+<div class="w3-container w3-content" style="max-width:600px; margin-top:20px">
+    <div class="w3-card-4 w3-round-large w3-white w3-margin">
+        <!-- Encabezado -->
+        <div class="w3-container w3-secondary w3-center w3-border-bottom">
+            <h3 class="w3-text-white"><b>VALIDA TU REGISTRO</b></h3>
+            <p class="w3-small w3-text-white">Copia y pega el código de 6 caracteres que recibiste en el mail</p>
+        </div>
+
+        <!-- Formulario -->
+        <div class="w3-container w3-padding-24">
+            <form id="formulario" method="post" autocomplete="off" action="{% url 'validate_code' ID=ID %}">
+                {% csrf_token %}
+
+                <div class="w3-section">
+                    <label class="w3-text-dark-gray"><b>Código de verificación</b></label>
+                    <input class="w3-input w3-border w3-round-large w3-margin-bottom"
+                           type="text"
+                           id="vcode"
+                           name="vcode"
+                           {% if email_validate_code %}value="{{ email_validate_code }}"{% endif %}
+                           placeholder="Ingresa el código de 6 caracteres"
+                           maxlength="6"
+                           required
+                           style="letter-spacing: 5px; font-size: 18px; text-align: center;">
+
+                    <button class="w3-button w3-block w3-secondary w3-text-white w3-round-large w3-section w3-padding" type="submit">
+                        <i class="fa fa-check-circle"></i> Validar Código
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Pie de página informativo -->
+        <div class="w3-container w3-center w3-small w3-text-gray">
+            <p>¿No recibiste el código? <a href="#" class="w3-text-blue">Reenviar código</a></p>
+        </div>
+    </div>
+</div>
+
+<!-- Script para mejorar la experiencia de usuario -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-enfocar el campo de código
+    document.getElementById('vcode').focus();
+
+    // Validación en tiempo real para mayúsculas y longitud
+    document.getElementById('vcode').addEventListener('input', function(e) {
+        // Convertir a mayúsculas automáticamente
+        e.target.value = e.target.value.toUpperCase();
+
+        // Limitar a 6 caracteres
+        if (e.target.value.length > 6) {
+            e.target.value = e.target.value.slice(0, 6);
+        }
+    });
+
+    // Validación antes de enviar el formulario
+    document.getElementById('formulario').addEventListener('submit', function(e) {
+        var codeInput = document.getElementById('vcode');
+        if (codeInput.value.length !== 6) {
+            e.preventDefault();
+            alert('Por favor, ingresa un código de 6 caracteres');
+            codeInput.focus();
+        }
+    });
+});
+</script>
+{% endblock %}

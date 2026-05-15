@@ -1,0 +1,10 @@
+ :root{
+    --primary:#1b1c4b;
+    --secondary:#ec1c24;
+    --tertiary:#6c799c;
+    --white:#ffff;
+    --black:#000000;   
+ }
+ main{
+    margin: 0;
+ }

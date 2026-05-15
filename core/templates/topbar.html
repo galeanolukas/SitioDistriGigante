@@ -1,0 +1,119 @@
+{% load static %}
+<!-- Top Bar Moderna y Uniforme -->
+<div class="w3-bar" style="background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+  <div class="w3-row" style="padding: 12px 16px;">
+    <!-- Columna Logo -->
+    <div class="w3-col s12 m3 l3 w3-left">
+      <a class="logo" href="/" style="display: inline-block; padding: 12px 16px;">
+        <img src="{% static 'img/Logo.png' %}" alt="logo" height="45">
+      </a>
+    </div>
+    
+    <!-- Columna buscador -->
+    <div class="w3-col s12 m6 l6">
+        <div class="w3-container">
+          <!-- Formulario de búsqueda moderno -->
+          <form action="{{ search_action }}" method="GET">
+            <div class="w3-row-padding" style="padding: 0 20px; margin: 8px 0;">
+              <div class="w3-col s10 m10 l10" style="padding-right: 8px;">
+                <input class="w3-input w3-border-0 w3-round-large" 
+                       type="search" 
+                       name="{{ search_name }}"
+                       placeholder="{{ placeholder }}" 
+                       style="background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 14px 16px; font-size: 16px;">
+              </div>
+              <div class="w3-col s2 m2 l2" style="padding-left: 0;">
+                <button class="w3-button w3-round-large w3-border-0" 
+                        type="submit"
+                        style="background: #3498db; color: white; width: 100%; height: 48px; transition: all 0.3s ease; font-size: 16px;">
+                  <i class="fas fa-search"></i>
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+    </div>
+    
+    <!-- Columna acciones -->
+    <div class="w3-col s12 m3 l3 w3-right w3-text-white">
+      <div class="w3-right" style="padding: 12px 16px;">
+        <!-- Carrito -->
+        <a class="w3-button w3-round-large w3-small w3-margin-left"
+           {% if user.is_authenticated %}href="{% url 'carrito' %}"{% else %}onclick="document.getElementById('loginModal').style.display='block'"{% endif %}
+           style="background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 12px 18px; transition: all 0.3s ease; margin-top: 8px;">
+           <i class="fas fa-shopping-cart"></i>
+           <span class="w3-badge w3-red w3-round-large w3-margin-left" style="padding: 3px 8px; font-size: 11px;">{{ total_carrito }}</span>
+        </a>
+        
+        {% if user.is_authenticated %}
+          <!-- Usuario autenticado -->
+          <a href="{% url 'admin_panel' %}" 
+             class="w3-button w3-round-large w3-small w3-margin-left"
+             style="background: rgba(52, 152, 219, 0.8); color: white; border: 1px solid rgba(52, 152, 219, 0.9); padding: 12px 18px; transition: all 0.3s ease; margin-top: 8px;">
+            <i class="fas fa-user"></i>
+            <span class="w3-hide-small w3-margin-left">{{ user.username|truncatechars:8 }}</span>
+          </a>
+        {% else %}
+          <!-- Botón login -->
+          <a class="w3-button w3-round-large w3-small w3-margin-left"
+             onclick="document.getElementById('loginModal').style.display='block'"
+             style="background: rgba(46, 204, 113, 0.8); color: white; border: 1px solid rgba(46, 204, 113, 0.9); padding: 12px 18px; transition: all 0.3s ease; margin-top: 8px;">
+            <i class="fas fa-sign-in-alt"></i>
+            <span class="w3-hide-small w3-margin-left">Ingresar</span>
+          </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Estilos para hover effects -->
+<style>
+  .w3-bar button:hover,
+  .w3-bar a:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  }
+  
+  .w3-bar input:focus {
+    background: rgba(255,255,255,0.15) !important;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.5);
+  }
+  
+  /* Placeholder styling */
+  .w3-bar input::placeholder {
+    color: rgba(255,255,255,0.6);
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .w3-bar .w3-row {
+      padding: 8px 12px !important;
+    }
+    
+    .w3-bar .w3-row-padding {
+      padding: 0 8px !important;
+      margin: 4px 0 !important;
+    }
+    
+    .w3-bar input {
+      padding: 12px 14px !important;
+      font-size: 14px !important;
+    }
+    
+    .w3-bar button {
+      height: 44px !important;
+      font-size: 14px !important;
+    }
+    
+    .w3-bar .w3-right {
+      padding: 8px 12px !important;
+    }
+    
+    .w3-bar .w3-right a {
+      padding: 10px 14px !important;
+      margin-top: 4px !important;
+    }
+  }
+</style>

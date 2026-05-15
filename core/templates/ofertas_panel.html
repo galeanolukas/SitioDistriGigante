@@ -1,0 +1,122 @@
+{% extends 'dashboard.html' %}
+{% block page_title %}<h4><i class="fa fa-tag"></i> OFERTA TUS PRODUCTOS</h4>{% endblock %}
+{% load static %}
+{% block content %}
+<div class="w3-container w3-padding-32">
+        <div class="w3-container w3-indigo w3-round-large w3-center">
+        </div>
+        <form method="POST" enctype="multipart/form-data" action="{% url 'crear_oferta' product_id=product_id %}" class="w3-container w3-padding-24">
+            {% csrf_token %}
+
+            <!-- Mejorar la presentación del formulario generado por Django -->
+            <div class="w3-section">
+                {% for field in form %}
+                <div class="w3-margin-bottom">
+                    <label class="w3-text-black"><b>{{ field.label }}</b></label>
+                    {{ field }}
+                    {% if field.help_text %}
+                    <span class="w3-small w3-text-gray">{{ field.help_text }}</span>
+                    {% endif %}
+                    {% for error in field.errors %}
+                    <span class="w3-small w3-text-red">{{ error }}</span>
+                    {% endfor %}
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="w3-center w3-margin-top">
+                <button type="submit" class="w3-button w3-secondary w3-round-large w3-large">
+                    <i class="fa fa-check"></i> Crear Oferta
+                </button>
+                <a href="{% url 'product_panel' %}" class="w3-button w3-primary w3-round-large w3-large">
+                    <i class="fa fa-times"></i> Cancelar
+                </a>
+            </div>
+        </form>
+
+</div>
+
+<style>
+    /* Estilos para mejorar la apariencia de los campos del formulario */
+    form input[type="number"],
+    form select {
+        width: 100%;
+        padding: 10px;
+        margin: 8px 0;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box;
+    }
+
+    /* Estilo para los mensajes de error */
+    .w3-text-red {
+        font-weight: bold;
+    }
+
+    /* Estilo para las etiquetas */
+    label {
+        margin-bottom: 8px;
+        display: block;
+        font-weight: bold;
+    }
+
+    /* Estilo específico para campos de precio */
+    .precio-field {
+        background-color: #f8f8f8;
+        border-left: 4px solid #3f51b5;
+        padding: 10px;
+        margin: 10px 0;
+    }
+
+    /* Responsive */
+    @media screen and (max-width: 600px) {
+        .w3-button.w3-large {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+    }
+</style>
+
+<script>
+    // Función para calcular automáticamente el precio final
+    function calcularPrecioFinal() {
+        const precioAnterior = parseFloat(document.getElementById('id_precio_anterior').value) || 0;
+        const descuento = parseFloat(document.getElementById('id_descuento').value) || 0;
+
+        if (precioAnterior > 0 && descuento > 0) {
+            const precioFinal = precioAnterior - (precioAnterior * (descuento / 100));
+            // Mostrar el precio calculado (puedes asignarlo a un campo si lo deseas)
+            console.log('Precio final calculado:', precioFinal.toFixed(2));
+
+            // Opcional: Mostrar el precio calculado al usuario
+            const precioFinalElement = document.getElementById('precio-final');
+            if (!precioFinalElement) {
+                const div = document.createElement('div');
+                div.id = 'precio-final';
+                div.className = 'w3-panel w3-green w3-round-large w3-padding';
+                div.innerHTML = `<strong>Precio final: $${precioFinal.toFixed(2)}</strong>`;
+                document.querySelector('form').insertBefore(div, document.querySelector('button[type="submit"]'));
+            } else {
+                precioFinalElement.innerHTML = `<strong>Precio final: $${precioFinal.toFixed(2)}</strong>`;
+            }
+        }
+    }
+
+    // Agregar event listeners para calcular automáticamente
+    document.addEventListener('DOMContentLoaded', function() {
+        // Cerrar todos los modales para que no aparezcan visibles al recargar
+        const modals = document.querySelectorAll('.w3-modal');
+        modals.forEach(modal => {
+            modal.style.display = 'none';
+        });
+        
+        const precioAnteriorField = document.getElementById('id_precio_anterior');
+        const descuentoField = document.getElementById('id_descuento');
+
+        if (precioAnteriorField && descuentoField) {
+            precioAnteriorField.addEventListener('input', calcularPrecioFinal);
+            descuentoField.addEventListener('input', calcularPrecioFinal);
+        }
+    });
+</script>
+{% endblock %}

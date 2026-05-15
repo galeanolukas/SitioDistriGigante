@@ -1,0 +1,66 @@
+{% extends 'dashboard.html' %}
+{% load static %}
+{% block page_title %}EDITAR USUARIO{% endblock %}
+{% block content %}
+<div class="w3-container w3-padding">
+    <div class="w3-round-large w3-light-grey" style="max-width:900px; margin:0 auto;">
+        <div class="w3-container w3-secondary w3-round-large w3-center">
+            <h2>Editar Usuario N°:{{ user_id }}</h2>
+        </div>
+
+        <form method="post" class="w3-container w3-padding-24">
+            {% csrf_token %}
+
+            <!-- Mejorar la presentación del formulario generado por Django -->
+            <div class="w3-section">
+                {% for field in form %}
+                <div class="w3-margin-bottom">
+                    <label class="w3-text-red"><b>{{ field.label }}</b></label>
+                    {{ field }}
+                    {% if field.help_text %}
+                    <span class="w3-small w3-text-gray">{{ field.help_text }}</span>
+                    {% endif %}
+                    {% for error in field.errors %}
+                    <span class="w3-small w3-text-red">{{ error }}</span>
+                    {% endfor %}
+                </div>
+                {% endfor %}
+            </div>
+
+            <button type="submit" class="w3-button w3-secondary w3-block w3-round-large w3-large">
+                <i class="fa fa-save"></i> Guardar Cambios
+            </button>
+        </form>
+    </div>
+</div>
+
+<style>
+    /* Estilos para mejorar la apariencia de los campos del formulario */
+    form input[type="text"],
+    form input[type="email"],
+    form input[type="password"],
+    form select {
+        width: 100%;
+        padding: 10px;
+        margin: 5px 0;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+
+    form input[type="checkbox"] {
+        margin: 10px 5px;
+        transform: scale(1.2);
+    }
+
+    /* Estilo para los mensajes de error */
+    .w3-text-red {
+        font-weight: bold;
+    }
+
+    /* Estilo para las etiquetas */
+    label {
+        margin-bottom: 5px;
+        display: block;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,793 @@
+{% extends 'base.html' %}
+{% block title %}INICIO{% endblock %}
+{% block content %}
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/home_styles.css' %}">
+
+<section class="w3-container w3-padding-32">
+    <!-- CARRUSEL MEJORADO -->
+    <div class="w3-content">
+        {% if imagenes %}
+            <div class="carousel-container">
+                {% for imagen in imagenes %}
+                <div class="mySlides w3-animate-sideflip">
+                    <div class="slide-content">
+                        <img class="slide-image" src="{{ imagen.imagen.url }}" alt="Slide {{ forloop.counter }}">
+                        <div class="slide-overlay w3-center">
+                            {% if imagen.texto %}
+                            <div class="w3-padding w3-round" style="background-color: rgba(0,0,0,0.6); display: inline-block;">
+                                {% with text_color=imagen.color_texto|default:'white' %}
+                                <p class="w3-large" style="margin: 0; color: {{ text_color|safe }};">
+                                    {{ imagen.texto|safe }}
+                                </p>
+                            {% endwith %}
+                            </div>
+                            {% endif %}
+                            <br>
+                            <a href="/buscar/?q={{ imagen.titulo }}" class="catalogo-btn">
+                                📋 VER EN CATÁLOGO
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+
+                <!-- Botones de navegación -->
+                <button class="w3-button w3-display-left w3-circle w3-xlarge"
+                        onclick="plusDivs(-1)"
+                        style="background: rgba(0,0,0,0.5); color: white; top: 50%; transform: translateY(-50%);">
+                    ‹
+                </button>
+                <button class="w3-button w3-display-right w3-circle w3-xlarge"
+                        onclick="plusDivs(1)"
+                        style="background: rgba(0,0,0,0.5); color: white; top: 50%; transform: translateY(-50%);">
+                    ›
+                </button>
+            </div>
+
+            <!-- Indicadores -->
+            <div class="w3-center w3-container w3-section w3-small">
+                {% for imagen in imagenes %}
+                <span class="w3-badge demo w3-border w3-transparent w3-hover-white"
+                      onclick="currentDiv('{{ forloop.counter }}')"
+                      style="margin: 0 5px; width: 12px; height: 12px; border-radius: 50%;"></span>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="w3-container w3-center w3-padding-64">
+                <div class="w3-card w3-padding-32" style="background: #f5f5f5; border-radius: 10px;">
+                    <h4 class="w3-large w3-text-gray">No hay imágenes disponibles</h4>
+                    <a href="/buscar/?q={{ imagen.titulo }}" class="catalogo-btn w3-margin-top">
+                        📋 VER EN CATÁLOGO
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- SECCIÓN DE OFERTAS CON CARRUSEL MODERNO -->
+<section class="w3-container w3-padding-32">
+    <div class="w3-container w3-primary w3-center w3-round" style="font-size:1.3em;">
+        <h2 class="w3-padding">¡Ofertas Especiales!</h2>
+    </div>
+    
+    {% if ofertas %}
+    <div class="offers-carousel">
+        <button class="carousel-nav carousel-prev" onclick="moveOffersCarousel(-1)">‹</button>
+        <button class="carousel-nav carousel-next" onclick="moveOffersCarousel(1)">›</button>
+        
+        <div class="offers-container" id="offersContainer">
+            {% for oferta in ofertas %}
+            <div class="offer-slide">
+                <div class="offer-card">
+                    <!-- Badge según tipo de oferta -->
+                    {% if oferta.tipo_oferta == 'descuento' %}
+                        <div class="offer-badge badge-discount">{{ oferta.descuento }}% OFF</div>
+                    {% elif oferta.tipo_oferta == 'combinar' %}
+                        <div class="offer-badge badge-combo">COMBO</div>
+                    {% elif oferta.tipo_oferta == 'multiplicidad' %}
+                        <div class="offer-badge badge-multiplicity">{{ oferta.get_tipo_multiplicidad_display }}</div>
+                    {% else %}
+                        <div class="offer-badge badge-discount">OFERTA</div>
+                    {% endif %}
+                    
+                    <!-- Imagen del producto -->
+                    <div class="offer-image-container">
+                        {% if oferta.producto.imagenurl %}
+                            <img src="{{ oferta.producto.imagenurl }}" alt="{{ oferta.producto.nombre }}" class="offer-image">
+                        {% else %}
+                            <img src="{{ oferta.producto.imagen1.url }}" alt="{{ oferta.producto.nombre }}" class="offer-image">
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Contenido de la oferta -->
+                    <div class="offer-content">
+                        <h3 class="offer-title">{{ oferta.producto.nombre }}</h3>
+                        
+                        <div class="offer-price-section">
+                            {% if oferta.tipo_oferta == 'descuento' %}
+                                <span class="offer-original-price">${{ oferta.producto.precio }}</span>
+                                <div class="offer-final-price">${{ oferta.precio_final }}</div>
+                            {% elif oferta.tipo_oferta == 'combinar' %}
+                                <div class="offer-final-price">${{ oferta.precio_final }}</div>
+                                <div class="offer-combo-info">+ {{ oferta.producto_combinar.nombre }}</div>
+                            {% elif oferta.tipo_oferta == 'multiplicidad' %}
+                                <div class="offer-final-price">${{ oferta.precio_final }} c/u</div>
+                                <div class="offer-combo-info">{{ oferta.get_tipo_multiplicidad_display }}</div>
+                            {% else %}
+                                <div class="offer-final-price">${{ oferta.precio_final }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="offer-actions">
+                            {% if oferta.producto.stock > 0 %}
+                                {% if user.is_authenticated %}
+                                    <form action="{% url 'agregar_al_carrito' oferta.producto.id %}" method="POST">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="cantidad" value="1">
+                                        <button type="submit" class="offer-btn offer-btn-primary">
+                                            <i class="fas fa-cart-plus"></i> Agregar al Carrito
+                                        </button>
+                                    </form>
+                                {% else %}
+                                    <a href="{% url 'product_detail' oferta.producto.id %}" class="offer-btn offer-btn-primary">
+                                        Ver Detalles
+                                    </a>
+                                {% endif %}
+                            {% else %}
+                                <a href="{% url 'product_detail' oferta.producto.id %}" class="offer-btn offer-btn-secondary">
+                                    Agotado - Ver Detalles
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Indicadores del carrusel -->
+        <div class="carousel-dots" id="carouselDots"></div>
+        
+        <!-- Botón Ver todas las ofertas -->
+        <div class="w3-center w3-margin-top">
+            <a href="{% url 'ofertas' %}" class="catalogo-btn" style="background: linear-gradient(135deg, #ff6b6b, #ee5a24);">
+                <i class="fas fa-tags"></i> Ver Todas las Ofertas
+            </a>
+        </div>
+    </div>
+    {% else %}
+    <div class="w3-container w3-center w3-padding-64">
+        <div class="empty-offers-card">
+            <div class="empty-offers-icon">
+                🏷️
+            </div>
+            <div class="empty-offers-content">
+                <h3 class="empty-offers-title">Próximamente Ofertas</h3>
+                <p class="empty-offers-description">Estamos preparando las mejores ofertas para ti</p>
+                <div class="empty-offers-action">
+                    <a href="{% url 'catalogo' %}" class="empty-offers-btn">
+                        <i class="fas fa-shopping-bag"></i> Ver Catálogo Completo
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</section>
+
+<div class="w3-border-bottom" style="border-bottom:5px solid #ccc !important; padding-top:1px;"></div>
+
+<section class="w3-container w3-padding-32">
+    <!--TITULOS DESTACADOS-->
+    <div class="w3-container w3-primary w3-center w3-round" style="font-size:1.3em;">
+        <h2 class="w3-padding">¡Los Más Buscados!</h2>
+    </div>
+
+    <!--PRODUCTOS MEJORADOS-->
+    <div class="w3-container w3-center">
+        <div class="w3-row-padding w3-margin-top">
+            {% for product in products %}
+            <div class="w3-col s12 m6 l4 xl3 w3-margin-bottom">
+                <div class="product-card-modern w3-card w3-white w3-round-large" style="max-width:320px; margin:0 auto; overflow:hidden; transition:all 0.3s ease; border:1px solid #f0f0f0;">
+                    {% if user.is_superuser %}
+                    <div class="w3-container w3-right" style="font-size:0.8em; position:absolute; top:10px; right:10px; z-index:10;">
+                        <a href="{% url 'product_img_search_id' ID=product.id %}" class="w3-button w3-blue w3-tiny w3-round" style="margin:2px;"><i class="fas fa-images"></i></a>
+                        <a href="{% url 'edit_product' product_id=product.id %}" class="w3-button w3-green w3-tiny w3-round" style="margin:2px;"><i class="fas fa-edit"></i></a>
+                        <a href="{% url 'delete_product' product_id=product.id %}" class="w3-button w3-red w3-tiny w3-round" style="margin:2px;"><i class="fas fa-times-circle"></i></a>
+                    </div>
+                    {% endif %}
+
+                    <!-- Badge de oferta si aplica -->
+                    {% if product.en_oferta %}
+                    <div class="offer-badge-modern" style="position:absolute; top:10px; left:10px; z-index:10;">
+                        <span class="w3-badge w3-red w3-round-large" style="padding:8px 12px; font-weight:bold;">
+                            <i class="fas fa-tag"></i> OFERTA
+                        </span>
+                    </div>
+                    {% endif %}
+
+                    <a href="{% url 'product_detail' product.id %}" style="text-decoration:none; display:block;">
+                        <div class="product-image-container" style="position:relative; height:220px; overflow:hidden; background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                            {% if product.imagenurl %}
+                            <img src="{{ product.imagenurl }}" style="width:100%; height:100%; object-fit:cover; transition:transform 0.3s ease;" class="product-image">
+                            {% else %}
+                            <img src="{{ product.imagen1.url }}" style="width:100%; height:100%; object-fit:cover; transition:transform 0.3s ease;" class="product-image">
+                            {% endif %}
+                        </div>
+                    </a>
+
+                    <div class="w3-container w3-center" style="padding:20px 15px;">
+                        <a href="{% url 'product_detail' product.id %}" style="text-decoration:none;">
+                            <h5 class="w3-large" style="color:#2c3e50; margin:10px 0; font-weight:600; line-height:1.3; min-height:2.6em;">
+                                <b>{{ product.nombre|truncatechars:50 }}</b>
+                            </h5>
+                        </a>
+
+                        <!-- Precio con diseño mejorado -->
+                        <div class="price-section" style="margin:15px 0;">
+                            {% if product.en_oferta %}
+                                {% for oferta in product.en_oferta.all %}
+                                <div style="text-decoration:line-through; color:#95a5a6; font-size:0.9rem;">
+                                    ${{ product.precio }}
+                                </div>
+                                <div class="w3-xlarge" style="color:#e74c3c; font-weight:bold;">
+                                    ${{ oferta.precio_final }}
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="w3-xlarge" style="color:#27ae60; font-weight:bold;">
+                                    ${{ product.precio }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Stock y botón -->
+                        <div class="stock-section" style="margin:15px 0;">
+                            {% if product.stock > 0 %}
+                            <span class="w3-badge w3-green w3-round-large" style="padding:6px 12px;">
+                                <i class="fas fa-check-circle"></i> Disponible
+                            </span>
+                            {% else %}
+                            <span class="w3-badge w3-red w3-round-large" style="padding:6px 12px;">
+                                <i class="fas fa-times-circle"></i> Agotado
+                            </span>
+                            {% endif %}
+                        </div>
+
+                        <div class="action-buttons" style="margin-top:15px;">
+                            {% if user.is_superuser %}
+                            <button class="btn-featured-toggle w3-button w3-round-large w3-margin-bottom" 
+                                    data-product-id="{{ product.id }}" 
+                                    data-featured="{% if product.destacado %}true{% else %}false{% endif %}"
+                                    style="width:100%; padding:10px; font-weight:bold; transition:all 0.3s ease;">
+                                {% if product.destacado %}
+                                    <i class="fas fa-star"></i> Quitar Destacado
+                                {% else %}
+                                    <i class="fas fa-star"></i> Marcar como Destacado
+                                {% endif %}
+                            </button>
+                            {% endif %}
+                            <a href="{% url 'product_detail' product.id %}" class="w3-button w3-primary w3-round-large" style="width:100%; padding:12px; font-weight:bold; transition:all 0.3s ease;">
+                                <i class="fas fa-eye"></i> Ver Detalle
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- SECCIÓN DE PRODUCTOS DESTACADOS -->
+{% if productos_destacados %}
+<section class="w3-container w3-padding-32">
+    <div class="w3-container w3-primary w3-center w3-round" style="font-size:1.3em;">
+        <h2 class="w3-padding">⭐ Productos Destacados</h2>
+    </div>
+
+    <div class="w3-container w3-center">
+        <div class="w3-row-padding w3-margin-top">
+            {% for product in productos_destacados %}
+            <div class="w3-col s12 m6 l4 xl3 w3-margin-bottom">
+                <div class="featured-product-card w3-card w3-white w3-round-large" style="max-width:320px; margin:0 auto; overflow:hidden; transition:all 0.3s ease; border:1px solid #f0f0f0;">
+                    {% if user.is_superuser %}
+                    <div class="w3-container w3-right" style="font-size:0.8em; position:absolute; top:10px; right:10px; z-index:10;">
+                        <a href="{% url 'product_img_search_id' ID=product.id %}" class="w3-button w3-blue w3-tiny w3-round" style="margin:2px;"><i class="fas fa-images"></i></a>
+                        <a href="{% url 'edit_product' product_id=product.id %}" class="w3-button w3-green w3-tiny w3-round" style="margin:2px;"><i class="fas fa-edit"></i></a>
+                        <a href="{% url 'delete_product' product_id=product.id %}" class="w3-button w3-red w3-tiny w3-round" style="margin:2px;"><i class="fas fa-times-circle"></i></a>
+                    </div>
+                    {% endif %}
+
+                    <!-- Badge de destacado -->
+                    <div class="featured-badge" style="position:absolute; top:10px; left:10px; z-index:10;">
+                        <span class="w3-badge w3-yellow w3-round-large" style="padding:8px 12px; font-weight:bold; color:#333;">
+                            <i class="fas fa-star"></i> DESTACADO
+                        </span>
+                    </div>
+
+                    <!-- Badge de oferta si aplica -->
+                    {% if product.en_oferta %}
+                    <div class="offer-badge-featured" style="position:absolute; top:50px; left:10px; z-index:10;">
+                        <span class="w3-badge w3-red w3-round-large" style="padding:6px 10px; font-weight:bold; font-size:11px;">
+                            <i class="fas fa-tag"></i> OFERTA
+                        </span>
+                    </div>
+                    {% endif %}
+
+                    <a href="{% url 'product_detail' product.id %}" style="text-decoration:none; display:block;">
+                        <div class="featured-image-container" style="position:relative; height:200px; overflow:hidden; background:linear-gradient(135deg, #ffd700 0%, #ffed4e 100%); border-bottom:1px solid #e0e0e0;">
+                            {% if product.imagenurl %}
+                            <img src="{{ product.imagenurl }}" style="width:100%; height:100%; object-fit:cover; transition:transform 0.3s ease; filter:brightness(1.05) contrast(1.02);" class="featured-product-image">
+                            {% else %}
+                            <img src="{{ product.imagen1.url }}" style="width:100%; height:100%; object-fit:cover; transition:transform 0.3s ease; filter:brightness(1.05) contrast(1.02);" class="featured-product-image">
+                            {% endif %}
+                        </div>
+                    </a>
+
+                    <div class="w3-container w3-center" style="padding:20px 15px;">
+                        <a href="{% url 'product_detail' product.id %}" style="text-decoration:none;">
+                            <h5 class="w3-large" style="color:#2c3e50; margin:10px 0; font-weight:600; line-height:1.3; min-height:2.6em;">
+                                <b>{{ product.nombre|truncatechars:50 }}</b>
+                            </h5>
+                        </a>
+
+                        <!-- Precio con diseño mejorado -->
+                        <div class="featured-price-section" style="margin:15px 0;">
+                            {% if product.en_oferta %}
+                                {% for oferta in product.en_oferta.all %}
+                                <div style="text-decoration:line-through; color:#95a5a6; font-size:0.9rem;">
+                                    ${{ product.precio }}
+                                </div>
+                                <div class="w3-xlarge" style="color:var(--secondary); font-weight:bold;">
+                                    ${{ oferta.precio_final }}
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="w3-xlarge" style="color:#27ae60; font-weight:bold;">
+                                    ${{ product.precio }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Stock y botón -->
+                        <div class="featured-stock-section" style="margin:15px 0;">
+                            <span class="w3-badge w3-green w3-round-large" style="padding:6px 12px;">
+                                <i class="fas fa-check-circle"></i> Disponible
+                            </span>
+                        </div>
+
+                        <div class="featured-action-buttons" style="margin-top:15px;">
+                            <a href="{% url 'product_detail' product.id %}" class="w3-button w3-primary w3-round-large" style="width:100%; padding:12px; font-weight:bold; transition:all 0.3s ease;">
+                                <i class="fas fa-eye"></i> Ver Detalle
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- SECCIÓN DE PROMOCIÓN DE ENVÍOS MEJORADA -->
+<section class="w3-container w3-padding-32" id="envios" style="background:linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius:15px;">
+    <div class="w3-container w3-primary w3-center w3-round" style="font-size:1.3em;">
+        <h2 class="w3-padding"><i class="fas fa-truck"></i> Envíos a Toda la Ciudad</h2>
+    </div>
+
+    <div class="w3-row-padding w3-margin-top">
+        <!-- Tarjeta de envío estándar -->
+        <div class="w3-col l4 m12 s12 w3-margin-bottom">
+            <div class="w3-card w3-white w3-round-large w3-padding-large" style="text-align:center; transition:all 0.3s ease; border:2px solid #3498db;">
+                <div class="w3-container" style="color:#3498db;">
+                    <i class="fas fa-shipping-fast w3-xxxlarge"></i>
+                </div>
+                <h4 class="w3-margin-top">Envío Estándar</h4>
+                <p class="w3-text-grey">Entrega en 24-48 hs hábiles</p>
+                <div class="w3-xlarge w3-text-blue" style="font-weight:bold;">
+                    Consultar
+                </div>
+                <div class="w3-margin-top">
+                    <span class="w3-badge w3-blue w3-round-large">
+                        <i class="fas fa-map-marker-alt"></i> Toda la ciudad
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tarjeta de envío express -->
+        <div class="w3-col l4 m12 s12 w3-margin-bottom">
+            <div class="w3-card w3-white w3-round-large w3-padding-large" style="text-align:center; transition:all 0.3s ease; border:2px solid #e74c3c;">
+                <div class="w3-container" style="color:#e74c3c;">
+                    <i class="fas fa-rocket w3-xxxlarge"></i>
+                </div>
+                <h4 class="w3-margin-top">Envío Express</h4>
+                <p class="w3-text-grey">Entrega en 24-48 horas</p>
+                <div class="w3-xlarge w3-text-red" style="font-weight:bold;">
+                    Consultar
+                </div>
+                <div class="w3-margin-top">
+                    <span class="w3-badge w3-red w3-round-large">
+                        <i class="fas fa-bolt"></i> Urgente
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tarjeta de retiro en sucursal -->
+        <div class="w3-col l4 m12 s12 w3-margin-bottom">
+            <div class="w3-card w3-white w3-round-large w3-padding-large" style="text-align:center; transition:all 0.3s ease; border:2px solid #27ae60;">
+                <div class="w3-container" style="color:#27ae60;">
+                    <i class="fas fa-store w3-xxxlarge"></i>
+                </div>
+                <h4 class="w3-margin-top">Retiro en Sucursal</h4>
+                <p class="w3-text-grey">Retira tu pedido sin costo adicional</p>
+                <div class="w3-xlarge w3-text-green" style="font-weight:bold;">
+                    Sin Costo
+                </div>
+                <div class="w3-margin-top">
+                    <span class="w3-badge w3-green w3-round-large">
+                        <i class="fas fa-map-marker-alt"></i> Inmediato
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Información adicional mejorada -->
+    <div class="w3-center w3-margin-top">
+        <div class="w3-container w3-white w3-round-large w3-padding" style="box-shadow:0 4px 15px rgba(0,0,0,0.1);">
+            <h4><i class="fas fa-info-circle w3-text-blue"></i> Información de Envíos</h4>
+            <div class="w3-row-padding">
+                <div class="w3-col l4 m12 s12">
+                    <div class="w3-container w3-padding">
+                        <i class="fas fa-check-circle w3-text-green w3-xxlarge"></i>
+                        <h5>Seguridad Garantizada</h5>
+                        <p class="w3-text-grey">Todos nuestros envíos están asegurados y cuentan con seguimiento en tiempo real</p>
+                    </div>
+                </div>
+                <div class="w3-col l4 m12 s12">
+                    <div class="w3-container w3-padding">
+                        <i class="fas fa-shield-alt w3-text-blue w3-xxlarge"></i>
+                        <h5>Empaque Seguro</h5>
+                        <p class="w3-text-grey">Utilizamos materiales de embalaje de alta calidad para proteger tu compra</p>
+                    </div>
+                </div>
+                <div class="w3-col l4 m12 s12">
+                    <div class="w3-container w3-padding">
+                        <i class="fas fa-headset w3-text-orange w3-xxlarge"></i>
+                        <h5>Soporte 24/7</h5>
+                        <p class="w3-text-grey">Atención al cliente disponible para resolver tus dudas sobre envíos</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Botones de acción mejorados -->
+            <div class="w3-margin-top">
+                <a href="{% url 'catalogo' %}" class="w3-button w3-blue w3-round-large w3-large w3-margin" style="padding:15px 30px; font-weight:bold;">
+                    <i class="fas fa-shopping-cart"></i> Comprar Ahora
+                </a>
+                <a href="{% url 'contacto' %}" class="w3-button w3-grey w3-round-large w3-large w3-margin" style="padding:15px 30px; font-weight:bold;">
+                    <i class="fas fa-question-circle"></i> Consultar Envíos
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+    
+<script>
+    // Script mejorado para el carrusel
+    var slideIndex = 1;
+    showDivs(slideIndex);
+
+    function plusDivs(n) {
+        showDivs(slideIndex += n);
+    }
+
+    function currentDiv(n) {
+        showDivs(slideIndex = n);
+    }
+
+    function showDivs(n) {
+        var i;
+        var x = document.getElementsByClassName("mySlides");
+        var dots = document.getElementsByClassName("demo");
+
+        if (n > x.length) { slideIndex = 1 }
+        if (n < 1) { slideIndex = x.length }
+
+        // Ocultar todos los slides
+        for (i = 0; i < x.length; i++) {
+            x[i].style.display = "none";
+        }
+
+        // Remover clase activa de todos los dots
+        for (i = 0; i < dots.length; i++) {
+            dots[i].className = dots[i].className.replace(" w3-white", "");
+        }
+
+        // Mostrar slide actual y activar dot correspondiente
+        x[slideIndex-1].style.display = "block";
+        dots[slideIndex-1].className += " w3-white";
+    }
+
+    // Auto avanzar el carrusel cada 5 segundos
+    var carouselInterval = setInterval(function() {
+        plusDivs(1);
+    }, 5000);
+
+    // Pausar carrusel cuando el usuario interactúa
+    document.querySelector('.carousel-container').addEventListener('mouseenter', function() {
+        clearInterval(carouselInterval);
+    });
+
+    document.querySelector('.carousel-container').addEventListener('mouseleave', function() {
+        carouselInterval = setInterval(function() {
+            plusDivs(1);
+        }, 5000);
+    });
+
+    // Script para el carrusel de ofertas
+    let currentOfferIndex = 0;
+    const offersContainer = document.getElementById('offersContainer');
+    const carouselDots = document.getElementById('carouselDots');
+    const offerSlides = document.querySelectorAll('.offer-slide');
+    
+    function initOffersCarousel() {
+        if (!offersContainer || offerSlides.length === 0) return;
+        
+        const totalSlides = offerSlides.length;
+        const offersCarousel = document.querySelector('.offers-carousel');
+        const prevBtn = document.querySelector('.carousel-prev');
+        const nextBtn = document.querySelector('.carousel-next');
+        
+        // Determinar si usar modo carrusel o centrado
+        if (totalSlides <= 3) {
+            // Modo centrado: ocultar controles y mostrar todas las cards
+            offersCarousel.classList.add('centered-mode');
+            prevBtn.classList.add('hidden');
+            nextBtn.classList.add('hidden');
+            carouselDots.classList.add('hidden');
+            
+            // Resetear transform
+            offersContainer.style.transform = 'translateX(0)';
+            
+            console.log('Modo centrado activado - ' + totalSlides + ' cards');
+        } else {
+            // Modo carrusel: mostrar controles y activar navegación
+            offersCarousel.classList.remove('centered-mode');
+            prevBtn.classList.remove('hidden');
+            nextBtn.classList.remove('hidden');
+            carouselDots.classList.remove('hidden');
+            
+            // Crear dots para cada oferta
+            carouselDots.innerHTML = '';
+            for (let i = 0; i < totalSlides; i++) {
+                const dot = document.createElement('span');
+                dot.className = 'carousel-dot';
+                if (i === 0) dot.classList.add('active');
+                dot.onclick = () => goToOfferSlide(i);
+                carouselDots.appendChild(dot);
+            }
+            
+            // Auto-avanzar cada 4 segundos
+            setInterval(() => {
+                if (totalSlides > 1) {
+                    moveOffersCarousel(1);
+                }
+            }, 4000);
+            
+            console.log('Modo carrusel activado - ' + totalSlides + ' cards');
+        }
+    }
+    
+    function moveOffersCarousel(direction) {
+        const totalSlides = offerSlides.length;
+        if (totalSlides === 0) return;
+        
+        // Solo funcionar en modo carrusel (más de 3 cards)
+        if (totalSlides <= 3) return;
+        
+        currentOfferIndex += direction;
+        
+        if (currentOfferIndex >= totalSlides) {
+            currentOfferIndex = 0;
+        } else if (currentOfferIndex < 0) {
+            currentOfferIndex = totalSlides - 1;
+        }
+        
+        updateOffersCarousel();
+    }
+    
+    function goToOfferSlide(index) {
+        currentOfferIndex = index;
+        updateOffersCarousel();
+    }
+    
+    function updateOffersCarousel() {
+        if (!offersContainer) return;
+        
+        const slideWidth = 320; // 300px + 20px gap
+        const offset = -currentOfferIndex * slideWidth;
+        offersContainer.style.transform = `translateX(${offset}px)`;
+        
+        // Actualizar dots
+        const dots = document.querySelectorAll('.carousel-dot');
+        dots.forEach((dot, index) => {
+            dot.classList.toggle('active', index === currentOfferIndex);
+        });
+    }
+    
+    // Inicializar carrusel cuando el DOM esté listo
+    document.addEventListener('DOMContentLoaded', initOffersCarousel);
+    
+    // Responsive: ajustar para móviles
+    function adjustOffersCarousel() {
+        if (window.innerWidth <= 768) {
+            const slideWidth = 270; // 250px + 20px gap
+            const offset = -currentOfferIndex * slideWidth;
+            if (offersContainer) {
+                offersContainer.style.transform = `translateX(${offset}px)`;
+            }
+        } else {
+            updateOffersCarousel();
+        }
+    }
+    
+    window.addEventListener('resize', adjustOffersCarousel);
+
+    // Script para el carrusel de productos (si es necesario)
+    $(document).ready(function(){
+        $('.owl-carousel').owlCarousel({
+            loop:true,
+            margin:10,
+            nav:true,
+            responsive:{
+                0:{
+                    items:1
+                },
+                600:{
+                    items:3
+                },
+                1000:{
+                    items:5
+                }
+            }
+        })
+    });
+</script>
+
+<script>
+// Función para toggle de productos destacados
+document.addEventListener('DOMContentLoaded', function() {
+    const featuredButtons = document.querySelectorAll('.btn-featured-toggle');
+    
+    featuredButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const productId = this.dataset.productId;
+            const isFeatured = this.dataset.featured === 'true';
+            
+            // Mostrar estado de carga
+            this.classList.add('loading');
+            const originalText = this.innerHTML;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+            
+            // Enviar petición AJAX para toggle
+            fetch(`/toggle-featured/${productId}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    'featured': !isFeatured
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Actualizar estado del botón
+                    this.dataset.featured = (!isFeatured).toString();
+                    
+                    if (!isFeatured) {
+                        this.innerHTML = '<i class="fas fa-star"></i> Quitar Destacado';
+                        this.classList.add('featured-active');
+                        
+                        // Mostrar mensaje de éxito
+                        showNotification('Producto marcado como destacado', 'success');
+                    } else {
+                        this.innerHTML = '<i class="fas fa-star"></i> Marcar como Destacado';
+                        this.classList.remove('featured-active');
+                        
+                        // Mostrar mensaje de éxito
+                        showNotification('Producto quitado de destacados', 'info');
+                    }
+                } else {
+                    throw new Error(data.error || 'Error al procesar la solicitud');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                this.innerHTML = originalText;
+                showNotification('Error al actualizar producto destacado', 'error');
+            })
+            .finally(() => {
+                this.classList.remove('loading');
+            });
+        });
+    });
+    
+    // Función para obtener CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Función para mostrar notificaciones
+    function showNotification(message, type) {
+        // Crear elemento de notificación
+        const notification = document.createElement('div');
+        notification.className = `notification notification-${type}`;
+        notification.innerHTML = `
+            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+            ${message}
+        `;
+        
+        // Estilos para la notificación
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            z-index: 9999;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        `;
+        
+        // Color según tipo
+        if (type === 'success') {
+            notification.style.background = '#27ae60';
+        } else if (type === 'error') {
+            notification.style.background = '#e74c3c';
+        } else {
+            notification.style.background = '#3498db';
+        }
+        
+        document.body.appendChild(notification);
+        
+        // Animar entrada
+        setTimeout(() => {
+            notification.style.transform = 'translateX(0)';
+        }, 100);
+        
+        // Remover después de 3 segundos
+        setTimeout(() => {
+            notification.style.transform = 'translateX(100%)';
+            setTimeout(() => {
+                document.body.removeChild(notification);
+            }, 300);
+        }, 3000);
+    }
+});
+</script>
+
+{% endblock %}

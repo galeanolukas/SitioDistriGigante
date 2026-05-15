@@ -1,0 +1,13 @@
+<div class="w3-container w3-center" id="header">
+    <!-- Menú de navegación -->
+    <div class="w3-bar w3-padding" id="navMenu">
+      <a href="/catalogo" class="w3-bar-item topbar-btn w3-secondary w3-text-white w3-round" class="w3-button w3-primary" style="text-decoration: none;">
+          VER CATALOGO
+      </a>
+      <a href="{% url 'ordenar_x' tp='ofertas' %}" class="w3-bar-item w3-button">VER OFERTAS</a>
+      <a href="{% url 'contacto' %}" class="w3-bar-item w3-button">CONTACTO</a>
+      <a class="w3-bar-item w3-button" onclick="toggleAssistant()">ASISTENTE VIRTUAL</a>
+      <a class="w3-bar-item w3-button" onclick="document.getElementById('registerModal').style.display='block'">REGISTRATE!</a>
+      <a href="#envios" class="w3-bar-item w3-button">ENVIOS</a>
+    </div>
+</div>

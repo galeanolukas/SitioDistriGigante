@@ -1,0 +1,281 @@
+{% extends 'dashboard.html' %}
+{% load static %}
+{% block page_title %}
+<h4><i class="fa fa-user-edit"></i> EDITAR PERFIL DE CLIENTE</h4>
+{% endblock %}
+{% block content %}
+<div class="w3-container">
+    <!-- Formulario de perfil -->
+    <div class="w3-row w3-padding">
+        <div class="w3-card-4 w3-round-large w3-white">
+            <div class="w3-container w3-padding">
+                <!-- Información del cliente que se está editando -->
+                <div class="w3-panel w3-blue w3-round-large">
+                    <h4><i class="fa fa-user"></i> Información del Cliente</h4>
+                    <p><strong>Usuario:</strong> {{ usuario.username }}</p>
+                    <p><strong>Email:</strong> {{ usuario.email }}</p>
+                    <p><strong>Tipo de Usuario:</strong> 
+                        {% if perfil_existente.tipo_usuario == 'cliente' %}
+                            <span class="w3-tag w3-green">Cliente</span>
+                        {% elif perfil_existente.tipo_usuario == 'vendedor' %}
+                            <span class="w3-tag w3-orange">Vendedor</span>
+                        {% else %}
+                            <span class="w3-tag w3-blue">Administrador</span>
+                        {% endif %}
+                    </p>
+                </div>
+
+                {% if redirect_to == 'carrito' %}
+                <div class="w3-panel w3-red w3-round-large w3-display-container">
+                    <span onclick="this.parentElement.style.display='none'"
+                          class="w3-button w3-red w3-large w3-display-topright">×</span>
+                    <h4><i class="fa fa-exclamation-circle"></i> ¡Atención!</h4>
+                    <p><strong>Para realizar pedidos y compras, necesitas completar tu información de perfil.</strong></p>
+                    <p>Sin estos datos no podremos procesar tu compra.</p>
+                </div>
+                {% endif %}
+
+                <form method="post" action="{% url 'confirm_register' ID=user.id %}{% if redirect_to %}?redirect_to={{ redirect_to }}{% endif %}"
+                      enctype="multipart/form-data" class="w3-container" id="perfilForm">
+                    {% csrf_token %}
+
+                    <!-- Campos agrupados por categoría -->
+                    <div class="w3-section">
+                        <h4 class="w3-text-red w3-border-bottom"><i class="fa fa-user"></i> Información Básica</h4>
+
+                        <div class="w3-row-padding">
+                            <div class="w3-half">
+                                <label class="w3-text-dark-gray"><b>Nombre Completo *</b></label>
+                                <input type="text" name="nombre" value="{{ form.nombre.value|default:'' }}"
+                                       class="w3-input w3-border w3-round" placeholder="Ej: Juan Pérez" required
+                                       oninput="actualizarProgreso()">
+                                {% if form.nombre.errors %}
+                                <div class="w3-text-red">{{ form.nombre.errors }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="w3-half">
+                                <label class="w3-text-dark-gray"><b>Teléfono *</b></label>
+                                <input type="text" name="telefono" value="{{ form.telefono.value|default:'' }}"
+                                       class="w3-input w3-border w3-round" placeholder="Ej: +54 11 1234-5678" required
+                                       oninput="actualizarProgreso()">
+                                {% if form.telefono.errors %}
+                                <div class="w3-text-red">{{ form.telefono.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="w3-section">
+                        <h4 class="w3-text-red w3-border-bottom"><i class="fa fa-truck"></i> Dirección de Envío</h4>
+
+                        <div class="w3-row-padding">
+                            <div class="w3-half">
+                                <label class="w3-text-dark-gray"><b>Dirección *</b></label>
+                                <input type="text" name="direccion" value="{{ form.direccion.value|default:'' }}"
+                                       class="w3-input w3-border w3-round" placeholder="Ej: Calle Falsa 123" required
+                                       oninput="actualizarProgreso()">
+                                {% if form.direccion.errors %}
+                                <div class="w3-text-red">{{ form.direccion.errors }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="w3-half">
+                                <label class="w3-text-dark-gray"><b>Localidad/Provincia *</b></label>
+                                <input type="text" name="localidad" value="{{ form.localidad.value|default:'' }}"
+                                       class="w3-input w3-border w3-round" placeholder="Ej: Buenos Aires" required
+                                       oninput="actualizarProgreso()">
+                                {% if form.localidad.errors %}
+                                <div class="w3-text-red">{{ form.localidad.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="w3-section">
+                        <h4 class="w3-text-red w3-border-bottom"><i class="fa fa-image"></i> Foto de Perfil (Opcional)</h4>
+                        <label class="w3-text-dark-gray"><b>Imagen de Perfil</b></label>
+                        <input type="file" name="imagen" class="w3-input w3-border w3-round">
+                        {% if form.imagen.errors %}
+                        <div class="w3-text-red">{{ form.imagen.errors }}</div>
+                        {% endif %}
+                        <p class="w3-small w3-text-gray">Formatos: JPG, PNG. Máx: 2MB</p>
+                    </div>
+
+                    <!-- Botones de acción -->
+                    <div class="w3-row w3-margin-top">
+                        <div class="w3-half w3-center w3-padding">
+                            <button class="w3-button w3-gray w3-round-large w3-large w3-block"
+                                    type="submit" name="action" value="confirm_later">
+                                <i class="fa fa-clock-o"></i> Completar Después
+                            </button>
+                            <p class="w3-small w3-text-gray">Podrás completarlo más tarde desde tu panel</p>
+                        </div>
+                        <div class="w3-half w3-center w3-padding">
+                            <button class="w3-button w3-green w3-round-large w3-large w3-block"
+                                    type="submit" name="action" value="confirm_now" id="confirmNowBtn">
+                                <i class="fa fa-check"></i> Guardar y Continuar
+                            </button>
+                            <p class="w3-small w3-text-gray">Ir al {% if redirect_to == 'carrito' %}carrito{% else %}inicio{% endif %}</p>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- Botones de navegación -->
+                <div class="w3-center w3-margin-top">
+                    <a href="{% url 'gestion_clientes' %}" class="w3-button w3-gray w3-round-large">
+                        <i class="fa fa-arrow-left"></i> Volver a Gestión de Clientes
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="w3-row w3-padding">
+        <!-- Panel de información importante -->
+            <div class="w3-card-4 w3-round-large w3-white w3-padding">
+                <div class="w3-container w3-center w3-pale-blue w3-round">
+                    <h4><i class="fa fa-info-circle w3-text-blue"></i> ¿Por qué necesitamos tus datos?</h4>
+                </div>
+                <div class="w3-padding">
+                    <ul class="w3-ul w3-small">
+                        <li><i class="fa fa-check-circle w3-text-green"></i> Para enviar tus pedidos a la dirección correcta</li>
+                        <li><i class="fa fa-check-circle w3-text-green"></i> Para contactarte sobre tus pedidos</li>
+                        <li><i class="fa fa-check-circle w3-text-green"></i> Para facturar correctamente</li>
+                        <li><i class="fa fa-check-circle w3-text-green"></i> Para ofrecerte un mejor servicio</li>
+                    </ul>
+                </div>
+
+                <div class="w3-container w3-center w3-pale-yellow w3-round w3-margin-top">
+                    <h5><i class="fa fa-exclamation-triangle w3-text-orange"></i> Datos Requeridos</h5>
+                </div>
+                <div class="w3-padding">
+                    <div class="w3-progress-container w3-small">
+                        <div id="progressBar" class="w3-progressbar w3-green" style="width:0%"></div>
+                    </div>
+                    <p class="w3-small w3-text-gray" id="progressText">0% completado</p>
+                </div>
+            </div>
+      </div>
+    </div>
+<style>
+    /* Estilos mejorados */
+    .w3-progress-container {
+        height: 10px;
+        margin: 10px 0;
+    }
+
+    .w3-progressbar {
+        height: 100%;
+        transition: width 0.5s ease;
+    }
+
+    input:required, select:required {
+        border-left: 4px solid #f44336 !important;
+    }
+
+    input:valid, select:valid {
+        border-left: 4px solid #4CAF50 !important;
+    }
+
+    .w3-card-4 {
+        box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+        transition: 0.3s;
+    }
+
+    .w3-card-4:hover {
+        box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2);
+    }
+
+    @media screen and (max-width: 992px) {
+        .w3-third, .w3-twothird {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+    }
+</style>
+
+<script>
+// Lista específica de campos requeridos para el progreso
+const CAMPOS_REQUERIDOS = ['nombre', 'telefono', 'direccion', 'localidad'];
+
+// Función para calcular y mostrar el progreso de completado
+function actualizarProgreso() {
+    let completados = 0;
+
+    CAMPOS_REQUERIDOS.forEach(campoId => {
+        const campo = document.querySelector(`[name="${campoId}"]`);
+        if (campo && campo.value.trim() !== '') {
+            completados++;
+        }
+    });
+
+    const porcentaje = Math.round((completados / CAMPOS_REQUERIDOS.length) * 100);
+    document.getElementById('progressBar').style.width = porcentaje + '%';
+    document.getElementById('progressText').textContent = porcentaje + '% completado';
+
+    // Habilitar/deshabilitar botón de confirmar
+    const confirmBtn = document.getElementById('confirmNowBtn');
+    if (confirmBtn) {
+        // Siempre habilitar el botón, independientemente del progreso
+        confirmBtn.disabled = false;
+        confirmBtn.classList.remove('w3-gray');
+        confirmBtn.classList.add('w3-green');
+
+        // Cambiar texto si no está completo pero permitir enviar
+        if (porcentaje < 100) {
+            confirmBtn.title = 'Puedes guardar igualmente, pero algunos datos requeridos faltan';
+        } else {
+            confirmBtn.title = 'Todos los campos requeridos están completos';
+        }
+    }
+}
+
+// Validación del formulario
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar barra de progreso
+    actualizarProgreso();
+
+    // Validar antes de enviar (permitir enviar incluso si no está completo)
+    const form = document.getElementById('perfilForm');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            // No prevenir el envío, solo mostrar advertencia si faltan campos
+            const camposRequeridos = document.querySelectorAll('[required]');
+            let camposFaltantes = [];
+
+            camposRequeridos.forEach(campo => {
+                if (!campo.value.trim()) {
+                    camposFaltantes.push(campo);
+                    campo.style.borderColor = 'red';
+                }
+            });
+
+            if (camposFaltantes.length > 0) {
+                // Mostrar mensaje pero permitir enviar
+                if (!confirm('Algunos campos requeridos están vacíos. ¿Estás seguro de que quieres continuar?')) {
+                    e.preventDefault();
+                    if (camposFaltantes[0]) camposFaltantes[0].focus();
+                }
+            }
+        });
+    }
+
+    // Redirección después de éxito
+    {% if messages %}
+        {% for message in messages %}
+            {% if message.tags == 'success' and redirect_to == 'carrito' %}
+                setTimeout(function() {
+                    window.location.href = "{% url 'carrito' %}";
+                }, 2000);
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+
+    // Asegurar que el botón esté siempre habilitado
+    const confirmBtn = document.getElementById('confirmNowBtn');
+    if (confirmBtn) {
+        confirmBtn.disabled = false;
+    }
+});
+</script>
+{% endblock %}

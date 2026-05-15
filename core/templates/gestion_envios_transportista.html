@@ -1,0 +1,282 @@
+{% extends 'dashboard.html' %}
+{% load static %}
+{% block title %}Gestión de Envíos{% endblock %}
+{% block page_title %}<h4><i class="fas fa-box"></i> GESTIÓN DE ENVÍOS</h4>{% endblock %}
+{% block content %}
+
+<div class="w3-container w3-padding-32">
+    <!-- Filtros -->
+    <div class="w3-panel w3-light-grey w3-round-large w3-padding">
+        <h5><i class="fas fa-filter"></i> Filtros</h5>
+        <form method="GET" class="w3-row-padding">
+            <div class="w3-col s12 m4">
+                <label class="w3-text-dark-grey">Estado</label>
+                <select name="estado" class="w3-select w3-border w3-round" onchange="this.form.submit()">
+                    <option value="">Todos los estados</option>
+                    <option value="asignado" {% if estado_filter == 'asignado' %}selected{% endif %}>Asignados</option>
+                    <option value="en_transito" {% if estado_filter == 'en_transito' %}selected{% endif %}>En Tránsito</option>
+                    <option value="entregado" {% if estado_filter == 'entregado' %}selected{% endif %}>Entregados</option>
+                    <option value="pendiente" {% if estado_filter == 'pendiente' %}selected{% endif %}>Pendientes</option>
+                </select>
+            </div>
+            <div class="w3-col s12 m4">
+                <label class="w3-text-dark-grey">Acciones</label>
+                <div class="w3-bar">
+                    <a href="{% url 'gestion_envios_transportista' %}" class="w3-button w3-small w3-grey w3-round">Limpiar</a>
+                    <a href="{% url 'escanear_qr_entrega' %}" class="w3-button w3-small w3-green w3-round">
+                        <i class="fas fa-qrcode"></i> Escanear QR
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Lista de envíos -->
+    <div class="w3-margin-top">
+        <h4><i class="fas fa-list"></i> Mis Envíos Asignados</h4>
+        
+        {% if envios %}
+            <div class="w3-responsive">
+                <table class="w3-table-all w3-striped w3-bordered w3-hoverable">
+                    <thead>
+                        <tr class="w3-primary">
+                            <th>Envío #</th>
+                            <th>Pedido #</th>
+                            <th>Cliente</th>
+                            <th>Dirección</th>
+                            <th>Estado</th>
+                            <th>Fecha Asignación</th>
+                            <th>QR</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for envio in envios %}
+                        <tr>
+                            <td><strong>{{ envio.id }}</strong></td>
+                            <td>
+                                <a href="#" class="w3-text-blue">{{ envio.pedido.id }}</a>
+                            </td>
+                            <td>{{ envio.pedido.user.username }}</td>
+                            <td>
+                                <small>{{ envio.direccion_entrega|truncatechars:30 }}</small>
+                            </td>
+                            <td>
+                                {% if envio.estado == 'asignado' %}
+                                    <span class="w3-tag w3-blue">Asignado</span>
+                                {% elif envio.estado == 'en_transito' %}
+                                    <span class="w3-tag w3-orange">En Tránsito</span>
+                                {% elif envio.estado == 'entregado' %}
+                                    <span class="w3-tag w3-green">Entregado</span>
+                                {% else %}
+                                    <span class="w3-tag w3-grey">{{ envio.get_estado_display }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if envio.fecha_asignacion %}
+                                    {{ envio.fecha_asignacion|date:"d/m/Y H:i" }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if envio.qr_code %}
+                                    <button onclick="mostrarQR('{{ envio.qr_code|escapejs }}', '{{ envio.id }}')" 
+                                            class="w3-button w3-small w3-blue w3-round">
+                                        <i class="fas fa-qrcode"></i> Ver
+                                    </button>
+                                {% else %}
+                                    <span class="w3-text-grey">Sin QR</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="w3-bar">
+                                    {% if envio.estado == 'asignado' %}
+                                        <button onclick="cambiarEstado('{{ envio.id }}', 'en_transito')" 
+                                                class="w3-button w3-small w3-orange w3-round">
+                                            <i class="fas fa-truck"></i> Enviar
+                                        </button>
+                                    {% endif %}
+                                    
+                                    {% if envio.estado != 'entregado' %}
+                                        <a href="{% url 'escanear_qr_entrega' %}" 
+                                           class="w3-button w3-small w3-green w3-round">
+                                            <i class="fas fa-check"></i> Entregar
+                                        </a>
+                                    {% endif %}
+                                    
+                                    <button onclick="verDetalles('{{ envio.id }}')" 
+                                            class="w3-button w3-small w3-grey w3-round">
+                                        <i class="fas fa-info"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Paginación -->
+            <div class="w3-center w3-margin-top">
+                {% if envios.has_previous %}
+                    <a href="?page=1{% if estado_filter %}&estado={{ estado_filter }}{% endif %}" 
+                       class="w3-button w3-round w3-grey">&laquo; Primera</a>
+                    <a href="?page={{ envios.previous_page_number }}{% if estado_filter %}&estado={{ estado_filter }}{% endif %}" 
+                       class="w3-button w3-round w3-grey">Anterior</a>
+                {% endif %}
+                
+                <span class="w3-text-grey">
+                    Página {{ envios.number }} de {{ envios.paginator.num_pages }}
+                </span>
+                
+                {% if envios.has_next %}
+                    <a href="?page={{ envios.next_page_number }}{% if estado_filter %}&estado={{ estado_filter }}{% endif %}" 
+                       class="w3-button w3-round w3-grey">Siguiente</a>
+                    <a href="?page={{ envios.paginator.num_pages }}{% if estado_filter %}&estado={{ estado_filter }}{% endif %}" 
+                       class="w3-button w3-round w3-grey">Última &raquo;</a>
+                {% endif %}
+            </div>
+        {% else %}
+            <div class="w3-panel w3-light-grey w3-round-large w3-padding">
+                <p class="w3-text-grey w3-center">
+                    <i class="fas fa-box-open w3-xxlarge"></i><br>
+                    No tienes envíos asignados{% if estado_filter %} con el filtro seleccionado{% endif %}.
+                </p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal para mostrar QR -->
+<div id="qrModal" class="w3-modal">
+    <div class="w3-modal-content w3-card-4 w3-animate-zoom" style="max-width:400px">
+        <div class="w3-container w3-primary w3-text-white">
+            <span onclick="document.getElementById('qrModal').style.display='none'" 
+                  class="w3-button w3-display-topright">&times;</span>
+            <h3 class="w3-center">Código QR del Envío</h3>
+        </div>
+        <div class="w3-container w3-padding-24 w3-center">
+            <div id="qrCodeContainer"></div>
+            <p class="w3-small w3-text-grey">Escanea este código para confirmar la entrega</p>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de detalles -->
+<div id="detallesModal" class="w3-modal">
+    <div class="w3-modal-content w3-card-4 w3-animate-zoom" style="max-width:600px">
+        <div class="w3-container w3-primary w3-text-white">
+            <span onclick="document.getElementById('detallesModal').style.display='none'" 
+                  class="w3-button w3-display-topright">&times;</span>
+            <h3 class="w3-center">Detalles del Envío</h3>
+        </div>
+        <div class="w3-container w3-padding-24" id="detallesContainer">
+            <!-- Contenido dinámico -->
+        </div>
+    </div>
+</div>
+
+<script>
+function mostrarQR(qrCode, envioId) {
+    // Generar QR dinámicamente
+    const qrContainer = document.getElementById('qrCodeContainer');
+    qrContainer.innerHTML = `
+        <div class="w3-center">
+            <h4>Envío #${envioId}</h4>
+            <div class="w3-padding">
+                <div class="w3-border w3-round" style="width:200px; height:200px; margin:0 auto; display:flex; align-items:center; justify-content:center; background:#f0f0f0;">
+                    <div>
+                        <i class="fas fa-qrcode" style="font-size:100px; color:#333;"></i>
+                        <p class="w3-small w3-margin-0">${qrCode}</p>
+                    </div>
+                </div>
+            </div>
+            <p class="w3-small w3-text-grey">Código: ${qrCode}</p>
+        </div>
+    `;
+    document.getElementById('qrModal').style.display = 'block';
+}
+
+function verDetalles(envioId) {
+    // Cargar detalles del envío (simulado)
+    const detallesContainer = document.getElementById('detallesContainer');
+    detallesContainer.innerHTML = `
+        <div class="w3-row-padding">
+            <div class="w3-half">
+                <h5>Información del Envío</h5>
+                <p><strong>Envío #:</strong> ${envioId}</p>
+                <p><strong>Estado:</strong> <span class="w3-tag w3-blue">Asignado</span></p>
+                <p><strong>Fecha Asignación:</strong> ${new Date().toLocaleDateString()}</p>
+            </div>
+            <div class="w3-half">
+                <h5>Información del Cliente</h5>
+                <p><strong>Cliente:</strong> Usuario Ejemplo</p>
+                <p><strong>Teléfono:</strong> +54 370 123456</p>
+                <p><strong>Dirección:</strong> Calle Falsa 123</p>
+            </div>
+        </div>
+        <div class="w3-margin-top">
+            <h5>Observaciones</h5>
+            <p class="w3-text-grey">Sin observaciones especiales.</p>
+        </div>
+    `;
+    document.getElementById('detallesModal').style.display = 'block';
+}
+
+function cambiarEstado(envioId, nuevoEstado) {
+    if (confirm('¿Estás seguro de cambiar el estado del envío?')) {
+        // Aquí iría la llamada AJAX para cambiar el estado
+        location.reload();
+    }
+}
+
+// Cerrar modales al hacer clic fuera
+window.onclick = function(event) {
+    const qrModal = document.getElementById('qrModal');
+    const detallesModal = document.getElementById('detallesModal');
+    
+    if (event.target == qrModal) {
+        qrModal.style.display = 'none';
+    }
+    if (event.target == detallesModal) {
+        detallesModal.style.display = 'none';
+    }
+}
+</script>
+
+<script>
+// Cerrar todos los modales al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+    // Cerrar todos los modales para que no aparezcan visibles al recargar
+    const modals = document.querySelectorAll('.w3-modal');
+    modals.forEach(modal => {
+        modal.style.display = 'none';
+    });
+});
+</script>
+
+<style>
+    .w3-table-all tr:hover {
+        background-color: #f5f5f5;
+    }
+    
+    .w3-tag {
+        font-size: 12px;
+        padding: 4px 8px;
+    }
+    
+    @media screen and (max-width: 768px) {
+        .w3-responsive {
+            overflow-x: auto;
+        }
+        
+        .w3-bar .w3-button {
+            display: block;
+            width: 100%;
+            margin: 2px 0;
+        }
+    }
+</style>
+
+{% endblock %}

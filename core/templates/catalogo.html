@@ -1,0 +1,416 @@
+{% extends 'base_catalogo.html' %}
+{% block title %}CATÁLOGO DE PRODUCTOS{% endblock %}
+{% load static %}
+
+{% block content %}
+<div class="w3-container">
+  {% if products %}
+  <div class="catalogo-grid">
+    {% for product in products %}
+    <div class="product-card">
+      <!-- Admin actions -->
+      {% if user.is_superuser %}
+      <div class="admin-actions">
+        <a href="{% url 'product_img_search_id' ID=product.id %}" class="admin-btn" title="Gestionar imágenes"><i class="fas fa-images"></i></a>
+        <a href="{% url 'edit_product' product_id=product.id %}" class="admin-btn" title="Editar producto"><i class="fas fa-edit"></i></a>
+        <a href="{% url 'delete_product' product_id=product.id %}" class="admin-btn delete" title="Eliminar producto"><i class="fas fa-times-circle"></i></a>
+        <button onclick="abrirModalOferta({{ product.id }})" class="admin-btn offer" title="Crear Oferta">
+          <i class="fas fa-tag"></i>
+        </button>
+      </div>
+      {% endif %}
+
+      <!-- Product image -->
+      <div class="product-image-container">
+        <a href="{% url 'product_detail' product.id %}">
+          {% if product.imagenurl %}
+            <img src="{{ product.imagenurl }}" alt="{{ product.nombre }}" class="product-image">
+          {% else %}
+            <img src="{{ product.imagen1.url }}" alt="{{ product.nombre }}" class="product-image">
+          {% endif %}
+        </a>
+        
+        <!-- Offer badge -->
+        {% if product.en_oferta %}
+          {% if product.en_oferta.tipo_oferta == 'descuento' %}
+            <span class="offer-badge discount">{{ product.en_oferta.descuento }}% OFF</span>
+          {% elif product.en_oferta.tipo_oferta == 'combinar' %}
+            <span class="offer-badge combo">COMBO</span>
+          {% elif product.en_oferta.tipo_oferta == 'multiplicidad' %}
+            <span class="offer-badge multiplicity">{{ product.en_oferta.get_tipo_multiplicidad_display }}</span>
+          {% else %}
+            <span class="offer-badge default">OFERTA!</span>
+          {% endif %}
+        {% endif %}
+      </div>
+
+      <!-- Product info -->
+      <div class="product-info">
+        <a href="{% url 'product_detail' product.id %}" class="product-link">
+          <h3 class="product-title">{{ product.nombre|truncatechars:45 }}</h3>
+        </a>
+
+        <!-- Stock status -->
+        <div class="stock-status">
+          {% if product.stock > 0 %}
+            {% if product.en_oferta %}
+              {% if product.en_oferta.stock_oferta > 0 %}
+                <span class="stock-available">✓ {{ product.en_oferta.stock_restante }}/{{ product.en_oferta.stock_oferta }} disponible</span>
+              {% else %}
+                <span class="stock-available">✓ {{ product.stock }} disponible</span>
+              {% endif %}
+            {% else %}
+              <span class="stock-available">✓ {{ product.stock }} disponible</span>
+            {% endif %}
+          {% else %}
+            <span class="stock-unavailable">✗ No disponible</span>
+          {% endif %}
+        </div>
+
+        <!-- Price -->
+        <div class="price-section">
+          {% if product.en_oferta %}
+            {% if product.en_oferta.tipo_oferta == 'descuento' %}
+              <div class="price-discount">
+                <span class="original-price">${{ product.precio }}</span>
+                <span class="final-price">${{ product.en_oferta.precio_final }}</span>
+              </div>
+            {% elif product.en_oferta.tipo_oferta == 'combinar' %}
+              <div class="price-combo">
+                <span class="combo-label">Combo desde:</span>
+                <span class="final-price">${{ product.en_oferta.precio_final }}</span>
+                <span class="combo-product">+ {{ product.en_oferta.producto_combinar.nombre|truncatechars:20 }}</span>
+              </div>
+            {% elif product.en_oferta.tipo_oferta == 'multiplicidad' %}
+              <div class="price-multiplicity">
+                <span class="multiplicity-label">{{ product.en_oferta.get_tipo_multiplicidad_display }}</span>
+                <span class="final-price">${{ product.en_oferta.precio_final }} c/u</span>
+              </div>
+            {% else %}
+              <div class="price-discount">
+                <span class="original-price">${{ product.precio }}</span>
+                <span class="final-price">${{ product.en_oferta.precio_final }}</span>
+              </div>
+            {% endif %}
+          {% else %}
+            <div class="price-normal">
+              <span class="final-price">${{ product.precio }}</span>
+            </div>
+          {% endif %}
+        </div>
+
+        <!-- Actions -->
+        <div class="product-actions">
+          {% if user.is_authenticated %}
+            <form action="{% url 'agregar_al_carrito' product.id %}" method="POST" class="add-to-cart-form">
+              {% csrf_token %}
+              <input type="hidden" name="cantidad" value="1">
+              <button type="submit" class="btn-add-cart">
+                <i class="fas fa-cart-plus"></i> Agregar
+              </button>
+            </form>
+          {% else %}
+            <a href="{% url 'product_detail' product.id %}" class="btn-view-detail">
+              <i class="fas fa-eye"></i> Ver detalle
+            </a>
+          {% endif %}
+        </div>
+
+        <!-- Share and code -->
+        <div class="product-footer">
+          <div class="share-buttons">
+            <span class="share-label">Compartir:</span>
+            <a href="https://wa.me/?text=Comparti%20este%20producto%20{{ host_link }}{% url 'product_detail' product.id %}"
+               target="_blank" class="share-btn whatsapp">
+              <i class="fab fa-whatsapp"></i>
+            </a>
+            <a href="https://www.facebook.com/sharer/sharer.php?u={{ host_link }}{% url 'product_detail' product.id %}"
+               target="_blank" class="share-btn facebook">
+              <i class="fab fa-facebook"></i>
+            </a>
+          </div>
+          <div class="product-code">Art: {{ product.numero }}</div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Paginación -->
+  {% if products.has_other_pages %}
+  <div class="pagination-container">
+    <div class="pagination">
+      {% if products.has_previous %}
+        <a class="pagination-btn" href="?page={{ products.previous_page_number }}">« Anterior</a>
+      {% endif %}
+
+      {% for i in products.paginator.page_range %}
+        {% if products.number == i %}
+          <span class="pagination-btn active">{{ i }}</span>
+        {% elif i > products.number|add:'-3' and i < products.number|add:'3' %}
+          <a class="pagination-btn" href="?page={{ i }}">{{ i }}</a>
+        {% endif %}
+      {% endfor %}
+
+      {% if products.has_next %}
+        <a class="pagination-btn" href="?page={{ products.next_page_number }}">Siguiente »</a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div class="empty-state">
+    {% if tp == "ofertas" %}
+    <div class="empty-icon">🏷️</div>
+    <h3>No hay ofertas disponibles</h3>
+    <p>Pronto tendremos las mejores ofertas para ti</p>
+    {% else %}
+    <div class="empty-icon">📦</div>
+    <h3>No hay productos disponibles</h3>
+    <p>Pronto tendremos más productos en stock</p>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+
+<style>
+/* Importar estilos del catálogo */
+@import url('{% static "css/catalogo_template.css" %}');
+</style>
+
+<!-- Modal para Crear Oferta -->
+<div id="modalOferta" class="w3-modal">
+    <div class="w3-modal-content w3-card-4 w3-animate-zoom" style="max-width: 600px;">
+        <div class="w3-center w3-padding w3-green">
+            <span onclick="document.getElementById('modalOferta').style.display='none'" 
+                  class="w3-button w3-green w3-xlarge w3-display-topright">×</span>
+            <h3>Crear Oferta para Producto</h3>
+        </div>
+        
+        <form id="formOferta" method="POST" action="{% url 'crear_oferta' product_id=0 %}" class="w3-container">
+            {% csrf_token %}
+            <input type="hidden" id="producto_id" name="producto_id" value="">
+            
+            <div class="w3-section">
+                <label class="w3-text-grey"><b>Tipo de Oferta</b></label>
+                <select id="tipo_oferta" name="tipo_oferta" class="w3-select w3-border" onchange="mostrarOpcionesOferta()">
+                    <option value="">Selecciona un tipo de oferta</option>
+                    <option value="descuento">1. Descuento porcentual</option>
+                    <option value="combinar">2. Combinar con otro producto</option>
+                    <option value="multiplicidad">3. 2x1, 3x2, etc.</option>
+                </select>
+            </div>
+
+            <!-- Opción 1: Descuento porcentual -->
+            <div id="opcion_descuento" class="w3-section" style="display: none;">
+                <label class="w3-text-grey"><b>Porcentaje de Descuento (%)</b></label>
+                <input type="number" id="descuento" name="descuento" min="1" max="100" 
+                       class="w3-input w3-border" placeholder="Ej: 20 para 20% de descuento">
+            </div>
+
+            <!-- Opción 2: Combinar con otro producto -->
+            <div id="opcion_combinar" class="w3-section" style="display: none;">
+                <label class="w3-text-grey"><b>Producto para Combinar</b></label>
+                <select id="producto_combinar" name="producto_combinar" class="w3-select w3-border">
+                    <option value="">Selecciona un producto</option>
+                    <!-- Se llenará dinámicamente -->
+                </select>
+                
+                <label class="w3-text-grey" style="margin-top: 16px;"><b>Monto de Oferta ($)</b></label>
+                <input type="number" id="monto_combinar" name="monto_combinar" min="0" step="0.01"
+                       class="w3-input w3-border" placeholder="Precio especial para el combo">
+            </div>
+
+            <!-- Opción 3: 2x1, 3x2, etc. -->
+            <div id="opcion_multiplicidad" class="w3-section" style="display: none;">
+                <label class="w3-text-grey"><b>Tipo de Multiplicidad</b></label>
+                <select id="tipo_multiplicidad" name="tipo_multiplicidad" class="w3-select w3-border">
+                    <option value="2x1">2x1 (Lleva 2, paga 1)</option>
+                    <option value="3x2">3x2 (Lleva 3, paga 2)</option>
+                    <option value="4x3">4x3 (Lleva 4, paga 3)</option>
+                    <option value="5x4">5x4 (Lleva 5, paga 4)</option>
+                </select>
+            </div>
+
+            <!-- Duración de la Oferta (común para todos los tipos) -->
+            <div class="w3-section">
+                <label class="w3-text-grey"><b>Duración de la Oferta (días)</b></label>
+                <input type="number" id="duracion_dias" name="duracion_dias" min="1" max="365" value="30"
+                       class="w3-input w3-border" placeholder="Duración en días (ej: 30)">
+                <p class="w3-small w3-text-grey">La oferta estará activa durante este número de días desde su creación.</p>
+            </div>
+
+            <!-- Campo de stock de oferta -->
+            <div class="w3-section">
+                <label class="w3-text-grey"><b>Stock de la oferta</b></label>
+                <input type="number" id="stock_oferta" name="stock_oferta" class="w3-input w3-border" min="0" placeholder="0 = ilimitado">
+                <p class="w3-small w3-text-grey">Deja en 0 para stock ilimitado, o ingresa un número para stock limitado</p>
+            </div>
+
+            <div class="w3-section w3-center">
+                <button type="submit" class="w3-button w3-green w3-round">
+                    <i class="fas fa-check"></i> Crear Oferta
+                </button>
+                <button type="button" onclick="document.getElementById('modalOferta').style.display='none'" 
+                        class="w3-button w3-red w3-round">
+                    <i class="fas fa-times"></i> Cancelar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Lazy Loading para imágenes
+function setupLazyLoading() {
+    const images = document.querySelectorAll('.product-image');
+    const imageObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const img = entry.target;
+                img.src = img.dataset.src || img.src;
+                img.onload = () => {
+                    img.classList.add('loaded');
+                };
+                observer.unobserve(img);
+            }
+        });
+    }, {
+        rootMargin: '50px 0px',
+        threshold: 0.01
+    });
+
+    images.forEach(img => {
+        if (!img.dataset.src) {
+            img.dataset.src = img.src;
+            img.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDMyMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMjAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRjVGNUY1Ii8+CjxwYXRoIGQ9Ik0xNjAgMTQwQzE4Ny42MTQgMTQwIDIxMCAxMTcuNjE0IDIxMCA5MEMyMTAgNjIuMzg2MSAxODcuNjE0IDQwIDE2MCA0MEMxMzIuMzg2IDQwIDExMCA2Mi4zODYxIDExMCA5MEMxMTAgMTE3LjYxNCAxMzIuMzg2IDE0MCAxNjAgMTQwWiIgZmlsbD0iI0Q5RDlEOSIvPgo8Y2lyY2xlIGN4PSIxNDAiIGN5PSI4MCIgcj0iOSIgZmlsbD0iI0Y1RjVGNSIvPgo8cGF0aCBkPSJNMTQwIDg1QzE0Mi4yMDkgODUgMTQ0IDgzLjIwOTEgMTQ0IDgxQzE0NCA3OC43OTA5IDE0Mi4yMDkgNzcgMTQwIDc3QzEzNy43OTEgNzcgMTM2IDc4Ljc5MDkgMTM2IDgxQzEzNiA4My4yMDkxIDEzNy43OTEgODUgMTQwIDg1WiIgZmlsbD0iI0Q5RDlEOSIvPgo8L3N2Zz4K';
+        }
+        imageObserver.observe(img);
+    });
+}
+
+function abrirModalOferta(productoId) {
+    document.getElementById('producto_id').value = productoId;
+    
+    // Actualizar la acción del formulario con el ID del producto
+    const form = document.getElementById('formOferta');
+    form.action = `/producto/ofertar/${productoId}/`;
+    
+    document.getElementById('modalOferta').style.display = 'block';
+    
+    // Cargar productos para la opción de combinar
+    cargarProductos();
+}
+
+function mostrarOpcionesOferta() {
+    const tipo = document.getElementById('tipo_oferta').value;
+    
+    // Ocultar todas las opciones
+    document.getElementById('opcion_descuento').style.display = 'none';
+    document.getElementById('opcion_combinar').style.display = 'none';
+    document.getElementById('opcion_multiplicidad').style.display = 'none';
+    
+    // Mostrar la opción seleccionada
+    if (tipo === 'descuento') {
+        document.getElementById('opcion_descuento').style.display = 'block';
+    } else if (tipo === 'combinar') {
+        document.getElementById('opcion_combinar').style.display = 'block';
+    } else if (tipo === 'multiplicidad') {
+        document.getElementById('opcion_multiplicidad').style.display = 'block';
+    }
+}
+
+function cargarProductos() {
+    const select = document.getElementById('producto_combinar');
+    const productoId = document.getElementById('producto_id').value;
+    
+    select.innerHTML = '<option value="">Cargando productos...</option>';
+    
+    // Hacer llamada AJAX para cargar productos
+    fetch('/api/productos/')
+        .then(response => response.json())
+        .then(data => {
+            select.innerHTML = '<option value="">Selecciona un producto</option>';
+            data.forEach(producto => {
+                // Excluir el producto actual de la lista
+                if (producto.id != productoId) {
+                    const option = document.createElement('option');
+                    option.value = producto.id;
+                    option.textContent = producto.nombre;
+                    select.appendChild(option);
+                }
+            });
+        })
+        .catch(error => {
+            console.error('Error al cargar productos:', error);
+            select.innerHTML = '<option value="">Error al cargar productos</option>';
+        });
+}
+
+// Manejar el envío del formulario con AJAX
+document.getElementById('formOferta').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const formAction = this.action;
+    
+    fetch(formAction, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Mostrar mensaje de éxito
+            alert('Oferta creada exitosamente');
+            // Cerrar el modal
+            document.getElementById('modalOferta').style.display = 'none';
+            // Recargar la página para mostrar la nueva oferta
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al crear la oferta');
+    });
+});
+
+// Cerrar todos los modales al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+    // Cerrar todos los modales para que no aparezcan visibles al recargar
+    const modals = document.querySelectorAll('.w3-modal');
+    modals.forEach(modal => {
+        modal.style.display = 'none';
+    });
+    
+    // Inicializar lazy loading
+    setupLazyLoading();
+    
+    // Animar entrada de productos
+    const productCards = document.querySelectorAll('.product-card');
+    productCards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+            card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+});
+
+// Cerrar modal al hacer clic fuera
+window.onclick = function(event) {
+    const modal = document.getElementById('modalOferta');
+    if (event.target == modal) {
+        modal.style.display = 'none';
+    }
+}
+</script>
+{% endblock %}

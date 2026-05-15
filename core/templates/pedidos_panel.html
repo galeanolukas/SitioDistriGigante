@@ -1,0 +1,506 @@
+{% extends 'dashboard.html' %}
+{% load static %}
+{% load user_tags %}
+{% block page_title %}
+<h4 class="w3-center"><i class="fas fa-shopping-bag"></i> PEDIDOS</h4>
+{% endblock %}
+{% block content %}
+<div class="w3-container">
+    <!-- Header del Panel -->
+    <div class="w3-white w3-round-large w3-margin-bottom">
+        <!-- Filtros y Búsqueda -->
+        <div class="w3-container w3-padding-16 w3-light-grey">
+            <div class="w3-row">
+                <div class="w3-col m4 w3-padding-small">
+                    <input type="text" id="searchInput" onkeyup="searchTable()"
+                           class="w3-input w3-border w3-round" placeholder="Buscar por número o estado...">
+                </div>
+                <div class="w3-col m2 w3-padding-small">
+                    <select id="statusFilter" onchange="filterTable()" class="w3-select w3-border w3-round">
+                        <option value="">Todos los estados</option>
+                        <option value="pendiente">Pendiente</option>
+                        <option value="pagado">Pagado</option>
+                        <option value="procesando">Procesando</option>
+                        <option value="entregado">Entregado</option>
+                        <option value="cancelado">Cancelado</option>
+                    </select>
+                </div>
+                <div class="w3-col m2 w3-padding-small">
+                    <select id="vendedorFilter" onchange="filterTable()" class="w3-select w3-border w3-round">
+                        <option value="">Todos los vendedores</option>
+                        {% for vendedor in vendedores %}
+                        <option value="{{ vendedor.username }}">{{ vendedor.username|truncatechars:15 }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="w3-col m2 w3-padding-small">
+                    <select id="clienteFilter" onchange="filterTable()" class="w3-select w3-border w3-round">
+                        <option value="">Todos los clientes</option>
+                        {% for cliente in clientes %}
+                        <option value="{{ cliente.username }}">{{ cliente.username|truncatechars:15 }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="w3-col m2 w3-padding-small">
+                    <select id="itemsPerPage" onchange="changeItemsPerPage()" class="w3-select w3-border w3-round">
+                        <option value="10">10 por página</option>
+                        <option value="20">20 por página</option>
+                        <option value="50">50 por página</option>
+                        <option value="100">100 por página</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla de Pedidos -->
+        <div class="w3-container w3-responsive">
+            <table id="pedidosTable" class="w3-table w3-striped w3-hoverable w3-small">
+                <thead>
+                    <tr class="w3-secondary">
+                        <th onclick="sortTable(0)" style="cursor:pointer;">Usuario ▾</th>
+                        <th onclick="sortTable(1)" style="cursor:pointer;">Vendedor ▾</th>
+                        <th onclick="sortTable(2)" style="cursor:pointer;">N° ▾</th>
+                        <th onclick="sortTable(3)" style="cursor:pointer;">Fecha ▾</th>
+                        <th onclick="sortTable(4)" style="cursor:pointer;">Total ▾</th>
+                        <th>Pagado</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pedido in pedidos_panel %}
+                    <tr class="w3-hover-light-grey">
+                        <td>{{ pedido.user.username|truncatechars:15 }}</td>
+                        <td>
+                            {% if pedido.vendedor %}
+                                {{ pedido.vendedor.username|truncatechars:15 }}
+                            {% else %}
+                                <span class="w3-text-gray">Sin vendedor</span>
+                            {% endif %}
+                        </td>
+                        <td><strong>#{{ pedido.id }}</strong></td>
+                        <td>{{ pedido.fecha_pedido|date:"d/m/Y H:i" }}</td>
+                        <td><strong>${{ pedido.total_precio }}</strong></td>
+                        <td>
+                            {% if pedido.pagado %}
+                            <span class="w3-tag w3-green w3-round">SI</span>
+                            {% else %}
+                            <span class="w3-tag w3-red w3-round">NO</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if pedido.estado == 'entregado' %}
+                            <span class="w3-tag w3-green w3-round">{{ pedido.estado|title }}</span>
+                            {% elif pedido.estado == 'cancelado' %}
+                            <span class="w3-tag w3-red w3-round">{{ pedido.estado|title }}</span>
+                            {% elif pedido.estado == 'procesando' %}
+                            <span class="w3-tag w3-orange w3-round">{{ pedido.estado|title }}</span>
+                            {% else %}
+                            <span class="w3-tag w3-blue w3-round">{{ pedido.estado|title }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="w3-cell-row">
+                                <!-- Botón Ver Detalle -->
+                                <div class="w3-cell">
+                                    <a href="{% url 'detalle_pedido' pedido_id=pedido.id %}"
+                                       class="w3-button w3-blue w3-round w3-tiny" title="Ver detalle">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </div>
+                                
+                                {% if pedido.estado == 'pendiente' and not pedido.pagado %}
+                                <!-- Botón Pagar Online (solo para clientes y pedidos pendientes) -->
+                                <div class="w3-cell">
+                                    <a href="{% url 'procesar_pago' pedido.id %}"
+                                       class="w3-button w3-green w3-round w3-tiny" title="Pagar online">
+                                        <i class="fas fa-credit-card"></i>
+                                    </a>
+                                </div>
+                                {% endif %}
+
+                                {% if user.is_superuser %}
+                                <!-- Botones para Superuser -->
+                                <div class="w3-cell">
+                                    <a href="{% url 'cambiar_estado_pedido' pedido_id=pedido.id %}"
+                                       class="w3-button w3-green w3-round w3-tiny" title="Marcar como entregado">
+                                        <i class="fas fa-check"></i>
+                                    </a>
+                                </div>
+                                <div class="w3-cell">
+                                    <a href="{% url 'modificar_pedido' pedido_id=pedido.id %}"
+                                       class="w3-button w3-orange w3-round w3-tiny" title="Modificar pedido">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                </div>
+                                {% elif request.user|has_group:"vendedor" %}
+                                <!-- Botones para Preventista -->
+                                <div class="w3-cell">
+                                    <a href="{% url 'modificar_pedido' pedido_id=pedido.id %}"
+                                       class="w3-button w3-orange w3-round w3-tiny" title="Modificar pedido">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                </div>
+                                {% endif %}
+
+                                <!-- Botón Eliminar -->
+                                <div class="w3-cell">
+                                    <a href="{% url 'eliminar_pedido' pedido_id=pedido.id %}"
+                                       class="w3-button w3-red w3-round w3-tiny"
+                                       title="Eliminar pedido"
+                                       onclick="return confirm('¿Estás seguro de que quieres eliminar este pedido?');">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="w3-center w3-padding-32">
+                            <div class="w3-text-grey">
+                                <i class="fas fa-inbox w3-jumbo"></i>
+                                <h4>No hay pedidos registrados</h4>
+                                <p>Cuando los clientes realicen pedidos, aparecerán aquí.</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Paginación Mejorada -->
+        {% if pedidos_panel.has_other_pages %}
+        <div class="w3-center w3-padding-16">
+            <div class="w3-bar w3-border w3-round">
+                <!-- Primera página -->
+                {% if pedidos_panel.has_previous %}
+                <a href="?page=1{% if request.GET.items_per_page %}&items_per_page={{ request.GET.items_per_page }}{% endif %}"
+                   class="w3-button w3-blue" title="Primera página">
+                    &laquo;&laquo;
+                </a>
+                <a href="?page={{ pedidos_panel.previous_page_number }}{% if request.GET.items_per_page %}&items_per_page={{ request.GET.items_per_page }}{% endif %}"
+                   class="w3-button w3-blue" title="Página anterior">
+                    &laquo;
+                </a>
+                {% endif %}
+
+                <!-- Números de página -->
+                {% for i in pedidos_panel.paginator.page_range %}
+                    {% if pedidos_panel.number == i %}
+                    <span class="w3-button w3-green">{{ i }}</span>
+                    {% elif i > pedidos_panel.number|add:'-3' and i < pedidos_panel.number|add:'3' %}
+                    <a href="?page={{ i }}{% if request.GET.items_per_page %}&items_per_page={{ request.GET.items_per_page }}{% endif %}"
+                       class="w3-button w3-hover-blue">{{ i }}</a>
+                    {% endif %}
+                {% endfor %}
+
+                <!-- Última página -->
+                {% if pedidos_panel.has_next %}
+                <a href="?page={{ pedidos_panel.next_page_number }}{% if request.GET.items_per_page %}&items_per_page={{ request.GET.items_per_page }}{% endif %}"
+                   class="w3-button w3-blue" title="Página siguiente">
+                    &raquo;
+                </a>
+                <a href="?page={{ pedidos_panel.paginator.num_pages }}{% if request.GET.items_per_page %}&items_per_page={{ request.GET.items_per_page }}{% endif %}"
+                   class="w3-button w3-blue" title="Última página">
+                    &raquo;&raquo;
+                </a>
+                {% endif %}
+            </div>
+
+            <!-- Información de paginación -->
+            <p class="w3-small w3-text-grey w3-margin-top">
+                Mostrando {{ pedidos_panel.start_index }} - {{ pedidos_panel.end_index }} de {{ pedidos_panel.paginator.count }} pedidos
+            </p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Estadísticas Rápidas -->
+<div class="w3-row-padding w3-margin-bottom">
+    <div class="w3-third">
+        <div class="w3-card-4 w3-blue w3-round-large w3-padding-16 w3-center">
+            <h3><i class="fas fa-shopping-bag"></i> Total Pedidos</h3>
+            <h2>{{ total_pedidos }}</h2>
+        </div>
+    </div>
+    <div class="w3-third">
+        <div class="w3-card-4 w3-green w3-round-large w3-padding-16 w3-center">
+            <h3><i class="fas fa-check-circle"></i> Entregados</h3>
+            <h2>{{ pedidos_entregados }}</h2>
+        </div>
+    </div>
+    <div class="w3-third">
+        <div class="w3-card-4 w3-orange w3-round-large w3-padding-16 w3-center">
+            <h3><i class="fas fa-clock"></i> Pendientes</h3>
+            <h2>{{ pedidos_pendientes }}</h2>
+        </div>
+    </div>
+</div>
+
+<style>
+.w3-tooltip {
+    position: relative;
+    display: inline-block;
+}
+
+.w3-tooltip .w3-text {
+    visibility: hidden;
+    width: 120px;
+    background-color: #555;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -60px;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.w3-tooltip:hover .w3-text {
+    visibility: visible;
+    opacity: 1;
+}
+
+.w3-cell-row {
+    display: flex;
+    flex-wrap: nowrap;
+}
+
+.w3-cell {
+    padding: 0 2px;
+}
+
+/* Mejoras para tablas grandes */
+.w3-responsive {
+    overflow-x: auto;
+}
+
+.w3-table {
+    min-width: 800px;
+}
+
+/* Responsive */
+@media screen and (max-width: 768px) {
+    .w3-cell-row {
+        flex-direction: column;
+    }
+
+    .w3-cell {
+        margin-bottom: 5px;
+    }
+
+    .w3-third {
+        width: 100%;
+        margin-bottom: 16px;
+    }
+
+    .w3-bar .w3-button {
+        padding: 5px 8px;
+        margin: 2px;
+        font-size: 12px;
+    }
+}
+
+/* Animaciones */
+.w3-hover-light-grey {
+    transition: background-color 0.3s ease;
+}
+
+.w3-button {
+    transition: all 0.3s ease;
+}
+
+.w3-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+/* Paginación responsive */
+@media screen and (max-width: 600px) {
+    .w3-bar .w3-button {
+        padding: 3px 6px;
+        margin: 1px;
+        font-size: 11px;
+    }
+}
+</style>
+
+<script>
+// Función de búsqueda
+function searchTable() {
+    var input, filter, table, tr, td, i, j, txtValue;
+    input = document.getElementById("searchInput");
+    filter = input.value.toUpperCase();
+    table = document.getElementById("pedidosTable");
+    tr = table.getElementsByTagName("tr");
+
+    for (i = 1; i < tr.length; i++) {
+        var found = false;
+        td = tr[i].getElementsByTagName("td");
+        for (j = 0; j < td.length - 1; j++) { // Excluir la columna de acciones
+            if (td[j]) {
+                txtValue = td[j].textContent || td[j].innerText;
+                if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                    found = true;
+                    break;
+                }
+            }
+        }
+        tr[i].style.display = found ? "" : "none";
+    }
+}
+
+// Función de filtrado por estado, vendedor y cliente
+function filterTable() {
+    var estadoFilter, vendedorFilter, clienteFilter, table, tr, td, i;
+    estadoFilter = document.getElementById("statusFilter").value.toUpperCase();
+    vendedorFilter = document.getElementById("vendedorFilter").value.toUpperCase();
+    clienteFilter = document.getElementById("clienteFilter").value.toUpperCase();
+    table = document.getElementById("pedidosTable");
+    tr = table.getElementsByTagName("tr");
+
+    for (i = 1; i < tr.length; i++) {
+        var showRow = true;
+        td = tr[i].getElementsByTagName("td");
+        
+        // Filtrar por estado
+        if (estadoFilter && td[5]) {
+            var estado = td[5].textContent || td[5].innerText;
+            if (estado.toUpperCase().indexOf(estadoFilter) === -1) {
+                showRow = false;
+            }
+        }
+        
+        // Filtrar por vendedor
+        if (vendedorFilter && td[0]) {
+            var vendedor = td[0].textContent || td[0].innerText;
+            if (vendedor.toUpperCase().indexOf(vendedorFilter) === -1) {
+                showRow = false;
+            }
+        }
+        
+        // Filtrar por cliente
+        if (clienteFilter && td[0]) {
+            var cliente = td[0].textContent || td[0].innerText;
+            if (cliente.toUpperCase().indexOf(clienteFilter) === -1) {
+                showRow = false;
+            }
+        }
+        
+        tr[i].style.display = showRow ? "" : "none";
+    }
+    
+    // Actualizar URL con todos los filtros
+    var url = new URL(window.location);
+    if (estadoFilter) {
+        url.searchParams.set('estado', estadoFilter.toLowerCase());
+    } else {
+        url.searchParams.delete('estado');
+    }
+    
+    if (vendedorFilter) {
+        url.searchParams.set('vendedor', vendedorFilter.toLowerCase());
+    } else {
+        url.searchParams.delete('vendedor');
+    }
+    
+    if (clienteFilter) {
+        url.searchParams.set('cliente', clienteFilter.toLowerCase());
+    } else {
+        url.searchParams.delete('cliente');
+    }
+    
+    window.location.href = url.toString();
+}
+
+// Cambiar número de items por página
+function changeItemsPerPage() {
+    var itemsPerPage = document.getElementById("itemsPerPage").value;
+    window.location.href = "?items_per_page=" + itemsPerPage + "&page=1";
+}
+
+// Ordenamiento de columnas
+function sortTable(n) {
+    var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+    table = document.getElementById("pedidosTable");
+    switching = true;
+    dir = "asc";
+
+    while (switching) {
+        switching = false;
+        rows = table.rows;
+
+        for (i = 1; i < (rows.length - 1); i++) {
+            shouldSwitch = false;
+            x = rows[i].getElementsByTagName("td")[n];
+            y = rows[i + 1].getElementsByTagName("td")[n];
+
+            // Para números (columnas 1 y 3)
+            if (n === 1 || n === 3) {
+                var xVal = parseFloat(x.innerHTML.replace(/[^\d.]/g, ''));
+                var yVal = parseFloat(y.innerHTML.replace(/[^\d.]/g, ''));
+
+                if (dir == "asc") {
+                    if (xVal > yVal) {
+                        shouldSwitch = true;
+                        break;
+                    }
+                } else if (dir == "desc") {
+                    if (xVal < yVal) {
+                        shouldSwitch = true;
+                        break;
+                    }
+                }
+            } else {
+                // Para texto
+                if (dir == "asc") {
+                    if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+                        shouldSwitch = true;
+                        break;
+                    }
+                } else if (dir == "desc") {
+                    if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+                        shouldSwitch = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (shouldSwitch) {
+            rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+            switching = true;
+            switchcount++;
+        } else {
+            if (switchcount == 0 && dir == "asc") {
+                dir = "desc";
+                switching = true;
+            }
+        }
+    }
+}
+
+// Cerrar todos los modales al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+    // Cerrar todos los modales para que no aparezcan visibles al recargar
+    const modals = document.querySelectorAll('.w3-modal');
+    modals.forEach(modal => {
+        modal.style.display = 'none';
+    });
+    
+    // Inicializar items por página
+    var urlParams = new URLSearchParams(window.location.search);
+    var itemsPerPage = urlParams.get('items_per_page');
+    if (itemsPerPage) {
+        document.getElementById('itemsPerPage').value = itemsPerPage;
+    }
+});
+</script>
+{% endblock %}

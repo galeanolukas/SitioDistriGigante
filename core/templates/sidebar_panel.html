@@ -1,0 +1,78 @@
+{% load static %}
+<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
+  <div class="offcanvas-header" style="background-color:var(--primary); color:white;">
+    <h5 class="offcanvas-title" id="offcanvasNavbarLabel">MENU {% if user.is_superuser %}ADMINISTRADOR{% else %}USUARIO{% endif %}</h5>
+    <button type="button" class="btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body" style="background-color:var(--primary);">
+    <ul class="navbar-nav justify-content-end flex-grow-1 pe-3">
+      {% if user.is_superuser %}
+        <li class="nav-item">
+          <a href="{% url 'user_panel' %}" class="list-group-item d-flex justify-content-between align-items-center list-group-item-action" style="color:white;">
+            GESTIÓN USUARIOS <span>  <i class="bi bi-people me-2"></i></span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="{% url 'product_panel' %}" class="list-group-item d-flex justify-content-between align-items-center list-group-item-action" style="color:white;">
+            GESTIÓN PRODUCTOS <span> <i class="bi bi-bag-check me-2"></i></span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="{% url 'create_flayer' %}" class="list-group-item d-flex justify-content-between align-items-center list-group-item-action" style="color:white;">
+            GESTIÓN CARTEL/FLAYER <span> <i class="bi bi-images me-2"></i></span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="{% url 'pedidos_panel' %}" class="list-group-item d-flex justify-content-between align-items-center list-group-item-action" style="color:white;">
+            GESTIÓN PEDIDOS <span> <i class="bi bi-bag-check-fill me-2"></i></span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="{% url 'product_img_search' %}" class="list-group-item d-flex justify-content-between align-items-center list-group-item-action" style="color:white;">
+            BUSCAR IMAGENES <span> <i class="bi bi-card-image me-2"></i></span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="{% url 'catalogo_a_pdf' %}" class="list-group-item d-flex justify-content-between align-items-center list-group-item-action" style="color:white;">
+            EXPORTAR CATALOG A PDF <span> <i class="bi bi-filetype-pdf me-2"></i></span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="{% url 'cargar_archivo' %}" class="list-group-item d-flex justify-content-between align-items-center list-group-item-action" style="color:white;">
+            CARGAR POR EXCEL/CSV <span> <i class="bi bi-file-earmark-excel me-2"></i></span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="{% url 'confirm_register' ID=user.id%}" class="list-group-item d-flex justify-content-between align-items-center list-group-item-action" style="color:white;">
+            ACTUALIZAR PERFIL <span> <i class="bi bi-person-lines-fill me-2 mb-2"></i></span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="{% url 'registro_actualizado' perfil_id=user.id%}" class="list-group-item d-flex justify-content-between align-items-center list-group-item-action" style="color:white;">
+            PERFIL <span> <i class="bi bi-person-lines-fill me-2 mb-2"></i></span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="/admin/db/" class="list-group-item d-flex justify-content-between align-items-center list-group-item-action" style="color:white;">
+            ACCEDER A DB<span> <i class="bi bi-database-check me-2 mb-2"></i></span>
+          </a>
+        </li>
+      {% else %}
+        <li class="nav-item">
+          <a href="{% url 'pedidos_panel' %}" class="list-group-item d-flex justify-content-between align-items-center list-group-item-action" style="color:white;">
+            GESTIÓN PEDIDOS <span> <i class="bi bi-bag-check-fill me-2"></i></span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="{% url 'confirm_register' ID=user.id%}" class="list-group-item d-flex justify-content-between align-items-center list-group-item-action" style="color:white;">
+            ACTUALIZAR PERFIL <span> <i class="bi bi-person-lines-fill me-2 mb-2"></i></span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="{% url 'registro_actualizado' perfil_id=user.id%}" class="list-group-item d-flex justify-content-between align-items-center list-group-item-action" style="color:white;">
+            PERFIL <span> <i class="bi bi-person-lines-fill me-2 mb-2"></i></span>
+          </a>
+        </li>
+      {% endif %}
+    </div>
+  </div>

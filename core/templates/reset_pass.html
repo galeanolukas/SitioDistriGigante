@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block content %}
+{% load static %}
+<div class="contenido px-3 py-4 mt-3 text-center">
+    <div class="row justify-content-sm-center pb-3 fs-5 fw-normal lh-sm text-body-emphasis bg-body-secondary rounded shadow-sm">
+        <h3 class="pt-5">RECUPERA TU CONTRASEÑA</h3>
+        <p class="border-bottom py-1"></p>
+        <div class="col-sm-4 mb-5 form-signin fw-normal">
+            <form class="form-group" id="formulario" name="form" autocomplete="off" action="#" method="POST">
+              {% csrf_token %}
+              {% if error %}
+              <p>{{ error }}</p>
+              {% endif %}
+              <div class="form-floating mb-3">
+                  <input type="mail" class="form-control" id="floatingInput" name="email" placeholder="mail" required>
+                  <label for="floatingInput">Ingresa correo registrado</label>
+                  <div class="invalid-feedback">
+                      Ingrese un nombre de usuario válido.
+                  </div>
+            </div>
+            <br>
+            <button type="submit" class="btn btn-primary w-100 py-2">Recuperar</button>
+            </form>
+            <hr class="mt-4 mb-2">
+            <small class="text-body-secondary fw-medium">
+                <strong>Se te enviara un codigo para verificar tu cuenta.</strong>
+            </small>
+        </div>
+    </div>
+</div>
+<script>
+    const togglePassword = document
+        .querySelector('#togglePassword');
+    const password = document.querySelector('#password');
+    togglePassword.addEventListener('click', () => {
+        // Toggle the type attribute using
+        // getAttribure() method
+        const type = password
+            .getAttribute('type') === 'password' ?
+            'text' : 'password';
+        password.setAttribute('type', type);
+        // Toggle the eye and bi-eye icon
+        this.classList.toggle('bi-eye');
+    });
+</script>
+{% endblock %}

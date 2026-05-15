@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  {% load static %}
+  <!--==========================================================-->
+  <!--META-TAGS-->
+  <!--==========================================================-->
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+  <meta name="generator" content="">
+  <link rel="icon" href="{% static 'img/icon.ico' %}" type="image/x-icon">
+  <title>GIGANTE DISTRIBUIDORA | {% block title %}{% endblock %}</title>
+  
+  <!-- Open Graph Meta Tags para Facebook -->
+  {% if og_title %}
+  <meta property="og:title" content="{{ og_title }}">
+  <meta property="og:description" content="{{ og_description }}">
+  <meta property="og:image" content="{{ og_image }}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:url" content="{{ og_url }}">
+  <meta property="og:type" content="{{ og_type }}">
+  <meta property="og:site_name" content="{{ og_site_name }}">
+  <meta property="fb:app_id" content="">
+  {% else %}
+  <!-- Meta tags por defecto -->
+  <meta property="og:title" content="GIGANTE DISTRIBUIDORA">
+  <meta property="og:description" content="Distribuidora líder en productos de calidad">
+  <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'img/logo.png' %}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:url" content="{{ request.scheme }}://{{ request.get_host }}{{ request.path }}">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="GIGANTE DISTRIBUIDORA">
+  {% endif %}
+
+  <!-- Estilos w3.css -->
+  <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Estilos personalizados -->
+  <link rel="stylesheet" href="{% static 'css/content-styles.css' %}" type="text/css">
+  <link rel="stylesheet" type="text/css" href="{% static '/css/owl.carousel.min.css' %}" >
+  <link rel="stylesheet" type="text/css" href="{% static '/css/owl.theme.default.min.css' %}">
+  <link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}">
+  <link rel="stylesheet" type="text/css" href="{% static 'css/enhanced-search.css' %}">
+  <link rel="stylesheet" type="text/css" href="{% static 'css/accessibility.css' %}">
+
+  <!-- Scripts -->
+  <script src="{% static 'js/jquery-3.7.1.min.js' %}"></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.5/jquery.validate.min.js"></script>
+  <script type="text/javascript" src="{% static 'js/API_CMF.js' %}"></script>
+  <script type="text/javascript" src="{% static 'js/validate.js' %}"></script>
+  <script type="text/javascript" src="{% static 'js/color-modes.js' %}"></script>
+  <script type="text/javascript" src="{% static 'js/scroll-top.js' %}"></script>
+  <script type="text/javascript" src="{% static 'js/modals.js' %}"></script>
+  <script src="https://sdk.mercadopago.com/js/v2"></script>
+  <script type="text/javascript" src="{% static 'js/enhanced-search.js' %}"></script>
+
+  {{ form.media }}
+
+  <style>
+    /* Contenido de style  */
+    {% block style %}
+
+    {% endblock %}
+    /* Definir variables de color para mantener la apariencia */
+    :root {
+      --primary: #2c3e50;
+      --secondary: #ec1c24;  /* Color secundario */
+      --accent: #e74c3c;
+      --text-light: #ffffff;
+      --text-dark: #2c3e50;
+      --light-grey: #f8f9fa;
+      --border-color: #e0e0e0;
+    }
+
+    /* Estilos personalizados adicionales */
+    .w3-primary { background-color: var(--primary) !important; color: var(--white);}
+    .w3-secondary { background-color: var(--secondary) !important; }
+    .w3-tertiary { background-color: var(--tertiary) !important; }
+    .w3-text-primary { color: var(--primary) !important; }
+    .w3-text-secondary { color: var(--secondary) !important; }
+
+    .logo img {
+      max-height: 60px;
+      width: auto;
+    }
+
+    .search-input {
+      width: 100% !important;
+    }
+
+    /* Ajustes para mensajes de alerta mejorados */
+    .alert-success, .alert-error, .alert-warning, .alert-info {
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      border-left: 4px solid;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      animation: slideInRight 0.3s ease;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .alert-success {
+      background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+      color: #155724;
+      border-left-color: #28a745;
+    }
+
+    .alert-error {
+      background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+      color: #721c24;
+      border-left-color: #dc3545;
+    }
+
+    .alert-warning {
+      background: linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%);
+      color: #856404;
+      border-left-color: #ffc107;
+    }
+
+    .alert-info {
+      background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+      color: #0c5460;
+      border-left-color: #17a2b8;
+    }
+
+    @keyframes slideInRight {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    .topbar-btn {
+      border-radius: 25px;
+      padding: 8px 16px;
+      transition: all 0.3s ease;
+      border: 2px solid transparent;
+    }
+
+    /* Estilos para mejorar la alineación */
+    .w3-bar .w3-bar-item {
+      display: flex;
+      align-items: center;
+      height: 40px;
+    }
+
+    .w3-border-right {
+      border-right: 1px solid rgba(255,255,255,0.3) !important;
+    }
+
+    /* Responsividad */
+    @media screen and (max-width: 768px) {
+      .w3-col.s12 {
+        text-align: center !important;
+      }
+
+      .w3-bar .w3-right {
+        float: none !important;
+        justify-content: center;
+      }
+
+      .logo img {
+        margin: 0 auto;
+        display: block;
+      }
+
+      .w3-border-right {
+        display: none !important;
+      }
+    }
+
+    @media screen and (max-width: 600px) {
+      .w3-bar .w3-bar-item {
+        height: 35px;
+      }
+
+      .w3-button {
+        padding: 6px 8px !important;
+      }
+
+      .w3-hide-small {
+        display: none !important;
+      }
+    }
+
+    /* Ajustar el tema oscuro si es necesario */
+    @media (prefers-color-scheme: dark) {
+      body {
+        background-color: #333;
+        color: #fff;
+      }
+    }
+  </style>
+</head>
+
+<body class="w3-white">
+  {% include 'modals.html' %}
+  <!--==========================================================-->
+  <!--ENCABEZADO-->
+  <!--==========================================================-->
+  <header>
+    <!--NAV MENSAJE-->
+    <div class="w3-bar w3-secondary w3-center w3-text-white w3-small w3-padding-small w3-animate-fade"> <!--d-none d-lg-block-->
+      <div class="w3-container">
+        <div class="w3-bar">
+          <!-- Dirección -->
+          <div class="w3-bar-item w3-hide-small">
+            <i class="fas fa-map-marker-alt w3-margin-right"></i>
+            <span>av. Arturo ILLIA 5.038, Formosa, Argentina</span>
+          </div>
+
+          <!-- Teléfono -->
+          <div class="w3-bar-item w3-hide-small">
+            <i class="fas fa-phone w3-margin-right"></i>
+            <span>+54370 526-2361</span>
+          </div>
+
+          <!-- WhatsApp -->
+          <div class="w3-bar-item">
+            <a href="https://wa.me/5403705120682?text=Hola,%20me%20interesa%20obtener%20más%20información"
+               target="_blank" class="w3-text-white" style="text-decoration: none;">
+              <i class="fab fa-whatsapp w3-margin-right"></i>
+              <span class="w3-hide-small">WhatsApp</span>
+            </a>
+          </div>
+
+          <!-- Espacio para mensajes de la API (dólar) -->
+          <!-- <div class="w3-bar-item w3-margin-left">
+            <span id="api-message">
+
+            </span>
+          </div> -->
+        </div>
+      </div>
+    </div>
+
+    <!--NAV PRINCIPAL-->
+    {% include "topbar.html" %}
+
+    <!--NAV TABS-->
+    {% include "navtabs.html" %}
+  </header>
+
+  <main class="w3-container">
+    <div class="w3-content" style="max-width:1240px;">
+      <!-- SIDEBAR CATEGORIAS -->
+      {% include 'sidebar.html' %}
+      {% block content %}
+
+      {% endblock %}
+    </div>
+  </main>
+
+  <!--==========================================================-->
+  <!--EXTRAS-->
+  <!--==========================================================-->
+  <!--SCROLL ARRIBA-->
+  <div class="w3-button w3-circle w3-large w3-primary"
+       style="position:fixed; bottom:20px; right:20px; z-index:100;"
+       id="btn-back-to-top" onclick="scrollToTop()">
+    <i class="fas fa-arrow-up"></i>
+  </div>
+  
+  <!-- WHATSAPP FLOTANTE AGRANDADO -->
+  <a href="https://wa.me/5403705120682?text=Hola,%20me%20interesa%20obtener%20más%20información%20de%20Distribuidora%20Gigante"
+     target="_blank"
+     class="w3-button w3-circle w3-xlarge w3-green w3-text-white w3-hover-green w3-animate-zoom"
+     style="position:fixed; bottom:80px; right:20px; z-index:101; width:60px; height:60px; font-size:24px; box-shadow:0 4px 12px rgba(37,211,102,0.4); transition:all 0.3s ease;"
+     onmouseover="this.style.transform='scale(1.1)'; this.style.boxShadow='0 6px 16px rgba(37,211,102,0.6)';"
+     onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 12px rgba(37,211,102,0.4)';"
+     title="Contactanos por WhatsApp">
+    <i class="fab fa-whatsapp"></i>
+  </a>
+  
+  <!-- ASISTENTE VIRTUAL IA -->
+  <div class="w3-button w3-circle w3-large w3-secondary w3-text-white"
+       style="position:fixed; bottom:150px; right:20px; z-index:100;"
+       id="btn-ai-assistant" onclick="toggleAssistant()">
+    <i class="fas fa-robot"></i>
+  </div>
+  <!--==========================================================-->
+  <!--PIE DE PAGINA - OPTIMIZADO-->
+  <!--==========================================================-->
+  <footer style="background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);">
+    <!--SUBIR - COMPACTO-->
+    <div class="w3-container w3-center w3-padding-8" style="background: rgba(0,0,0,0.2);">
+      <a class="w3-button w3-small w3-round-large" href="#" style="background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2);">
+        <i class="fas fa-chevron-up"></i> Subir
+      </a>
+    </div>
+
+    <!--LINKS PIE - COMPACTO-->
+    <div class="w3-container w3-padding-16">
+        <div class="w3-row w3-center w3-text-white" style="text-decoration: none;">
+          <div class="w3-third w3-padding-8">
+            <h6 class="w3-small" style="margin: 4px 0;"><b>INFO</b></h6>
+            <div class="w3-tiny">
+              <a href="{% url 'acerca' %}" class="w3-hover-none" style="text-decoration: none; color: #ecf0f1;">Quiénes somos</a><br>
+              <a href="{% url 'faq' %}" class="w3-hover-none" style="text-decoration: none; color: #ecf0f1;">FAQ</a><br>
+              <a href="{% url 'contacto' %}" class="w3-hover-none" style="text-decoration: none; color: #ecf0f1;">Contacto</a>
+            </div>
+          </div>
+          <div class="w3-third w3-padding-8">
+            <h6 class="w3-small" style="margin: 4px 0;"><b>MENÚS</b></h6>
+            <div class="w3-tiny">
+              <a href="{% url 'catalogo' %}" class="w3-hover-none" style="text-decoration: none; color: #ecf0f1;">Catálogo</a><br>
+              <a href="{% url 'ofertas' %}" class="w3-hover-none" style="text-decoration: none; color: #ecf0f1;">Ofertas</a>
+            </div>
+          </div>
+          <div class="w3-third w3-padding-8">
+            <h6 class="w3-small" style="margin: 4px 0;"><b>SEGUINOS</b></h6>
+            <div>
+              <a class="instagram w3-margin-right w3-hover" href="https://www.instagram.com/distribuidora_gigantefsa/" target="_blank" style="text-decoration: none; color: #ecf0f1;">
+                <i class="fab fa-instagram" style="font-size: 18px;"></i>
+              </a>
+              <a class="facebook w3-margin-right w3-hover" href="https://www.facebook.com/profile.php?id=100063477193881&locale=es_LA" target="_blank" style="text-decoration: none; color: #ecf0f1;">
+                <i class="fab fa-facebook" style="font-size: 18px;"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+    </div>
+
+    <!--DERECHOS DE AUTOR - COMPACTO-->
+    <div class="w3-container w3-center w3-padding-8 w3-text-white" style="background: rgba(0,0,0,0.3); border-top: 1px solid rgba(255,255,255,0.1);">
+      <div class="w3-tiny">
+        <span class="w3-hide-small">
+          &copy; 2025 | Todos los derechos reservados | <a href="https://www.multilideres.com/" style="text-decoration: none; color: #3498db;">Desarrollado por Multilideres tech</a>
+        </span>
+        <span class="w3-hide-medium w3-hide-large">
+          &copy; 2025 | Todos los derechos reservados
+        </span>
+        <span class="w3-hide-small"> | </span><span>{{ version }}</span>
+      </div>
+    </div>
+  </footer>
+    <!-- Modal del Asistente Virtual IA -->
+    <div id="aiAssistantModal" class="w3-modal w3-animate-bottom">
+      <div class="w3-modal-content w3-card-4 w3-round-large"
+           style="max-width:400px; position:fixed; bottom:80px; right:20px; z-index:1000;">
+
+        <!-- Header del asistente -->
+        <div class="w3-container w3-secondary w3-round-large w3-padding-small">
+          <span onclick="closeAssistant()"
+                class="w3-button w3-secondary w3-round-large w3-right w3-small">
+            <i class="fas fa-times"></i>
+          </span>
+          <h5 class="w3-text-white">
+            <i class="fas fa-robot w3-margin-right"></i>Asistente Virtual
+          </h5>
+        </div>
+
+        <!-- Contenido del asistente -->
+        <div class="w3-container w3-white w3-padding">
+          <div id="assistantStatus" class="w3-panel w3-light-grey w3-round-large w3-padding">
+            <p class="w3-text-grey">
+              <i class="fas fa-info-circle w3-margin-right"></i>
+              El asistente virtual está en desarrollo. Próximamente estará disponible.
+            </p>
+          </div>
+
+          <!-- Área de chat (deshabilitada por ahora) -->
+          <div id="chatArea" class="w3-hide">
+            <div class="w3-border w3-round-large w3-padding" style="height:200px; overflow-y:auto;">
+              <div class="w3-container w3-light-grey w3-round-large w3-margin-bottom w3-small">
+                <p>Hola! Soy tu asistente virtual. ¿En qué puedo ayudarte hoy?</p>
+              </div>
+            </div>
+
+            <div class="w3-row w3-margin-top">
+              <div class="w3-col s10">
+                <input type="text" class="w3-input w3-border w3-round-large"
+                       placeholder="Escribe tu pregunta..." disabled>
+              </div>
+              <div class="w3-col s2">
+                <button class="w3-button w3-secondary w3-round-large" disabled>
+                  <i class="fas fa-paper-plane"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Botones de acción rápida -->
+          <div class="w3-row w3-margin-top">
+            <div class="w3-col s6 w3-padding-small">
+              <button class="w3-button w3-light-grey w3-block w3-round-large"
+                      onclick="quickAction('catalogo')" disabled>
+                <i class="fas fa-book w3-margin-right"></i>Catálogo
+              </button>
+            </div>
+            <div class="w3-col s6 w3-padding-small">
+              <button class="w3-button w3-light-grey w3-block w3-round-large"
+                      onclick="quickAction('contacto')" disabled>
+                <i class="fas fa-phone w3-margin-right"></i>Contacto
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Modal de Notificaciones (Faltaba) -->
+    <div id="djangoMessagesModal" class="w3-modal">
+      <div class="w3-modal-content w3-card-4 w3-round-large" style="max-width:500px; margin-top:100px;">
+        <div class="w3-container w3-padding">
+          <div class="w3-row">
+            <div class="w3-col s11">
+              <h5 class="w3-margin-0">
+                <i class="fas fa-bell w3-margin-right"></i>Notificaciones
+              </h5>
+            </div>
+            <div class="w3-col s1 w3-right-align">
+              <span onclick="document.getElementById('djangoMessagesModal').style.display='none'" 
+                    class="w3-button w3-transparent w3-hover-none w3-large w3-padding-small">
+                <i class="fas fa-times"></i>
+              </span>
+            </div>
+          </div>
+          
+          {% if messages %}
+            {% for message in messages %}
+              <div class="w3-panel w3-round-large w3-margin-top w3-{{ message.tags }}">
+                <p class="w3-margin-0">
+                  {% if message.tags == 'success' %}
+                    <i class="fas fa-check-circle w3-margin-right"></i>
+                  {% elif message.tags == 'error' %}
+                    <i class="fas fa-exclamation-circle w3-margin-right"></i>
+                  {% elif message.tags == 'warning' %}
+                    <i class="fas fa-exclamation-triangle w3-margin-right"></i>
+                  {% else %}
+                    <i class="fas fa-info-circle w3-margin-right"></i>
+                  {% endif %}
+                  {{ message }}
+                </p>
+              </div>
+            {% endfor %}
+          {% else %}
+            <div class="w3-panel w3-light-grey w3-round-large w3-margin-top">
+              <p class="w3-text-grey w3-margin-0">
+                <i class="fas fa-info-circle w3-margin-right"></i>
+                No hay notificaciones nuevas
+              </p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+  <script>
+    // Función para scroll hacia arriba
+    function scrollToTop() {
+      window.scrollTo({top: 0, behavior: 'smooth'});
+    }
+
+    // Manejo del tema de color
+    document.addEventListener('DOMContentLoaded', function() {
+      const themeButtons = document.querySelectorAll('[data-theme-value]');
+
+      themeButtons.forEach(button => {
+        button.addEventListener('click', function() {
+          const theme = this.getAttribute('data-theme-value');
+          // Aquí implementarías la lógica para cambiar el tema
+          console.log('Cambiando a tema: ' + theme);
+        });
+      });
+    });
+
+    // Ejemplo de cómo podrías cargar información de la API del dólar
+    document.addEventListener('DOMContentLoaded', function() {
+      // Esta es una simulación - reemplaza con tu API real
+      const apiMessage = document.getElementById('api-message');
+
+      // Simular datos de API (dólar blue)
+      const simulateApiData = () => {
+        const dollarBuy = Math.random() * 1400 + 1000; // Entre 900 y 1000
+        const dollarSell = dollarBuy + Math.random() * 20;
+
+        apiMessage.innerHTML = `
+          <i class="fas fa-dollar-sign w3-margin-right"></i>
+          Dólar Blue: Compra $${dollarBuy.toFixed(2)} | Venta $${dollarSell.toFixed(2)}
+        `;
+      };
+
+      // Cargar inicialmente y cada 5 minutos
+      simulateApiData();
+      setInterval(simulateApiData, 300000);
+
+      // O si tienes una API real:
+      /*
+      fetch('https://api-dolar-argentina.com.ar/api/dolarblue')
+        .then(response => response.json())
+        .then(data => {
+          apiMessage.innerHTML = `
+            <i class="fas fa-dollar-sign w3-margin-right"></i>
+            Dólar Blue: Compra $${data.compra} | Venta $${data.venta}
+          `;
+        })
+        .catch(error => {
+          apiMessage.innerHTML = '<i class="fas fa-sync-alt w3-margin-right"></i>Actualizando...';
+        });
+      */
+    });
+
+    function togglePassword(inputId) {
+        const input = document.getElementById(inputId);
+        const icon = input.nextElementSibling.querySelector('i');
+
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        } else {
+            input.type = 'password';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        }
+    }
+
+    // Función para mostrar automáticamente el modal de mensajes
+    document.addEventListener('DOMContentLoaded', function() {
+        {% if messages %}
+        // Mostrar el modal de mensajes si hay mensajes
+        document.getElementById('djangoMessagesModal').style.display = 'block';
+
+        // Configurar auto-cierre después de 7 segundos
+        setTimeout(function() {
+            document.getElementById('djangoMessagesModal').style.display = 'none';
+        }, 7000);
+        {% endif %}
+    });
+
+    // Función mejorada para mostrar notificaciones del sistema
+    function showSystemNotification(message, type = 'info', duration = 5000) {
+        // Eliminar notificaciones existentes
+        const existingNotifications = document.querySelectorAll('.system-notification');
+        existingNotifications.forEach(notif => notif.remove());
+        
+        const notification = document.createElement('div');
+        const iconClass = type === 'success' ? 'fa-check-circle' :
+                         type === 'error' ? 'fa-exclamation-circle' :
+                         type === 'warning' ? 'fa-exclamation-triangle' : 'fa-info-circle';
+
+        const bgColor = type === 'success' ? 'w3-green' :
+                       type === 'error' ? 'w3-red' :
+                       type === 'warning' ? 'w3-orange' : 'w3-blue';
+
+        notification.className = `system-notification w3-panel w3-round ${bgColor} w3-text-white w3-card-4 w3-animate-top`;
+        notification.style.cssText = 'position:fixed; top:20px; right:20px; z-index:10000; max-width:400px; min-width:300px;';
+        notification.innerHTML = `
+            <span onclick="this.parentElement.style.display='none'" class="w3-button w3-display-topright w3-hover-none">&times;</span>
+            <div class="w3-row">
+                <div class="w3-col" style="width:40px">
+                    <i class="fas ${iconClass} fa-2x"></i>
+                </div>
+                <div class="w3-rest">
+                    <h4 class="w3-margin-0">${type === 'success' ? 'Éxito' : type === 'error' ? 'Error' : type === 'warning' ? 'Advertencia' : 'Información'}</h4>
+                    <p class="w3-margin-0">${message}</p>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(notification);
+
+        // Auto-eliminar después del tiempo especificado
+        setTimeout(() => {
+            if (notification.parentElement) {
+                notification.style.opacity = '0';
+                setTimeout(() => {
+                    if (notification.parentElement) {
+                        notification.parentElement.removeChild(notification);
+                    }
+                }, 300);
+            }
+        }, duration);
+
+        return notification;
+    }
+
+    // Función para procesar mensajes de Django
+    function processDjangoMessages() {
+        {% if messages %}
+        {% for message in messages %}
+            showSystemNotification('{{ message|safe }}', '{{ message.tags }}', 7000);
+        {% endfor %}
+        {% endif %}
+    }
+
+    // Función UNIFICADA para manejar mensajes de Django
+    function handleDjangoMessages() {
+        // Primero cerrar TODOS los modales para evitar conflictos
+        const allModals = document.querySelectorAll('.w3-modal');
+        allModals.forEach(modal => {
+            modal.style.display = 'none';
+            modal.classList.remove('show');
+        });
+        
+        {% if messages %}
+        // Mostrar notificaciones individuales en lugar del modal
+        {% for message in messages %}
+            showSystemNotification('{{ message|safe }}', '{{ message.tags }}', 7000);
+        {% endfor %}
+        
+        // Opcional: mostrar modal solo si hay mensajes específicos que lo requieran
+        // document.getElementById('djangoMessagesModal').style.display = 'block';
+        {% endif %}
+    }
+
+    // Función para mostrar automáticamente el modal de mensajes (solo para casos específicos)
+    function showDjangoMessagesModal() {
+        // Cerrar otros modales primero
+        const allModals = document.querySelectorAll('.w3-modal');
+        allModals.forEach(modal => {
+            if (modal.id !== 'djangoMessagesModal') {
+                modal.style.display = 'none';
+            }
+        });
+        
+        {% if messages %}
+        document.getElementById('djangoMessagesModal').style.display = 'block';
+        setTimeout(function() {
+            document.getElementById('djangoMessagesModal').style.display = 'none';
+        }, 7000);
+        {% endif %}
+    }
+
+    // Funciones para el asistente virtual
+    function toggleAssistant() {
+      var modal = document.getElementById("aiAssistantModal");
+      if (modal.style.display === "block") {
+        closeAssistant();
+      } else {
+        openAssistant();
+      }
+    }
+
+    function openAssistant() {
+      document.getElementById("aiAssistantModal").style.display = "block";
+      // Mostrar mensaje de desarrollo
+      showDevelopmentMessage();
+    }
+
+    function closeAssistant() {
+      document.getElementById("aiAssistantModal").style.display = "none";
+    }
+
+    function showDevelopmentMessage() {
+      var statusDiv = document.getElementById("assistantStatus");
+      statusDiv.innerHTML = `
+        <div class="w3-panel w3-yellow w3-round-large w3-padding">
+          <p class="w3-text-dark-grey">
+            <i class="fas fa-tools w3-margin-right"></i>
+            <strong>En Desarrollo</strong><br>
+            Nuestro asistente virtual IA está siendo mejorado.
+            Estará disponible muy pronto con funciones avanzadas
+            de atención al cliente.
+          </p>
+        </div>
+        <div class="w3-panel w3-light-grey w3-round-large w3-padding w3-small">
+          <p class="w3-text-grey">
+            <i class="fas fa-clock w3-margin-right"></i>
+            <strong>Próximamente:</strong><br>
+            • Búsqueda inteligente de productos<br>
+            • Soporte 24/7<br>
+            • Recomendaciones personalizadas<br>
+            • Gestión de pedidos
+          </p>
+        </div>
+      `;
+    }
+
+    function quickAction(action) {
+      // Funciones de acción rápida (deshabilitadas por ahora)
+      switch(action) {
+        case 'catalogo':
+          window.location.href = "{% url 'catalogo' %}";
+          break;
+        case 'contacto':
+          window.location.href = "{% url 'contacto' %}";
+          break;
+        default:
+          console.log('Acción no implementada:', action);
+      }
+    }
+
+    // Cerrar el asistente al hacer clic fuera
+    document.addEventListener('click', function(event) {
+      var assistantBtn = document.getElementById('btn-ai-assistant');
+      var assistantModal = document.getElementById('aiAssistantModal');
+
+      if (!assistantBtn.contains(event.target) &&
+          !assistantModal.contains(event.target) &&
+          assistantModal.style.display === 'block') {
+        closeAssistant();
+      }
+    });
+
+    // Inicializar el asistente
+    document.addEventListener('DOMContentLoaded', function() {
+      // Verificar si el asistente debería estar activo
+      const assistantActive = false; // Cambiar a true cuando esté listo
+
+      if (!assistantActive) {
+        // Deshabilitar funcionalidades hasta que esté listo
+        const assistantBtn = document.getElementById('btn-ai-assistant');
+        if (assistantBtn) {
+          assistantBtn.classList.add('w3-grey');
+          assistantBtn.title = "Asistente en desarrollo - Próximamente";
+        }
+      }
+
+      // Cerrar todos los modales inmediatamente (antes de cualquier otra cosa)
+      (function() {
+        const modals = document.querySelectorAll('.w3-modal');
+        modals.forEach(modal => {
+            modal.style.display = 'none';
+            modal.classList.remove('show');
+        });
+      })();
+
+      // UNICAMENTE procesar mensajes de Django una vez
+      handleDjangoMessages();
+    });
+
+    // Eliminar DOMContentLoaded duplicado que estaba causando el problema
+    // document.addEventListener('DOMContentLoaded', function() {
+    //   // Cerrar todos los modales para que no aparezcan visibles al recargar
+    //   const modals = document.querySelectorAll('.w3-modal');
+    //   modals.forEach(modal => {
+    //       modal.style.display = 'none';
+    //   });
+    //   
+    //   // También ocultar modales con estilos inline o clases específicas
+    //   const hiddenModals = document.querySelectorAll('[style*="display: block"], .modal.show');
+    //   hiddenModals.forEach(modal => {
+    //       modal.style.display = 'none';
+    //       modal.classList.remove('show');
+    //   });
+    // });
+</script>
+
+</body>
+</html>
