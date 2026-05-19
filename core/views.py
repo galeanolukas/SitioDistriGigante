@@ -1968,6 +1968,28 @@ def contacto(request):
 
     return render(request, template_name)
 
+@login_required
+def api_mensajes_contacto(request):
+    """API para obtener mensajes de contacto"""
+    if not (request.user.is_staff or request.user.is_superuser):
+        return JsonResponse({'success': False, 'error': 'No tienes permisos'})
+    
+    mensajes = Contacto.objects.all().order_by('-fecha')
+    mensajes_data = []
+    
+    for mensaje in mensajes:
+        mensajes_data.append({
+            'id': mensaje.id,
+            'nombre': mensaje.nombre,
+            'correo': mensaje.correo,
+            'telefono': mensaje.telefono,
+            'mensaje': mensaje.mensaje[:100] + '...' if len(mensaje.mensaje) > 100 else mensaje.mensaje,
+            'fecha': mensaje.fecha.isoformat(),
+            'leido': getattr(mensaje, 'leido', False)  # Agregar campo leido si existe
+        })
+    
+    return JsonResponse({'success': True, 'mensajes': mensajes_data})
+
 def faq(request):
     template_name = "faq.html"
     return render(request, template_name)

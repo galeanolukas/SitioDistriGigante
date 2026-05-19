@@ -29,16 +29,22 @@
 
                     <!-- Mensajes Recibidos -->
                     <div class="w3-third">
-                        <div class="stat-card">
-                            <div class="stat-icon green">
-                                <i class="fas fa-envelope"></i>
+                        <a href="#" onclick="openContactMessages()" class="stat-card-link">
+                            <div class="stat-card">
+                                <div class="stat-icon green">
+                                    <i class="fas fa-envelope"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <h3>{{ total_mensajes }}</h3>
+                                    <h5>Mensajes</h5>
+                                    <p>Último: {{ mensaje_ultimo|date:"d/m/Y" }}</p>
+                                    <small class="stat-badge">Click para gestionar</small>
+                                </div>
+                                <div class="stat-arrow">
+                                    <i class="fas fa-arrow-right"></i>
+                                </div>
                             </div>
-                            <div class="stat-content">
-                                <h3>{{ total_mensajes }}</h3>
-                                <h5>Mensajes</h5>
-                                <p>Último: {{ mensaje_ultimo|date:"d/m/Y" }}</p>
-                            </div>
-                        </div>
+                        </a>
                     </div>
 
                     <!-- Usuarios Registrados -->
@@ -117,6 +123,9 @@
                         </a>
                         <a href="{% url 'gestion_envios' %}" class="action-btn teal">
                             <i class="fas fa-truck"></i> Gestionar Envíos
+                        </a>
+                        <a href="#" onclick="openContactMessages()" class="action-btn purple">
+                            <i class="fas fa-envelope"></i> Mensajes de Contacto
                         </a>
                     </div>
                 </div>
@@ -401,5 +410,114 @@ document.addEventListener('DOMContentLoaded', function() {
         modal.style.display = 'none';
     });
 });
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Función para actualizar estadísticas en tiempo real
+function updateStats() {
+    // Aquí puedes agregar lógica para actualizar estadísticas via AJAX
+    console.log('Actualizando estadísticas...');
+}
+
+// Abrir modal de mensajes de contacto
+function openContactMessages() {
+    loadContactMessages();
+    document.getElementById('contactMessagesModal').style.display = 'block';
+}
+
+// Cargar mensajes de contacto dinámicamente
+function loadContactMessages() {
+    const messagesList = document.getElementById('contactMessagesList');
+    messagesList.innerHTML = '<div class="w3-center w3-padding-32"><div class="w3-spinner"></div><p>Cargando mensajes...</p></div>';
+    
+    fetch('/api/mensajes-contacto/')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                renderContactMessages(data.mensajes);
+            } else {
+                messagesList.innerHTML = '<div class="w3-center w3-padding-32"><p class="w3-text-red">Error al cargar mensajes</p></div>';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            messagesList.innerHTML = '<div class="w3-center w3-padding-32"><p class="w3-text-red">Error de conexión</p></div>';
+        });
+}
+
+// Renderizar mensajes en el modal
+function renderContactMessages(mensajes) {
+    const messagesList = document.getElementById('contactMessagesList');
+    
+    if (mensajes.length === 0) {
+        messagesList.innerHTML = '<div class="w3-center w3-padding-32"><p class="w3-text-grey">No hay mensajes de contacto</p></div>';
+        return;
+    }
+    
+    let html = '';
+    mensajes.forEach(mensaje => {
+        const fecha = new Date(mensaje.fecha).toLocaleDateString('es-AR');
+        const leidoClass = mensaje.leido ? 'w3-light-grey' : 'w3-pale-blue';
+        const leidoIcon = mensaje.leido ? 'fa-envelope-open' : 'fa-envelope';
+        
+        html += `
+            <div class="w3-card w3-margin-bottom w3-hover-shadow ${leidoClass} mensaje-item" data-id="${mensaje.id}">
+                <div class="w3-container w3-padding-16">
+                    <div class="w3-row">
+                        <div class="w3-col s8">
+                            <h5><b>${mensaje.nombre}</b></h5>
+                            <p class="w3-small w3-text-grey">
+                                <i class="fas fa-envelope"></i> ${mensaje.correo || 'Sin email'}<br>
+                                <i class="fas fa-phone"></i> ${mensaje.telefono || 'Sin teléfono'}
+                            </p>
+                        </div>
+                        <div class="w3-col s4 w3-right-align">
+                            <span class="w3-tiny w3-text-grey">${fecha}</span><br>
+                            <button onclick="viewMessage(${mensaje.id})" class="w3-button w3-blue w3-tiny w3-margin-top">
+                                <i class="fas fa-eye"></i> Ver
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    messagesList.innerHTML = html;
+}
+
+// Ver mensaje completo
+function viewMessage(messageId) {
+    // Aquí puedes implementar la lógica para ver el mensaje completo
+    alert(`Ver mensaje ID: ${messageId}`);
+}
+
+// Filtrar mensajes
+function filterContacts() {
+    const searchValue = document.getElementById('contactSearch').value.toLowerCase();
+    const filterValue = document.getElementById('contactFilter').value;
+    const mensajes = document.querySelectorAll('.mensaje-item');
+    
+    mensajes.forEach(mensaje => {
+        const text = mensaje.textContent.toLowerCase();
+        const matchesSearch = text.includes(searchValue);
+        
+        let matchesFilter = true;
+        if (filterValue === 'unread') {
+            matchesFilter = mensaje.classList.contains('w3-pale-blue');
+        } else if (filterValue === 'read') {
+            matchesFilter = mensaje.classList.contains('w3-light-grey');
+        } else if (filterValue === 'today') {
+            // Implementar lógica para filtrar por hoy
+        }
+        
+        mensaje.style.display = matchesSearch && matchesFilter ? 'block' : 'none';
+    });
+}
+
+// Actualizar cada 30 segundos
+setInterval(updateStats, 30000);
 </script>
 {% endblock %}

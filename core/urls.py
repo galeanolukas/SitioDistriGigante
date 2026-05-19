@@ -86,6 +86,7 @@ urlpatterns = [
     path('gestion-ofertas/eliminar/<int:oferta_id>/', views.eliminar_oferta, name='eliminar_oferta'),
     path('catalogo-pdf/', views.catalogo_pdf, name='catalogo_pdf'),
     path('catalogo-pdf/<str:orden>/', views.catalogo_pdf, name='catalogo_pdf_orden'),
+    path('api/mensajes-contacto/', views.api_mensajes_contacto, name='api_mensajes_contacto'),
     
     # URLs de Sistema de Transportistas
     path('panel-transportista/', views.panel_transportista, name='panel_transportista'),
