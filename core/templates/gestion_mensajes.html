@@ -1,0 +1,248 @@
+{% extends 'dashboard.html' %}
+{% load static %}
+{% block title %}GESTIÓN DE MENSAJES{% endblock %}
+{% block page_title %}GESTIÓN DE MENSAJES DE CONTACTO{% endblock %}
+
+<!-- Definir funciones JavaScript al principio -->
+<script>
+// Función para ver mensaje completo
+function viewMessage(messageId) {
+    // Obtener los datos del mensaje directamente del DOM
+    const messageElement = document.querySelector('[data-message-id="' + messageId + '"]');
+    if (!messageElement) {
+        alert('Mensaje no encontrado');
+        return;
+    }
+    
+    // Obtener datos del mensaje
+    const nombre = messageElement.querySelector('h5 b').textContent;
+    const emailElement = messageElement.querySelector('.fa-envelope').parentElement;
+    const email = emailElement.textContent.trim().replace('Sin email', '').trim() || 'No proporcionado';
+    const phoneElement = messageElement.querySelector('.fa-phone').parentElement;
+    const telefono = phoneElement.textContent.trim().replace('Sin teléfono', '').trim() || 'No proporcionado';
+    const fechaElement = messageElement.querySelector('.w3-tiny');
+    const fecha = fechaElement.textContent;
+    const mensajePreview = messageElement.querySelector('.w3-small').textContent;
+    
+    // Crear contenido del modal
+    const content = document.getElementById('messageDetailContent');
+    content.innerHTML = `
+        <div class="w3-padding">
+            <div class="w3-margin-bottom">
+                <h5><i class="fas fa-user w3-margin-right"></i> Nombre:</h5>
+                <p><b>${nombre}</b></p>
+            </div>
+            
+            <div class="w3-margin-bottom">
+                <h5><i class="fas fa-envelope w3-margin-right"></i> Email:</h5>
+                <p>${email}</p>
+            </div>
+            
+            <div class="w3-margin-bottom">
+                <h5><i class="fas fa-phone w3-margin-right"></i> Teléfono:</h5>
+                <p>${telefono}</p>
+            </div>
+            
+            <div class="w3-margin-bottom">
+                <h5><i class="fas fa-calendar w3-margin-right"></i> Fecha:</h5>
+                <p>${fecha}</p>
+            </div>
+            
+            <div class="w3-margin-bottom">
+                <h5><i class="fas fa-comment w3-margin-right"></i> Mensaje:</h5>
+                <div class="w3-border w3-round w3-padding" style="background-color: #f8f9fa;">
+                    <p>${mensajePreview}</p>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Mostrar el modal
+    document.getElementById('viewMessageModal').style.display = 'block';
+}
+
+// Función para eliminar mensaje
+function deleteMessage(messageId) {
+    if (confirm('¿Estás seguro de que quieres eliminar este mensaje? Esta acción no se puede deshacer.')) {
+        // Simular eliminación (en producción esto llamaría a la API)
+        const messageElement = document.querySelector('[data-message-id="' + messageId + '"]');
+        if (messageElement) {
+            messageElement.remove();
+            alert('Mensaje eliminado correctamente');
+            
+            // Actualizar contador
+            const totalElement = document.querySelector('h3');
+            if (totalElement) {
+                const currentTotal = parseInt(totalElement.textContent);
+                totalElement.textContent = currentTotal - 1;
+            }
+            
+            // Si no hay más mensajes, recargar
+            const remainingMessages = document.querySelectorAll('.message-item');
+            if (remainingMessages.length === 0) {
+                location.reload();
+            }
+        }
+    }
+}
+
+// Función para filtrar mensajes
+function filterMessages() {
+    const searchValue = document.getElementById('messageSearch').value.toLowerCase();
+    const filterValue = document.getElementById('messageFilter').value;
+    const messages = document.querySelectorAll('.message-item');
+    
+    const today = new Date();
+    const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+    
+    messages.forEach(message => {
+        const text = message.getAttribute('data-search');
+        const messageDate = new Date(message.getAttribute('data-date'));
+        
+        const matchesSearch = text.includes(searchValue);
+        
+        let matchesFilter = true;
+        if (filterValue === 'today') {
+            matchesFilter = messageDate.toDateString() === today.toDateString();
+        } else if (filterValue === 'week') {
+            matchesFilter = messageDate >= weekAgo;
+        } else if (filterValue === 'month') {
+            matchesFilter = messageDate >= monthAgo;
+        }
+        
+        message.style.display = matchesSearch && matchesFilter ? 'block' : 'none';
+    });
+}
+
+// Cerrar modales al hacer clic fuera
+window.onclick = function(event) {
+    const modals = document.querySelectorAll('.w3-modal');
+    modals.forEach(modal => {
+        if (event.target === modal) {
+            modal.style.display = 'none';
+        }
+    });
+}
+</script>
+
+{% block content %}
+
+<div class="w3-container w3-padding-32">
+    <!-- Estadísticas -->
+    <div class="w3-row-padding w3-margin-bottom">
+        <div class="w3-col s12 m6 l3">
+            <div class="w3-card w3-round-large w3-white w3-center w3-padding-16">
+                <i class="fas fa-envelope w3-xxlarge w3-text-blue"></i>
+                <h3>{{ total_mensajes }}</h3>
+                <p>Total de Mensajes</p>
+            </div>
+        </div>
+        <div class="w3-col s12 m6 l3">
+            <div class="w3-card w3-round-large w3-white w3-center w3-padding-16">
+                <i class="fas fa-calendar-day w3-xxlarge w3-text-green"></i>
+                <h3>{{ mensajes|length }}</h3>
+                <p>Este Mes</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros y Búsqueda -->
+    <div class="w3-card w3-round-large w3-white w3-margin-bottom">
+        <div class="w3-container w3-padding-16">
+            <div class="w3-row-padding">
+                <div class="w3-col s8">
+                    <input type="text" id="messageSearch" class="w3-input w3-border w3-round" 
+                           placeholder="Buscar mensajes..." onkeyup="filterMessages()">
+                </div>
+                <div class="w3-col s4">
+                    <select id="messageFilter" class="w3-select w3-border w3-round" onchange="filterMessages()">
+                        <option value="all">Todos los mensajes</option>
+                        <option value="today">Hoy</option>
+                        <option value="week">Esta semana</option>
+                        <option value="month">Este mes</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Mensajes -->
+    <div class="w3-card w3-round-large w3-white">
+        <div class="w3-container w3-padding-16">
+            <h3 class="w3-text-blue">
+                <i class="fas fa-envelope w3-margin-right"></i>
+                Mensajes Recibidos
+            </h3>
+        </div>
+        
+        <div class="w3-container" style="max-height:600px; overflow-y:auto;">
+            {% if mensajes %}
+                {% for mensaje in mensajes %}
+                <div class="w3-border-bottom w3-hover-light-grey message-item" 
+                     data-message-id="{{ mensaje.id }}"
+                     data-date="{{ mensaje.fecha|date:'Y-m-d' }}"
+                     data-search="{{ mensaje.nombre|lower }} {{ mensaje.correo|lower }} {{ mensaje.mensaje|lower }}">
+                    <div class="w3-padding-16">
+                        <div class="w3-row">
+                            <div class="w3-col s8">
+                                <h5><b>{{ mensaje.nombre }}</b></h5>
+                                <p class="w3-small w3-text-grey">
+                                    <i class="fas fa-envelope"></i> {{ mensaje.correo|default:"Sin email" }}<br>
+                                    <i class="fas fa-phone"></i> {{ mensaje.telefono|default:"Sin teléfono" }}
+                                </p>
+                                <p class="w3-small">{{ mensaje.mensaje|truncatewords:20 }}</p>
+                            </div>
+                            <div class="w3-col s4 w3-right-align">
+                                <span class="w3-tiny w3-text-grey">{{ mensaje.fecha|date:"d/m/Y H:i" }}</span><br>
+                                <button onclick="viewMessage({{ mensaje.id }})" 
+                                        class="w3-button w3-blue w3-tiny w3-margin-top">
+                                    <i class="fas fa-eye"></i> Ver
+                                </button>
+                                <button onclick="deleteMessage({{ mensaje.id }})" 
+                                        class="w3-button w3-red w3-tiny w3-margin-top">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="w3-center w3-padding-32">
+                    <i class="fas fa-inbox w3-xxxlarge w3-text-grey"></i>
+                    <p class="w3-text-grey">No hay mensajes de contacto</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal para ver mensaje completo -->
+<div id="viewMessageModal" class="w3-modal">
+    <div class="w3-modal-content w3-card-4 w3-round-large" style="max-width:700px;">
+        <div class="w3-container w3-blue w3-text-white w3-round-top">
+            <span onclick="document.getElementById('viewMessageModal').style.display='none'" 
+                  class="w3-button w3-display-topright w3-large">&times;</span>
+            <h4 class="w3-center">
+                <i class="fas fa-envelope-open w3-margin-right"></i>
+                Detalles del Mensaje
+            </h4>
+        </div>
+        
+        <div class="w3-container w3-padding-24" id="messageDetailContent">
+            <!-- El contenido se cargará dinámicamente -->
+        </div>
+        
+        <div class="w3-container w3-light-grey w3-padding-16 w3-round-bottom">
+            <div class="w3-center">
+                <button onclick="document.getElementById('viewMessageModal').style.display='none'" 
+                        class="w3-button w3-grey w3-round">
+                    <i class="fas fa-times"></i> Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

@@ -1969,6 +1969,23 @@ def contacto(request):
     return render(request, template_name)
 
 @login_required
+def gestion_mensajes(request):
+    """Vista para gestionar mensajes de contacto"""
+    if not (request.user.is_staff or request.user.is_superuser):
+        messages.error(request, "No tienes permisos para acceder a esta página.")
+        return redirect('admin_panel')
+    
+    # Obtener todos los mensajes ordenados por fecha (más recientes primero)
+    mensajes = Contacto.objects.all().order_by('-fecha')
+    
+    context = {
+        'mensajes': mensajes,
+        'total_mensajes': mensajes.count(),
+    }
+    
+    return render(request, 'gestion_mensajes.html', context)
+
+@login_required
 def api_mensajes_contacto(request):
     """API para obtener mensajes de contacto"""
     if not (request.user.is_staff or request.user.is_superuser):
@@ -1989,6 +2006,47 @@ def api_mensajes_contacto(request):
         })
     
     return JsonResponse({'success': True, 'mensajes': mensajes_data})
+
+@login_required
+def api_eliminar_mensaje(request, mensaje_id):
+    """API para eliminar un mensaje de contacto"""
+    if not (request.user.is_staff or request.user.is_superuser):
+        return JsonResponse({'success': False, 'error': 'No tienes permisos'})
+    
+    if request.method != 'DELETE':
+        return JsonResponse({'success': False, 'error': 'Método no permitido'})
+    
+    try:
+        mensaje = Contacto.objects.get(id=mensaje_id)
+        mensaje.delete()
+        return JsonResponse({'success': True, 'message': 'Mensaje eliminado correctamente'})
+    except Contacto.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Mensaje no encontrado'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+@login_required
+def api_ver_mensaje(request, mensaje_id):
+    """API para obtener detalles de un mensaje específico"""
+    if not (request.user.is_staff or request.user.is_superuser):
+        return JsonResponse({'success': False, 'error': 'No tienes permisos'})
+    
+    try:
+        mensaje = Contacto.objects.get(id=mensaje_id)
+        mensaje_data = {
+            'id': mensaje.id,
+            'nombre': mensaje.nombre,
+            'correo': mensaje.correo,
+            'telefono': mensaje.telefono,
+            'mensaje': mensaje.mensaje,
+            'fecha': mensaje.fecha.isoformat(),
+            'leido': getattr(mensaje, 'leido', False)
+        }
+        return JsonResponse({'success': True, 'mensaje': mensaje_data})
+    except Contacto.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Mensaje no encontrado'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
 
 def faq(request):
     template_name = "faq.html"

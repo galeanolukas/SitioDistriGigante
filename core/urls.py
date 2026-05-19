@@ -86,7 +86,10 @@ urlpatterns = [
     path('gestion-ofertas/eliminar/<int:oferta_id>/', views.eliminar_oferta, name='eliminar_oferta'),
     path('catalogo-pdf/', views.catalogo_pdf, name='catalogo_pdf'),
     path('catalogo-pdf/<str:orden>/', views.catalogo_pdf, name='catalogo_pdf_orden'),
+    path('gestion-mensajes/', views.gestion_mensajes, name='gestion_mensajes'),
     path('api/mensajes-contacto/', views.api_mensajes_contacto, name='api_mensajes_contacto'),
+    path('api/mensaje/<int:mensaje_id>/ver/', views.api_ver_mensaje, name='api_ver_mensaje'),
+    path('api/mensaje/<int:mensaje_id>/eliminar/', views.api_eliminar_mensaje, name='api_eliminar_mensaje'),
     
     # URLs de Sistema de Transportistas
     path('panel-transportista/', views.panel_transportista, name='panel_transportista'),

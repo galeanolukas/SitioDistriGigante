@@ -312,6 +312,12 @@
         </li>
 
         <li class="w3-padding">
+          <a href="{% url 'gestion_mensajes' %}" class="w3-button w3-block w3-left-align w3-light-grey">
+            <i class="fas fa-envelope"></i> MENSAJES
+          </a>
+        </li>
+
+        <li class="w3-padding">
           <a href="{% url 'gestion_clientes' %}" class="w3-button w3-block w3-left-align w3-light-grey">
             <i class="fas fa-users"></i> MIS CLIENTES
           </a>
@@ -443,19 +449,27 @@ function toggleSidebar() {
   const overlay = document.getElementById('sidebarOverlay');
 
   if (sidebar.classList.contains('sidebar-hidden')) {
+    // Abrir sidebar
     sidebar.classList.remove('sidebar-hidden');
     sidebar.classList.add('sidebar-visible');
     overlay.classList.add('sidebar-overlay-active');
+    
+    // Ajustar contenido para desktop y móvil
     if (window.innerWidth < 993) {
+      // En móvil: el contenido ocupa todo el ancho
       content.classList.add('content-fullwidth');
+    } else {
+      // En desktop: el contenido se mueve para dejar espacio al sidebar
+      content.classList.remove('content-fullwidth');
     }
   } else {
+    // Cerrar sidebar
     sidebar.classList.remove('sidebar-visible');
     sidebar.classList.add('sidebar-hidden');
     overlay.classList.remove('sidebar-overlay-active');
-    if (window.innerWidth < 993) {
-      content.classList.remove('content-fullwidth');
-    }
+    
+    // En desktop y móvil: el contenido ocupa todo el ancho cuando el sidebar está oculto
+    content.classList.add('content-fullwidth');
   }
 }
 
@@ -481,6 +495,42 @@ window.onclick = function(event) {
   }
 }
 
+// Inicializar el estado del sidebar al cargar la página
+function initializeSidebar() {
+  const sidebar = document.getElementById('dashboardSidebar');
+  const content = document.getElementById('dashboardContent');
+  
+  if (window.innerWidth < 993) {
+    // En móvil: sidebar oculto por defecto, contenido full width
+    sidebar.classList.add('sidebar-hidden');
+    sidebar.classList.remove('sidebar-visible');
+    content.classList.add('content-fullwidth');
+  } else {
+    // En desktop: sidebar visible por defecto, contenido normal
+    sidebar.classList.add('sidebar-visible');
+    sidebar.classList.remove('sidebar-hidden');
+    content.classList.remove('content-fullwidth');
+  }
+}
+
+// Manejar redimensionamiento de ventana
+window.addEventListener('resize', function() {
+  const sidebar = document.getElementById('dashboardSidebar');
+  const content = document.getElementById('dashboardContent');
+  
+  if (window.innerWidth < 993) {
+    // En móvil: asegurar que el contenido siempre sea full width
+    content.classList.add('content-fullwidth');
+  } else {
+    // En desktop: ajustar según el estado del sidebar
+    if (sidebar.classList.contains('sidebar-visible')) {
+      content.classList.remove('content-fullwidth');
+    } else {
+      content.classList.add('content-fullwidth');
+    }
+  }
+});
+
 // Auto cerrar sidebar en móviles al seleccionar opción
 if (window.innerWidth <= 992) {
   document.querySelectorAll('.dashboard-sidebar a').forEach(function(link) {
@@ -489,6 +539,9 @@ if (window.innerWidth <= 992) {
     });
   });
 }
+
+// Inicializar al cargar la página
+document.addEventListener('DOMContentLoaded', initializeSidebar);
 
 // Inicializar sidebar según el tamaño de pantalla
 document.addEventListener('DOMContentLoaded', function() {
