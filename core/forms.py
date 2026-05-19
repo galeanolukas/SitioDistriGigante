@@ -325,15 +325,17 @@ class PerfilForm(forms.ModelForm):
 
     class Meta:
         model = Perfil
-        fields = ['nombre', 'direccion', 'localidad', 'telefono', 'imagen']
+        fields = ['nombre', 'direccion', 'localidad', 'ubicacion', 'telefono', 'imagen']
         labels = {
             "localidad": "Localidad/Cuidad",
             "telefono": "Tel/Celular",
-            "nombre": "Nombre y Apellido"
+            "nombre": "Nombre y Apellido",
+            "ubicacion": "Ubicación GPS (coordenadas)"
         }
         widgets = {
             "direccion": forms.TextInput(attrs={'class': 'w3-input w3-border w3-round-large'}),
             "localidad": forms.TextInput(attrs={'class': 'w3-input w3-border w3-round-large'}),
+            "ubicacion": forms.TextInput(attrs={'class': 'w3-input w3-border w3-round-large', 'readonly': True}),
             "telefono": forms.TextInput(attrs={'class': 'w3-input w3-border w3-round-large'}),
             "imagen": forms.FileInput(attrs={'class': 'w3-input w3-border w3-round-large'}),
         }

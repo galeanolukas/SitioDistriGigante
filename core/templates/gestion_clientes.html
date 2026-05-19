@@ -89,14 +89,20 @@
                     <label class="w3-text-dark-gray">Asignar a Vendedor</label>
                     <select name="vendedor_id" class="w3-select w3-border w3-round" required>
                         {% for vendedor in todos_vendedores %}
-                        <option value="{{ vendedor.id }}">
+                        <option value="{{ vendedor.id }}" {% if perfil_usuario and vendedor.id == perfil_usuario.id %}selected{% endif %}>
                             {{ vendedor.user.username }}
                         </option>
                         {% endfor %}
                     </select>
                 </div>
                 {% else %}
-                <input type="hidden" name="vendedor_id" value="{{ perfil_usuario.id }}">
+                <div class="w3-margin-bottom">
+                    <label class="w3-text-dark-gray">Vendedor Asignado</label>
+                    <div class="w3-light-gray w3-padding w3-round">
+                        <i class="fa fa-user"></i> {{ perfil_usuario.user.username }} (Tú)
+                    </div>
+                    <input type="hidden" name="vendedor_id" value="{{ perfil_usuario.id }}">
+                </div>
                 {% endif %}
 
                 <button type="submit" class="w3-button w3-secondary w3-round-large w3-block">

@@ -1,7 +1,12 @@
 {% extends 'dashboard.html' %}
 {% load static %}
+{% block title %}{{ user.username|upper }} PANEL{% endblock %}
 {% block page_title %}
 <h4><i class="fa fa-user-edit"></i> EDITAR PERFIL DE CLIENTE</h4>
+{% endblock %}
+{% block extra_head %}
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 {% endblock %}
 {% block content %}
 <div class="w3-container">
@@ -71,9 +76,9 @@
 
                         <div class="w3-row-padding">
                             <div class="w3-half">
-                                <label class="w3-text-dark-gray"><b>Dirección *</b></label>
+                                <label class="w3-text-dark-gray"><b>Dirección (Opcional)</b></label>
                                 <input type="text" name="direccion" value="{{ form.direccion.value|default:'' }}"
-                                       class="w3-input w3-border w3-round" placeholder="Ej: Calle Falsa 123" required
+                                       class="w3-input w3-border w3-round" placeholder="Ej: Calle Falsa 123"
                                        oninput="actualizarProgreso()">
                                 {% if form.direccion.errors %}
                                 <div class="w3-text-red">{{ form.direccion.errors }}</div>
@@ -81,13 +86,38 @@
                             </div>
 
                             <div class="w3-half">
-                                <label class="w3-text-dark-gray"><b>Localidad/Provincia *</b></label>
+                                <label class="w3-text-dark-gray"><b>Localidad/Provincia (Opcional)</b></label>
                                 <input type="text" name="localidad" value="{{ form.localidad.value|default:'' }}"
-                                       class="w3-input w3-border w3-round" placeholder="Ej: Buenos Aires" required
+                                       class="w3-input w3-border w3-round" placeholder="Ej: Buenos Aires"
                                        oninput="actualizarProgreso()">
                                 {% if form.localidad.errors %}
                                 <div class="w3-text-red">{{ form.localidad.errors }}</div>
                                 {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="w3-row-padding">
+                            <div class="w3-full">
+                                <label class="w3-text-dark-gray"><b>Ubicación GPS (Opcional)</b></label>
+                                <p class="w3-small w3-margin-bottom">
+                                    <a href="javascript:void(0)" onclick="openMapModal()" class="w3-text-blue" style="text-decoration: underline;">
+                                        Seleccionar ubicación en el mapa
+                                    </a> para marcar tu posición GPS (opcional)
+                                </p>
+                                
+                                <!-- Campo oculto para coordenadas -->
+                                {{ form.ubicacion }}
+                                {% if form.ubicacion.errors %}
+                                <div class="w3-text-red">{{ form.ubicacion.errors }}</div>
+                                {% endif %}
+                                
+                                <!-- Mostrar URL del mapa si existen coordenadas -->
+                                <div id="mapaUrlMostrada" class="w3-small w3-text-gray" style="display: none;">
+                                    <i class="fa fa-map"></i> 
+                                    <a href="#" id="mapaUrlLink" target="_blank" class="w3-text-blue" style="text-decoration: underline;">
+                                        Ver ubicación en el mapa
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -130,6 +160,61 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal para seleccionar ubicación en el mapa -->
+    <div id="mapModal" class="w3-modal">
+        <div class="w3-modal-content w3-card-4 w3-animate-zoom" style="max-width:900px; margin: 20px auto;">
+            <header class="w3-container w3-blue w3-text-white">
+                <span onclick="closeMapModal()" class="w3-button w3-display-topright w3-large">&times;</span>
+                <h3 class="w3-center"><i class="fa fa-map"></i> Seleccionar Ubicación GPS</h3>
+            </header>
+            
+            <div class="w3-container w3-padding-24">
+                <div class="w3-panel w3-light-blue w3-round-large">
+                    <p><i class="fa fa-info-circle"></i> <strong>Instrucciones:</strong></p>
+                    <ul class="w3-ul">
+                        <li>Navega por el mapa usando los controles de zoom</li>
+                        <li>Haz clic en cualquier punto para marcar tu ubicación</li>
+                        <li>Las coordenadas se guardarán automáticamente</li>
+                        <li>Haz clic en "Guardar Ubicación" cuando estés listo</li>
+                    </ul>
+                </div>
+                
+                <!-- Contenedor del mapa -->
+                <div class="w3-margin-bottom">
+                    <div id="map" style="height: 400px; width: 100%; border-radius: 8px; border: 2px solid #ccc;"></div>
+                </div>
+                
+                <!-- Coordenadas seleccionadas -->
+                <div class="w3-row-padding w3-margin-bottom">
+                    <div class="w3-half">
+                        <label class="w3-text-dark-gray"><b>Coordenadas seleccionadas:</b></label>
+                        <div id="coordenadasSeleccionadas" class="w3-light-gray w3-padding w3-round">
+                            <span id="coordsDisplay">No seleccionadas</span>
+                        </div>
+                    </div>
+                    <div class="w3-half">
+                        <label class="w3-text-dark-gray"><b>Estado:</b></label>
+                        <div id="estadoSeleccion" class="w3-light-gray w3-padding w3-round">
+                            <i class="fa fa-info-circle"></i> Esperando selección...
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <footer class="w3-container w3-light-grey w3-padding">
+                <div class="w3-center">
+                    <button onclick="closeMapModal()" class="w3-button w3-gray w3-round-large w3-margin-right">
+                        <i class="fa fa-times"></i> Cancelar
+                    </button>
+                    <button onclick="guardarUbicacion()" class="w3-button w3-blue w3-round-large">
+                        <i class="fa fa-save"></i> Guardar Ubicación
+                    </button>
+                </div>
+            </footer>
+        </div>
+    </div>
+
     <div class="w3-row w3-padding">
         <!-- Panel de información importante -->
             <div class="w3-card-4 w3-round-large w3-white w3-padding">
@@ -196,7 +281,7 @@
 
 <script>
 // Lista específica de campos requeridos para el progreso
-const CAMPOS_REQUERIDOS = ['nombre', 'telefono', 'direccion', 'localidad'];
+const CAMPOS_REQUERIDOS = ['nombre', 'telefono'];
 
 // Función para calcular y mostrar el progreso de completado
 function actualizarProgreso() {
@@ -276,6 +361,211 @@ document.addEventListener('DOMContentLoaded', function() {
     if (confirmBtn) {
         confirmBtn.disabled = false;
     }
+    
+    // Cargar URL del mapa si existen coordenadas guardadas
+    cargarMapaUrlGuardada();
 });
+
+// Función para cargar URL del mapa si existen coordenadas guardadas
+function cargarMapaUrlGuardada() {
+    const ubicacionInput = document.getElementById('id_ubicacion');
+    const mapaUrlMostrada = document.getElementById('mapaUrlMostrada');
+    const mapaUrlLink = document.getElementById('mapaUrlLink');
+    
+    if (ubicacionInput && ubicacionInput.value && mapaUrlMostrada && mapaUrlLink) {
+        const coords = ubicacionInput.value.split(',');
+        if (coords.length === 2) {
+            const lat = parseFloat(coords[0]);
+            const lng = parseFloat(coords[1]);
+            if (!isNaN(lat) && !isNaN(lng)) {
+                const mapaUrl = generarMapaUrl(lat, lng);
+                mapaUrlLink.href = mapaUrl;
+                mapaUrlMostrada.style.display = 'block';
+            }
+        }
+    }
+}
+
+// Variables globales para el mapa
+let map = null;
+let marker = null;
+let selectedCoords = null;
+
+// Función para abrir el modal del mapa
+function openMapModal() {
+    document.getElementById('mapModal').style.display = 'block';
+    
+    // Inicializar el mapa solo cuando se abre el modal
+    if (!map) {
+        initMap();
+    }
+    
+    // Actualizar coordenadas si ya existen
+    updateCoordenadasDisplay();
+}
+
+// Función para cerrar el modal del mapa
+function closeMapModal() {
+    document.getElementById('mapModal').style.display = 'none';
+}
+
+// Función para inicializar el mapa de OpenStreetMaps
+function initMap() {
+    // Coordenadas por defecto: Buenos Aires
+    let defaultLat = -34.6037;
+    let defaultLng = -58.3816;
+    let initialZoom = 13;
+    
+    // Intentar obtener coordenadas del formulario
+    const direccionInput = document.getElementById('id_direccion');
+    const localidadInput = document.getElementById('id_localidad');
+    const ubicacionInput = document.getElementById('id_ubicacion');
+    
+    // Si ya hay coordenadas guardadas, usar esas
+    if (ubicacionInput && ubicacionInput.value) {
+        const coords = ubicacionInput.value.split(',');
+        if (coords.length === 2) {
+            const lat = parseFloat(coords[0]);
+            const lng = parseFloat(coords[1]);
+            if (!isNaN(lat) && !isNaN(lng)) {
+                defaultLat = lat;
+                defaultLng = lng;
+                initialZoom = 15; // Más zoom si hay coordenadas exactas
+            }
+        }
+    }
+    // Si no hay coordenadas pero hay dirección/localidad, intentar geocodificar
+    else if ((direccionInput && direccionInput.value) || (localidadInput && localidadInput.value)) {
+        // Construir dirección para búsqueda
+        const direccion = direccionInput ? direccionInput.value : '';
+        const localidad = localidadInput ? localidadInput.value : '';
+        const query = `${direccion}, ${localidad}, Argentina`.trim();
+        
+        if (query !== ', Argentina') {
+            // Usar Nominatim de OpenStreetMaps para geocodificación
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.length > 0) {
+                        const result = data[0];
+                        const lat = parseFloat(result.lat);
+                        const lng = parseFloat(result.lon);
+                        if (!isNaN(lat) && !isNaN(lng)) {
+                            // Actualizar la vista del mapa con las coordenadas encontradas
+                            map.setView([lat, lng], 15);
+                            console.log('Mapa centrado en:', query, '->', lat, lng);
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.log('Error en geocodificación:', error);
+                });
+        }
+    }
+    
+    // Crear el mapa
+    map = L.map('map').setView([defaultLat, defaultLng], initialZoom);
+    
+    // Agregar tiles de OpenStreetMaps
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 19
+    }).addTo(map);
+    
+    // Si ya hay coordenadas guardadas, mostrar el marcador
+    if (ubicacionInput && ubicacionInput.value) {
+        const coords = ubicacionInput.value.split(',');
+        if (coords.length === 2) {
+            const lat = parseFloat(coords[0]);
+            const lng = parseFloat(coords[1]);
+            if (!isNaN(lat) && !isNaN(lng)) {
+                marker = L.marker([lat, lng]).addTo(map);
+                map.setView([lat, lng], 15);
+                selectedCoords = {lat, lng};
+                updateCoordenadasDisplay();
+            }
+        }
+    }
+    
+    // Manejar clics en el mapa
+    map.on('click', function(e) {
+        // Remover marcador anterior si existe
+        if (marker) {
+            map.removeLayer(marker);
+        }
+        
+        // Agregar nuevo marcador
+        marker = L.marker([e.latlng.lat, e.latlng.lng]).addTo(map);
+        
+        // Guardar coordenadas seleccionadas
+        selectedCoords = {
+            lat: e.latlng.lat,
+            lng: e.latlng.lng
+        };
+        
+        // Actualizar display
+        updateCoordenadasDisplay();
+        
+        // Actualizar estado
+        document.getElementById('estadoSeleccion').innerHTML = 
+            '<i class="fa fa-check-circle w3-text-green"></i> Ubicación seleccionada';
+    });
+}
+
+// Función para actualizar el display de coordenadas
+function updateCoordenadasDisplay() {
+    if (selectedCoords) {
+        const coordsText = `${selectedCoords.lat.toFixed(6)}, ${selectedCoords.lng.toFixed(6)}`;
+        document.getElementById('coordsDisplay').textContent = coordsText;
+    } else {
+        document.getElementById('coordsDisplay').textContent = 'No seleccionadas';
+    }
+}
+
+// Función para generar URL de OpenStreetMaps con coordenadas
+function generarMapaUrl(lat, lng) {
+    return `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=15/${lat}/${lng}`;
+}
+
+// Función para guardar la ubicación seleccionada
+function guardarUbicacion() {
+    if (!selectedCoords) {
+        alert('Por favor, selecciona una ubicación en el mapa haciendo clic en un punto.');
+        return;
+    }
+    
+    // Guardar coordenadas en el campo oculto
+    const ubicacionInput = document.getElementById('id_ubicacion');
+    if (ubicacionInput) {
+        ubicacionInput.value = `${selectedCoords.lat.toFixed(6)},${selectedCoords.lng.toFixed(6)}`;
+    }
+    
+    // Generar URL del mapa y actualizar display
+    const mapaUrlMostrada = document.getElementById('mapaUrlMostrada');
+    const mapaUrlLink = document.getElementById('mapaUrlLink');
+    if (mapaUrlMostrada && mapaUrlLink) {
+        const mapaUrl = generarMapaUrl(selectedCoords.lat, selectedCoords.lng);
+        mapaUrlLink.href = mapaUrl;
+        mapaUrlMostrada.style.display = 'block';
+    }
+    
+    // Cerrar modal
+    closeMapModal();
+    
+    // Mostrar mensaje de éxito
+    console.log('Ubicación guardada:', selectedCoords);
+    console.log('URL del mapa:', generarMapaUrl(selectedCoords.lat, selectedCoords.lng));
+}
+
+// Cerrar modal al hacer clic fuera
+window.onclick = function(event) {
+    const modal = document.getElementById('mapModal');
+    if (event.target == modal) {
+        closeMapModal();
+    }
+}
 </script>
+
+<!-- Leaflet JavaScript -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 {% endblock %}

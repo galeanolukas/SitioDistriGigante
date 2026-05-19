@@ -486,10 +486,21 @@ def validar_registro(request, ID=None):
             return redirect('register')
 
 @login_required
-@user_passes_test(lambda u: u.is_staff or u.groups.filter(name='vendedor').exists() or u.is_superuser)
 def confirm_register(request, ID=None):
     # Obtén el usuario relacionado o lanza un error 404
     registro = get_object_or_404(User, id=ID)
+
+    # Validar permisos: solo puede editar su propio perfil, excepto admin/vendedor
+    perfil_usuario = Perfil.objects.get(user=request.user)
+    es_admin_o_vendedor = (request.user.is_staff or 
+                          request.user.is_superuser or 
+                          perfil_usuario.tipo_usuario in ['admin', 'vendedor'] or
+                          request.user.groups.filter(name__in=['admin', 'vendedor']).exists())
+    
+    # Si no es admin/vendedor y no es su propio perfil, denegar acceso
+    if not es_admin_o_vendedor and request.user.id != ID:
+        messages.error(request, "No tienes permiso para acceder a este perfil.")
+        return redirect('carrito')
 
     # Obtén el perfil existente
     perfil_existente = Perfil.objects.get(user=registro)
@@ -613,12 +624,31 @@ def admin_panel(request):
         mensaje_ultimo = mensaje_ultimo.fecha
 
     cont_visitas = VisitNumber.objects.all()[0]
-    pedidos = Pedido.objects.all()
+    
+    # Determinar tipo de usuario
+    es_vendedor = request.user.groups.filter(name='vendedor').exists() or (Perfil.objects.filter(user=request.user).first() and Perfil.objects.filter(user=request.user).first().tipo_usuario == 'vendedor')
+    es_administrador = request.user.is_staff or request.user.is_superuser
+    
+    # Filtrar pedidos según el tipo de usuario
+    if es_vendedor:
+        # Para vendedores: solo sus pedidos
+        pedidos = Pedido.objects.filter(vendedor=request.user)
+    else:
+        # Para administradores y otros: todos los pedidos
+        pedidos = Pedido.objects.all()
     
     # Calcular clientes sin vendedor asignado
     clientes_perfil = Perfil.objects.filter(tipo_usuario='cliente')
     clientes_con_vendedor = ClienteVendedor.objects.all().values_list('cliente_id', flat=True)
     clientes_sin_vendedor = clientes_perfil.exclude(id__in=clientes_con_vendedor).count()
+    
+    # Calcular clientes relacionados con el vendedor logueado
+    mis_clientes_count = 0
+    if es_vendedor:
+        # Obtener el perfil del vendedor actual
+        perfil_vendedor = Perfil.objects.filter(user=request.user).first()
+        if perfil_vendedor:
+            mis_clientes_count = ClienteVendedor.objects.filter(vendedor=perfil_vendedor).count()
     
     context = {"total_usuarios":usuarios.count(),
                "total_clientes":usuarios.filter(groups__name='cliente').count,
@@ -629,6 +659,7 @@ def admin_panel(request):
                'total_visitas_hoy':cont_visitas_hoy.count,
                'pedidos':pedidos.count(),
                'clientes_sin_vendedor': clientes_sin_vendedor,
+               'mis_clientes_count': mis_clientes_count,
                'notificaciones_no_leidas': NotificacionAdmin.contar_no_leidas()}
 
     return render(request, 'admin_panel.html', context)
@@ -977,26 +1008,45 @@ def carrito(request):
         perfil.localidad
     ])
 
-    # Determinar tipo de usuario basado en el perfil
-    es_cliente = perfil.tipo_usuario == 'cliente'
-    es_vendedor = perfil.tipo_usuario == 'vendedor'
+    # Determinar tipo de usuario basado en el perfil y grupos (más robusto)
+    es_cliente = perfil.tipo_usuario == 'cliente' or request.user.groups.filter(name='cliente').exists()
+    es_vendedor = perfil.tipo_usuario == 'vendedor' or request.user.groups.filter(name='vendedor').exists()
     es_administrador = perfil.tipo_usuario == 'admin' or request.user.is_staff or request.user.is_superuser
+
+    # Debug logs para verificar detección de usuario
+    print(f"DEBUG: Usuario: {request.user.username}")
+    print(f"DEBUG: Perfil tipo_usuario: {perfil.tipo_usuario}")
+    print(f"DEBUG: es_cliente: {es_cliente}")
+    print(f"DEBUG: es_vendedor: {es_vendedor}")
+    print(f"DEBUG: es_administrador: {es_administrador}")
 
     # Obtener lista de clientes para vendedores/administradores
     clientes = None
     if es_vendedor:
-        # Para vendedores: solo sus clientes asignados
+        # Para vendedores: solo sus clientes asignados a través de ClienteVendedor
+        # Obtener el perfil del vendedor actual
+        perfil_vendedor = Perfil.objects.get(user=request.user)
+        clientes_ids = ClienteVendedor.objects.filter(
+            vendedor=perfil_vendedor
+        ).values_list('cliente_id', flat=True)
+        
+        print(f"DEBUG: IDs de clientes asignados al vendedor: {list(clientes_ids)}")
+        
         clientes = Perfil.objects.filter(
+            id__in=clientes_ids,
             tipo_usuario='cliente',
-            user__is_active=True,
-            vendedor_asignado=request.user
+            user__is_active=True
         ).select_related('user').exclude(user=request.user)
+        
+        print(f"DEBUG: Número de clientes filtrados: {clientes.count()}")
     elif es_administrador:
         # Para administradores: todos los clientes
         clientes = Perfil.objects.filter(
             tipo_usuario='cliente',
             user__is_active=True
         ).select_related('user').exclude(user=request.user)
+        
+        print(f"DEBUG: Número total de clientes (admin): {clientes.count()}")
 
     # Asignar vendedor por defecto para clientes
     vendedor = None
@@ -2295,8 +2345,8 @@ def panel_gestion_clientes(request):
     )
 
     # Verificar el tipo de usuario
-    es_vendedor = request.user.groups.filter(name='vendedor').exists()
-    es_administrador = request.user.is_staff or request.user.is_superuser
+    es_vendedor = request.user.groups.filter(name='vendedor').exists() or (perfil_usuario and perfil_usuario.tipo_usuario == 'vendedor')
+    es_administrador = request.user.is_staff or request.user.is_superuser or (perfil_usuario and perfil_usuario.tipo_usuario == 'admin')
 
     # Obtener TODOS los perfiles de clientes
     todos_los_perfiles_clientes = Perfil.objects.filter(tipo_usuario="cliente")
@@ -2394,12 +2444,24 @@ def panel_gestion_clientes(request):
         
         elif 'asignar_cliente' in request.POST:
             cliente_id = request.POST.get('cliente_id')
-            vendedor_id = request.POST.get('vendedor_id')
             
-            if cliente_id and vendedor_id:
+            if cliente_id:
                 try:
                     cliente = Perfil.objects.get(id=cliente_id, tipo_usuario='cliente')
-                    vendedor = Perfil.objects.get(id=vendedor_id)
+                    
+                    # Para vendedores: siempre asignar a sí mismos
+                    if es_vendedor:
+                        vendedor = perfil_usuario
+                        messages.success(request, f'Cliente "{cliente.user.username}" asignado a ti exitosamente.')
+                    else:
+                        # Para administradores: usar el vendedor seleccionado
+                        vendedor_id = request.POST.get('vendedor_id')
+                        if vendedor_id:
+                            vendedor = Perfil.objects.get(id=vendedor_id)
+                            messages.success(request, f'Cliente "{cliente.user.username}" asignado a "{vendedor.user.username}" exitosamente.')
+                        else:
+                            messages.error(request, 'Por favor seleccione un vendedor.')
+                            return redirect('gestion_clientes')
                     
                     # Crear o actualizar la asignación
                     asignacion, created = ClienteVendedor.objects.get_or_create(
@@ -2410,12 +2472,13 @@ def panel_gestion_clientes(request):
                     if not created:
                         asignacion.vendedor = vendedor
                         asignacion.save()
+                        if not es_vendedor:
+                            messages.success(request, f'Asignación actualizada: "{cliente.user.username}" ahora está asignado a "{vendedor.user.username}".')
                     
-                    messages.success(request, f'Cliente "{cliente.user.username}" asignado a "{vendedor.user.username}" exitosamente.')
                 except Exception as e:
                     messages.error(request, f'Error al asignar cliente: {str(e)}')
             else:
-                messages.error(request, 'Por favor seleccione un cliente y un vendedor.')
+                messages.error(request, 'Por favor seleccione un cliente.')
             
             return redirect('gestion_clientes')
         

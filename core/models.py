@@ -538,6 +538,7 @@ class Perfil(models.Model):
     imagen = models.ImageField(default='/static/img/usuario_defecto.webp', upload_to='usuarios/', verbose_name='Imagen de perfil', null=True, blank=True)
     direccion = models.CharField(max_length=150, null=True, blank=True, verbose_name='Dirección')
     localidad = models.CharField(max_length=150, null=True, blank=True, verbose_name='Barrio/Cuidad')
+    ubicacion = models.CharField(max_length=100, null=True, blank=True, verbose_name='Ubicación GPS (coordenadas)')
     telefono = models.CharField(max_length=50, null=True, blank=True, verbose_name='Teléfono')
     vendedor_asignado = models.ForeignKey(
         User,
