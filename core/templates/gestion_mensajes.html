@@ -2,6 +2,7 @@
 {% load static %}
 {% block title %}GESTIÓN DE MENSAJES{% endblock %}
 {% block page_title %}GESTIÓN DE MENSAJES DE CONTACTO{% endblock %}
+{% csrf_token %}
 
 {% block content %}
 
@@ -162,89 +163,83 @@
     </div>
 </div>
 
-{% endblock %}
-
-<!-- Funciones JavaScript -->
+<!-- Script para funcionalidad de mensajes -->
 <script>
 // Función para ver mensaje completo
-function viewMessage(messageId) {
-    // Obtener los datos del mensaje directamente del DOM
-    const messageElement = document.querySelector('[data-message-id="' + messageId + '"]');
-    if (!messageElement) {
-        alert('Mensaje no encontrado');
-        return;
-    }
-    
-    // Obtener datos del mensaje
-    const nombre = messageElement.querySelector('h6 b').textContent;
-    const emailElement = messageElement.querySelector('.fa-envelope').parentElement;
-    const email = emailElement.textContent.trim().replace('Sin email', '').trim() || 'No proporcionado';
-    const phoneElement = messageElement.querySelector('.fa-phone');
-    const telefono = phoneElement ? phoneElement.parentElement.textContent.trim().replace('Sin teléfono', '').trim() || 'No proporcionado' : 'No proporcionado';
-    const fechaElement = messageElement.querySelector('.w3-tiny');
-    const fecha = fechaElement.textContent;
-    const mensajePreview = messageElement.querySelector('.w3-small.w3-text-grey').textContent;
-    
-    // Crear contenido del modal
-    const content = document.getElementById('messageDetailContent');
-    content.innerHTML = '<div class="w3-padding">' +
-        '<div class="w3-margin-bottom">' +
-        '<h5><i class="fas fa-user w3-margin-right"></i> Nombre:</h5>' +
-        '<p><b>' + nombre + '</b></p>' +
-        '</div>' +
-        '<div class="w3-margin-bottom">' +
-        '<h5><i class="fas fa-envelope w3-margin-right"></i> Email:</h5>' +
-        '<p>' + email + '</p>' +
-        '</div>' +
-        '<div class="w3-margin-bottom">' +
-        '<h5><i class="fas fa-phone w3-margin-right"></i> Teléfono:</h5>' +
-        '<p>' + telefono + '</p>' +
-        '</div>' +
-        '<div class="w3-margin-bottom">' +
-        '<h5><i class="fas fa-calendar w3-margin-right"></i> Fecha:</h5>' +
-        '<p>' + fecha + '</p>' +
-        '</div>' +
-        '<div class="w3-margin-bottom">' +
-        '<h5><i class="fas fa-comment w3-margin-right"></i> Mensaje:</h5>' +
-        '<div class="w3-border w3-round w3-padding" style="background-color: #f8f9fa;">' +
-        '<p>' + mensajePreview + '</p>' +
-        '</div>' +
-        '</div>' +
-        '</div>';
-    
-    // Mostrar el modal
-    document.getElementById('viewMessageModal').style.display = 'block';
-}
+window.viewMessage = function(messageId) {
+    // Obtener el token CSRF
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
+                      getCookie('csrftoken');
 
-// Función para eliminar mensaje
-function deleteMessage(messageId) {
-    if (confirm('¿Estás seguro de que quieres eliminar este mensaje? Esta acción no se puede deshacer.')) {
-        // Llamar a la API para eliminar el mensaje
-        fetch('/api/mensaje/' + messageId + '/eliminar/', {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCookie('csrftoken')
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('Mensaje eliminado correctamente');
-                // Recargar la página para mostrar los cambios
-                location.reload();
-            } else {
-                alert('Error: ' + data.error);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Error al eliminar el mensaje');
-        });
-    }
-}
+    // Llamar a la API para obtener el mensaje completo
+    fetch(`/api/mensaje/${messageId}/ver/`, {
+        method: 'GET',
+        headers: {
+            'X-CSRFToken': csrfToken,
+            'Content-Type': 'application/json',
+        },
+        credentials: 'same-origin'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const mensaje = data.mensaje;
 
-// Función para obtener CSRF token
+            // Formatear la fecha
+            const fecha = new Date(mensaje.fecha).toLocaleString('es-AR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            // Crear contenido del modal
+            const content = document.getElementById('messageDetailContent');
+            content.innerHTML = `
+                <div class="w3-padding">
+                    <div class="w3-margin-bottom">
+                        <h5><i class="fas fa-user w3-margin-right"></i> Nombre:</h5>
+                        <p><b>${mensaje.nombre}</b></p>
+                    </div>
+
+                    <div class="w3-margin-bottom">
+                        <h5><i class="fas fa-envelope w3-margin-right"></i> Email:</h5>
+                        <p>${mensaje.correo || 'No proporcionado'}</p>
+                    </div>
+
+                    <div class="w3-margin-bottom">
+                        <h5><i class="fas fa-phone w3-margin-right"></i> Teléfono:</h5>
+                        <p>${mensaje.telefono || 'No proporcionado'}</p>
+                    </div>
+
+                    <div class="w3-margin-bottom">
+                        <h5><i class="fas fa-calendar w3-margin-right"></i> Fecha:</h5>
+                        <p>${fecha}</p>
+                    </div>
+
+                    <div class="w3-margin-bottom">
+                        <h5><i class="fas fa-comment w3-margin-right"></i> Mensaje:</h5>
+                        <div class="w3-border w3-round w3-padding" style="background-color: #f8f9fa;">
+                            <p>${mensaje.mensaje}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Mostrar el modal
+            document.getElementById('viewMessageModal').style.display = 'block';
+        } else {
+            alert('Error: ' + (data.error || 'No se pudo cargar el mensaje'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al cargar el mensaje. Por favor, intenta nuevamente.');
+    });
+};
+
+// Función auxiliar para obtener cookies
 function getCookie(name) {
     let cookieValue = null;
     if (document.cookie && document.cookie !== '') {
@@ -260,22 +255,72 @@ function getCookie(name) {
     return cookieValue;
 }
 
+// Función para eliminar mensaje
+window.deleteMessage = function(messageId) {
+    if (confirm('¿Estás seguro de que quieres eliminar este mensaje? Esta acción no se puede deshacer.')) {
+        // Obtener el token CSRF
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
+                          getCookie('csrftoken');
+
+        // Llamar a la API para eliminar el mensaje
+        fetch(`/api/mensaje/${messageId}/eliminar/`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': csrfToken,
+                'Content-Type': 'application/json',
+            },
+            credentials: 'same-origin'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Eliminar el elemento del DOM
+                const messageElement = document.querySelector('[data-message-id="' + messageId + '"]');
+                if (messageElement) {
+                    messageElement.remove();
+                }
+
+                alert('Mensaje eliminado correctamente');
+
+                // Actualizar contador
+                const totalElement = document.querySelector('h3');
+                if (totalElement) {
+                    const currentTotal = parseInt(totalElement.textContent);
+                    totalElement.textContent = currentTotal - 1;
+                }
+
+                // Si no hay más mensajes, recargar
+                const remainingMessages = document.querySelectorAll('.message-item');
+                if (remainingMessages.length === 0) {
+                    location.reload();
+                }
+            } else {
+                alert('Error: ' + (data.error || 'No se pudo eliminar el mensaje'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error al eliminar el mensaje. Por favor, intenta nuevamente.');
+        });
+    }
+};
+
 // Función para filtrar mensajes
-function filterMessages() {
+window.filterMessages = function() {
     const searchValue = document.getElementById('messageSearch').value.toLowerCase();
     const filterValue = document.getElementById('messageFilter').value;
     const messages = document.querySelectorAll('.message-item');
-    
+
     const today = new Date();
     const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
     const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
-    
+
     messages.forEach(message => {
         const text = message.getAttribute('data-search');
         const messageDate = new Date(message.getAttribute('data-date'));
-        
+
         const matchesSearch = text.includes(searchValue);
-        
+
         let matchesFilter = true;
         if (filterValue === 'today') {
             matchesFilter = messageDate.toDateString() === today.toDateString();
@@ -284,10 +329,10 @@ function filterMessages() {
         } else if (filterValue === 'month') {
             matchesFilter = messageDate >= monthAgo;
         }
-        
+
         message.style.display = matchesSearch && matchesFilter ? 'block' : 'none';
     });
-}
+};
 
 // Cerrar modales al hacer clic fuera
 window.onclick = function(event) {
@@ -297,5 +342,7 @@ window.onclick = function(event) {
             modal.style.display = 'none';
         }
     });
-}
+};
 </script>
+
+{% endblock %}
