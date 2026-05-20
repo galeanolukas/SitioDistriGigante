@@ -1970,17 +1970,39 @@ def contacto(request):
 
 @login_required
 def gestion_mensajes(request):
-    """Vista para gestionar mensajes de contacto"""
+    """Vista para gestionar mensajes de contacto con paginación"""
     if not (request.user.is_staff or request.user.is_superuser):
         messages.error(request, "No tienes permisos para acceder a esta página.")
         return redirect('admin_panel')
     
+    # Configuración de paginación
+    mensajes_por_pagina = 10
+    pagina_actual = request.GET.get('pagina', 1)
+    
+    try:
+        pagina_actual = int(pagina_actual)
+    except ValueError:
+        pagina_actual = 1
+    
     # Obtener todos los mensajes ordenados por fecha (más recientes primero)
-    mensajes = Contacto.objects.all().order_by('-fecha')
+    todos_mensajes = Contacto.objects.all().order_by('-fecha')
+    total_mensajes = todos_mensajes.count()
+    
+    # Calcular paginación
+    total_paginas = (total_mensajes + mensajes_por_pagina - 1) // mensajes_por_pagina
+    inicio = (pagina_actual - 1) * mensajes_por_pagina
+    fin = inicio + mensajes_por_pagina
+    
+    # Obtener mensajes de la página actual
+    mensajes = todos_mensajes[inicio:fin]
     
     context = {
         'mensajes': mensajes,
-        'total_mensajes': mensajes.count(),
+        'total_mensajes': total_mensajes,
+        'pagina_actual': pagina_actual,
+        'total_paginas': total_paginas,
+        'mensajes_por_pagina': mensajes_por_pagina,
+        'rango_paginas': range(max(1, pagina_actual - 2), min(total_paginas + 1, pagina_actual + 3)),
     }
     
     return render(request, 'gestion_mensajes.html', context)
