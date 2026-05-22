@@ -3547,6 +3547,202 @@ def asignar_envio_transportista(request, envio_id):
     transportistas = Transportista.objects.filter(activo=True)
     context = {
         'envio': envio,
-        'transportistas': transportistas
+        'transportistas': transportistas,
     }
     return render(request, 'asignar_envio.html', context)
+
+
+# ==================== VISTAS DE UBER API ====================
+
+@csrf_exempt
+def uber_webhook(request):
+    """Webhook para recibir eventos de Uber"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Método no permitido'}, status=405)
+    
+    try:
+        from .uber_integration import procesar_webhook_uber
+        from .models import Envio
+        
+        webhook_data = json.loads(request.body)
+        resultado = procesar_webhook_uber(webhook_data)
+        
+        if resultado['success']:
+            # Actualizar el envío basado en el evento
+            delivery_id = resultado.get('delivery_id')
+            accion = resultado.get('action')
+            
+            if delivery_id:
+                try:
+                    envio = Envio.objects.get(uber_delivery_id=delivery_id)
+                    
+                    if accion == 'actualizar_estado':
+                        uber_status = webhook_data.get('status')
+                        from .uber_integration import UberIntegration
+                        uber = UberIntegration()
+                        nuevo_estado = uber.mapear_estado_uber(uber_status)
+                        envio.estado = nuevo_estado
+                        envio.uber_status = uber_status
+                        envio.save()
+                        
+                    elif accion == 'completar':
+                        envio.estado = 'entregado'
+                        envio.fecha_entrega = timezone.now()
+                        envio.save()
+                        
+                    elif accion == 'cancelar':
+                        envio.estado = 'cancelado'
+                        envio.save()
+                        
+                except Envio.DoesNotExist:
+                    logger.warning(f"Envío con Uber delivery ID {delivery_id} no encontrado")
+        
+        return JsonResponse({'success': True})
+        
+    except Exception as e:
+        logger.error(f"Error en webhook de Uber: {str(e)}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@login_required
+def uber_crear_delivery(request, envio_id):
+    """Crear un delivery en Uber para un envío existente"""
+    if not (request.user.is_staff or request.user.is_superuser):
+        return JsonResponse({'success': False, 'error': 'No tienes permisos'}, status=403)
+    
+    try:
+        from .uber_integration import UberIntegration
+        from .models import Envio, Pedido
+        
+        envio = Envio.objects.get(id=envio_id)
+        pedido = envio.pedido
+        
+        # Verificar que el envío no tenga ya un delivery de Uber
+        if envio.uber_delivery_id:
+            return JsonResponse({'success': False, 'error': 'Este envío ya tiene un delivery de Uber'})
+        
+        # Obtener datos del pedido para el delivery
+        pickup_address = "Av. Nestor Kirchner 6770, Formosa, Argentina"  # Dirección de la empresa
+        dropoff_address = envio.direccion_entrega
+        
+        # Datos de contacto
+        pickup_name = "Distribuidora Gigante"
+        pickup_phone = "+543705262361"
+        dropoff_name = pedido.usuario.get_full_name() or pedido.usuario.username
+        dropoff_phone = pedido.usuario.perfil.telefono if hasattr(pedido.usuario, 'perfil') else ""
+        
+        # Coordenadas (si están disponibles en el perfil)
+        pickup_latitude = -26.1849  # Formosa, Argentina (aproximado)
+        pickup_longitude = -58.1731
+        dropoff_latitude = None
+        dropoff_longitude = None
+        
+        # Crear el delivery
+        uber = UberIntegration()
+        resultado = uber.crear_delivery(
+            pickup_address=pickup_address,
+            dropoff_address=dropoff_address,
+            pickup_name=pickup_name,
+            pickup_phone=pickup_phone,
+            dropoff_name=dropoff_name,
+            dropoff_phone=dropoff_phone,
+            pickup_latitude=pickup_latitude,
+            pickup_longitude=pickup_longitude,
+            dropoff_latitude=dropoff_latitude,
+            dropoff_longitude=dropoff_longitude
+        )
+        
+        if resultado['success']:
+            # Actualizar el envío con los datos de Uber
+            delivery_data = resultado['data']
+            envio.uber_delivery_id = delivery_data.get('id')
+            envio.uber_status = delivery_data.get('status')
+            envio.tipo_transporte = 'uber'
+            envio.estado = 'asignado'
+            envio.fecha_asignacion = timezone.now()
+            envio.save()
+            
+            return JsonResponse({
+                'success': True,
+                'delivery_id': envio.uber_delivery_id,
+                'status': envio.uber_status,
+                'message': 'Delivery de Uber creado exitosamente'
+            })
+        else:
+            return JsonResponse({
+                'success': False,
+                'error': resultado.get('error', 'Error desconocido al crear delivery')
+            })
+            
+    except Envio.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Envío no encontrado'}, status=404)
+    except Exception as e:
+        logger.error(f"Error al crear delivery de Uber: {str(e)}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@login_required
+def uber_estado_delivery(request, delivery_id):
+    """Obtener el estado actual de un delivery de Uber"""
+    if not (request.user.is_staff or request.user.is_superuser):
+        return JsonResponse({'success': False, 'error': 'No tienes permisos'}, status=403)
+    
+    try:
+        from .uber_integration import UberIntegration
+        
+        uber = UberIntegration()
+        resultado = uber.obtener_delivery(delivery_id)
+        
+        if resultado['success']:
+            return JsonResponse({
+                'success': True,
+                'data': resultado['data']
+            })
+        else:
+            return JsonResponse({
+                'success': False,
+                'error': resultado.get('error', 'Error desconocido')
+            })
+            
+    except Exception as e:
+        logger.error(f"Error al obtener estado de delivery: {str(e)}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@login_required
+def uber_cancelar_delivery(request, delivery_id):
+    """Cancelar un delivery de Uber"""
+    if not (request.user.is_staff or request.user.is_superuser):
+        return JsonResponse({'success': False, 'error': 'No tienes permisos'}, status=403)
+    
+    try:
+        from .uber_integration import UberIntegration
+        from .models import Envio
+        
+        # Buscar el envío asociado
+        envio = Envio.objects.get(uber_delivery_id=delivery_id)
+        
+        uber = UberIntegration()
+        resultado = uber.cancelar_delivery(delivery_id)
+        
+        if resultado['success']:
+            # Actualizar el estado del envío
+            envio.estado = 'cancelado'
+            envio.uber_status = 'canceled'
+            envio.save()
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'Delivery cancelado exitosamente'
+            })
+        else:
+            return JsonResponse({
+                'success': False,
+                'error': resultado.get('error', 'Error desconocido al cancelar delivery')
+            })
+            
+    except Envio.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Envío no encontrado'}, status=404)
+    except Exception as e:
+        logger.error(f"Error al cancelar delivery: {str(e)}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)

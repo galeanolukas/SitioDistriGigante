@@ -846,9 +846,16 @@ class Envio(models.Model):
         ('cancelado', 'Cancelado'),
     ]
     
+    TIPO_TRANSPORTE_CHOICES = [
+        ('local', 'Transportista Local'),
+        ('uber', 'Uber Direct'),
+    ]
+    
     pedido = models.OneToOneField('Pedido', on_delete=models.CASCADE, verbose_name="Pedido asociado")
     transportista = models.ForeignKey('Transportista', on_delete=models.SET_NULL, null=True, blank=True, 
                                    verbose_name="Transportista asignado")
+    tipo_transporte = models.CharField(max_length=20, choices=TIPO_TRANSPORTE_CHOICES, default='local',
+                                      verbose_name="Tipo de transporte")
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='pendiente', 
                              verbose_name="Estado del envío")
     qr_code = models.CharField(max_length=255, unique=True, verbose_name="Código QR")
@@ -857,6 +864,18 @@ class Envio(models.Model):
     direccion_entrega = models.TextField(verbose_name="Dirección de entrega")
     observaciones = models.TextField(blank=True, verbose_name="Observaciones")
     fecha_creacion = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de creación")
+    
+    # Campos para integración con Uber
+    uber_delivery_id = models.CharField(max_length=255, null=True, blank=True, 
+                                       verbose_name="ID de delivery en Uber")
+    uber_status = models.CharField(max_length=50, null=True, blank=True,
+                                  verbose_name="Estado en Uber")
+    uber_tracking_url = models.URLField(null=True, blank=True,
+                                       verbose_name="URL de tracking de Uber")
+    uber_quote_id = models.CharField(max_length=255, null=True, blank=True,
+                                    verbose_name="ID de cotización en Uber")
+    uber_costo = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True,
+                                     verbose_name="Costo del delivery Uber")
     
     class Meta:
         verbose_name = 'Envío'

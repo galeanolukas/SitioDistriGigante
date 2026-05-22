@@ -39,8 +39,16 @@
                 <form method="POST">
                     {% csrf_token %}
                     <div class="w3-section">
+                        <label class="w3-text-dark-grey"><b>Tipo de Transporte:</b></label>
+                        <select name="tipo_transporte" class="w3-select w3-border w3-round" required onchange="toggleTransportistaSelect(this.value)">
+                            <option value="local">Transportista Local</option>
+                            <option value="uber">Uber Direct</option>
+                        </select>
+                    </div>
+                    
+                    <div id="transportista_local" class="w3-section">
                         <label class="w3-text-dark-grey"><b>Seleccionar Transportista:</b></label>
-                        <select name="transportista_id" class="w3-select w3-border w3-round" required>
+                        <select name="transportista_id" class="w3-select w3-border w3-round">
                             <option value="">Seleccionar transportista...</option>
                             {% for transportista in transportistas %}
                                 <option value="{{ transportista.id }}">
@@ -59,8 +67,11 @@
                     </div>
 
                     <div class="w3-section">
-                        <button type="submit" class="w3-button w3-green w3-round">
+                        <button type="submit" class="w3-button w3-green w3-round" id="btn_asignar_local">
                             <i class="fas fa-truck"></i> Asignar Envío
+                        </button>
+                        <button type="button" class="w3-button w3-black w3-round w3-margin-left" id="btn_uber" style="display:none;" onclick="crearUberDelivery({{ envio.id }})">
+                            <i class="fab fa-uber"></i> Solicitar Uber Direct
                         </button>
                         <a href="{% url 'gestion_envios' %}" class="w3-button w3-grey w3-round w3-margin-left">
                             <i class="fas fa-arrow-left"></i> Cancelar
@@ -104,5 +115,63 @@
         }
     }
 </style>
+
+<script>
+function toggleTransportistaSelect(tipoTransporte) {
+    const transportistaSelect = document.getElementById('transportista_local');
+    const btnAsignarLocal = document.getElementById('btn_asignar_local');
+    const btnUber = document.getElementById('btn_uber');
+    
+    if (tipoTransporte === 'uber') {
+        transportistaSelect.style.display = 'none';
+        btnAsignarLocal.style.display = 'none';
+        btnUber.style.display = 'inline-block';
+    } else {
+        transportistaSelect.style.display = 'block';
+        btnAsignarLocal.style.display = 'inline-block';
+        btnUber.style.display = 'none';
+    }
+}
+
+function crearUberDelivery(envioId) {
+    if (confirm('¿Estás seguro de que quieres solicitar un delivery de Uber para este envío?')) {
+        fetch('/api/uber/crear-delivery/' + envioId + '/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Delivery de Uber solicitado exitosamente. ID: ' + data.delivery_id);
+                window.location.href = '/gestion-envios/';
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error al solicitar delivery de Uber');
+        });
+    }
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
 
 {% endblock %}

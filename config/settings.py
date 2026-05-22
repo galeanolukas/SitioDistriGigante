@@ -287,5 +287,26 @@ RECAPTCHA_PUBLIC_KEY = os.environ.get('RECAPTCHA_PUBLIC_KEY', '')
 RECAPTCHA_PRIVATE_KEY = os.environ.get('RECAPTCHA_PRIVATE_KEY', '')
 
 # Opciones adicionales de reCAPTCHA
+
+# Configuración de Uber Direct API
+UBER_CLIENT_ID = os.environ.get('UBER_CLIENT_ID', '')
+UBER_CLIENT_SECRET = os.environ.get('UBER_CLIENT_SECRET', '')
+UBER_ACCESS_TOKEN = os.environ.get('UBER_ACCESS_TOKEN', '')
+UBER_REFRESH_TOKEN = os.environ.get('UBER_REFRESH_TOKEN', '')
+
+# Entorno de Uber (sandbox o production)
+UBER_ENVIRONMENT = os.environ.get('UBER_ENVIRONMENT', 'sandbox')  # 'sandbox' o 'production'
+
+# URLs de Uber API
+UBER_API_BASE_URL = {
+    'sandbox': 'https://sandbox-api.uber.com/v1',
+    'production': 'https://api.uber.com/v1'
+}
+
+# Webhook URL para Uber
+UBER_WEBHOOK_URL = os.environ.get('UBER_WEBHOOK_URL', 'https://www.distribuidoragigante.com/api/uber/webhook/')
+
+# Configuración de timeouts para Uber API
+UBER_API_TIMEOUT = 30  # segundos
 RECAPTCHA_USE_SSL = True
 RECAPTCHA_SCORE_THRESHOLD = 0.5  # Para reCAPTCHA v3 (si decides usarlo en el futuro)

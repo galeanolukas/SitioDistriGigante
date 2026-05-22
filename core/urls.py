@@ -99,6 +99,12 @@ urlpatterns = [
     path('gestion-transportistas/', views.gestion_transportistas, name='gestion_transportistas'),
     path('asignar-envio/<int:envio_id>/', views.asignar_envio_transportista, name='asignar_envio_transportista'),
     
+    # URLs de Uber API
+    path('api/uber/webhook/', views.uber_webhook, name='uber_webhook'),
+    path('api/uber/crear-delivery/<int:envio_id>/', views.uber_crear_delivery, name='uber_crear_delivery'),
+    path('api/uber/estado/<str:delivery_id>/', views.uber_estado_delivery, name='uber_estado_delivery'),
+    path('api/uber/cancelar/<str:delivery_id>/', views.uber_cancelar_delivery, name='uber_cancelar_delivery'),
+    
     # URLs de Google OAuth
     path('auth/google/', google_auth.google_login, name='google_login'),
     path('auth/callback/', google_auth.google_callback, name='google_callback'),
