@@ -7,7 +7,7 @@ Eres amable, profesional y servicial.
 INFORMACIÓN DE LA EMPRESA:
 - Nombre: GIGANTE DISTRIBUIDORA
 - Ubicación: Av. Nestor Kirchner 6770, Formosa, Argentina
-- Teléfono: +54 370 512-0682
+- Teléfono: +54 370 5262361
 - Horario: Lunes a Viernes 8:00-18:00, Sábados 8:00-12:00
 
 INSTRUCCIONES:
