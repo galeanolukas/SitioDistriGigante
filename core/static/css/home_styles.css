@@ -516,15 +516,31 @@
     .product-card-modern {
         margin-bottom: 20px;
     }
-    
+
     .w3-col.xl3 {
         width: 50%;
+        padding: 8px;
+    }
+
+    /* Forzar 2 columnas para Los Más Buscados en móvil */
+    .w3-col.s6 {
+        width: 50% !important;
+        padding: 8px;
+    }
+
+    .w3-row-padding {
+        padding: 0 8px;
     }
 }
 
 @media (max-width: 480px) {
-    .w3-col.xl3, .w3-col.m6 {
-        width: 100%;
+    .w3-col.xl3, .w3-col.m6, .w3-col.s6 {
+        width: 50% !important;
+        padding: 6px;
+    }
+
+    .w3-row-padding {
+        padding: 0 6px;
     }
 }
 

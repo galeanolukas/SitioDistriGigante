@@ -182,6 +182,21 @@
         padding: 10px 15px;
       }
 
+      .catalog-topbar .w3-bar-item {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+      }
+
+      .catalog-topbar .w3-bar-item.w3-left {
+        justify-content: flex-start;
+      }
+
+      .catalog-topbar .w3-bar-item.w3-right {
+        justify-content: center;
+        margin-top: 10px;
+      }
+
       .category-dropdown-content {
         position: static;
         display: none;
@@ -243,25 +258,24 @@
 {% include 'modals.html' %}
 <!-- Topbar Refinada -->
 <div class="catalog-topbar w3-bar w3-animate-top">
-  <!-- Logo a la izquierda -->
-  <div class="w3-bar-item">
+  <!-- Logo y Categorías -->
+  <div class="w3-bar-item w3-left" style="display: flex; align-items: center; gap: 10px;">
+    <!-- Logo -->
     <a href="/" class="w3-round">
       <img src="{% static 'img/Logo.png' %}" alt="Gigante Distribuidora" height="40" style="vertical-align: middle;">
     </a>
-  </div>
 
-  <!-- Botón Mostrar/Ocultar Menú de Categorías -->
-  {% if products or resultados %}
-  <div class="w3-bar-item">
+    <!-- Botón Mostrar/Ocultar Menú de Categorías -->
+    {% if products or resultados %}
     <button onclick="toggleCategories()" class="w3-button topbar-btn" style="background: rgba(255,255,255,0.1); margin-right: 15px;">
       <i class="fas fa-bars w3-margin-right"></i> VER CATEGORÍAS
     </button>
+    {% endif %}
   </div>
-  {% endif %}
 
   <!-- Botones a la derecha -->
   <div class="w3-bar-item w3-right">
-    <!-- Botón Volver a la derecha -->
+    <!-- Botón Volver -->
     <a href="/catalogo" class="w3-button topbar-btn" style="background: rgba(255,255,255,0.1); margin-right: 15px;">
       <i class="fas fa-home"></i>
     </a>
