@@ -1,12 +1,13 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User, Group
 from django.core.paginator import Paginator
-from django.db.models import Q, Sum
+from django.db.models import Q, Sum, Count
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
-from .models import Pedido, Product, MovimientoCaja
+from .models import Pedido, Product, MovimientoCaja, Category, Perfil
 
 
 # ---------- Roles ----------
@@ -261,3 +262,158 @@ def pedidos(request):
         'q': q,
     }
     return render(request, 'panel/pedidos.html', context)
+
+
+# ---------- Gestión de contenido (solo admin) ----------
+
+def _solo_admin(request):
+    if request.rol != 'admin':
+        messages.error(request, "Esta sección es solo para administradores.")
+        return False
+    return True
+
+
+def _asignar_rol(user, rol, es_admin=False):
+    """Sincroniza perfil.tipo_usuario, grupos y flags staff/superuser."""
+    try:
+        perfil = user.perfil  # misma instancia que la signal post_save vuelve a guardar
+    except Perfil.DoesNotExist:
+        perfil = Perfil(user=user)
+    perfil.tipo_usuario = 'admin' if es_admin else rol
+    perfil.save()
+
+    user.is_superuser = es_admin
+    user.is_staff = es_admin or rol != 'cliente'
+    user.save()
+
+    user.groups.clear()
+    if es_admin:
+        grupo, _ = Group.objects.get_or_create(name='admin')
+    else:
+        grupo, _ = Group.objects.get_or_create(name=rol)
+    user.groups.add(grupo)
+
+
+@panel_access
+def categorias(request):
+    """Gestión de categorías: orden y visibilidad en la tienda"""
+    if not _solo_admin(request):
+        return redirect('panel')
+
+    if request.method == 'POST':
+        nombre = request.POST.get('nombre', '').strip()
+        if nombre:
+            ultimo = Category.objects.aggregate(m=Count('id'))['m'] or 0
+            Category.objects.get_or_create(
+                nombre=nombre,
+                defaults={'orden': request.POST.get('orden') or ultimo},
+            )
+            messages.success(request, f"Categoría '{nombre}' creada.")
+        else:
+            messages.error(request, "Ingresá un nombre para la categoría.")
+        return redirect('panel_categorias')
+
+    context = {
+        'rol': request.rol,
+        'categorias': Category.objects.annotate(
+            total_productos=Count('categoria')),
+    }
+    return render(request, 'panel/categorias.html', context)
+
+
+@panel_access
+@require_POST
+def categoria_guardar(request, cat_id):
+    if not _solo_admin(request):
+        return redirect('panel')
+    cat = get_object_or_404(Category, id=cat_id)
+    nombre = request.POST.get('nombre', '').strip()
+    if nombre:
+        cat.nombre = nombre
+    cat.orden = request.POST.get('orden') or 0
+    cat.visible = request.POST.get('visible') == 'on'
+    cat.save()
+    messages.success(request, f"Categoría '{cat.nombre}' actualizada.")
+    return redirect('panel_categorias')
+
+
+@panel_access
+@require_POST
+def categoria_borrar(request, cat_id):
+    if not _solo_admin(request):
+        return redirect('panel')
+    cat = get_object_or_404(Category, id=cat_id)
+    if cat.categoria.exists():
+        messages.error(request,
+            f"'{cat.nombre}' tiene productos asignados. Reasignalos antes de borrarla.")
+    else:
+        cat.delete()
+        messages.success(request, "Categoría eliminada.")
+    return redirect('panel_categorias')
+
+
+@panel_access
+def usuarios(request):
+    """Gestión de usuarios: crear, asignar roles, activar/desactivar"""
+    if not _solo_admin(request):
+        return redirect('panel')
+
+    if request.method == 'POST':
+        username = request.POST.get('username', '').strip()
+        password = request.POST.get('password', '').strip()
+        email = request.POST.get('email', '').strip()
+        nombre = request.POST.get('nombre', '').strip()
+        rol = request.POST.get('rol', 'cliente')
+        es_admin = request.POST.get('es_admin') == 'on'
+
+        if not username or not password:
+            messages.error(request, "Usuario y contraseña son obligatorios.")
+        elif User.objects.filter(username=username).exists():
+            messages.error(request, f"El usuario '{username}' ya existe.")
+        elif rol not in dict(Perfil.TIPOS_USUARIO):
+            messages.error(request, "Rol no válido.")
+        else:
+            user = User.objects.create_user(
+                username=username, email=email, password=password,
+                first_name=nombre)
+            _asignar_rol(user, rol, es_admin)
+            messages.success(request, f"Usuario '{username}' creado.")
+        return redirect('panel_usuarios')
+
+    context = {
+        'rol': request.rol,
+        'usuarios': User.objects.select_related('perfil')
+                    .prefetch_related('groups').order_by('username'),
+        'roles': Perfil.TIPOS_USUARIO,
+    }
+    return render(request, 'panel/usuarios.html', context)
+
+
+@panel_access
+@require_POST
+def usuario_guardar(request, user_id):
+    if not _solo_admin(request):
+        return redirect('panel')
+    user = get_object_or_404(User, id=user_id)
+
+    user.email = request.POST.get('email', '').strip()
+    user.first_name = request.POST.get('nombre', '').strip()
+    user.is_active = request.POST.get('is_active') == 'on'
+    es_admin = request.POST.get('es_admin') == 'on'
+    rol = request.POST.get('rol', 'cliente')
+
+    if user == request.user and (not user.is_active or not es_admin):
+        messages.error(request, "No podés quitarte el acceso a vos mismo.")
+        return redirect('panel_usuarios')
+
+    nueva_pass = request.POST.get('password', '').strip()
+    if nueva_pass:
+        user.set_password(nueva_pass)
+
+    if rol in dict(Perfil.TIPOS_USUARIO):
+        _asignar_rol(user, rol, es_admin)
+    else:
+        user.save()
+
+    messages.success(request, f"Usuario '{user.username}' actualizado.")
+    return redirect('panel_usuarios')

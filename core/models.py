@@ -229,10 +229,13 @@ class MainCategory(models.Model):
 class Category(models.Model):
 	nombre = models.CharField(max_length=200)
 	main = models.ForeignKey("MainCategory", on_delete=models.CASCADE, blank=True, null=True)
+	orden = models.PositiveIntegerField(default=0, verbose_name='Orden en tienda')
+	visible = models.BooleanField(default=True, verbose_name='Visible en tienda')
 
 	class Meta:
 		verbose_name = 'SubCategoria'
 		verbose_name_plural = 'SubCategoria de Productos'
+		ordering = ['orden', 'nombre']
 
 	def __str__(self):
 		return self.nombre

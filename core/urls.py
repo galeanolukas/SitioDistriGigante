@@ -15,6 +15,11 @@ urlpatterns = [
     path('panel/pedidos/', panel_views.pedidos, name='panel_pedidos'),
     path('panel/pedido/<int:pedido_id>/accion/', panel_views.pedido_accion, name='panel_pedido_accion'),
     path('panel/stock/', panel_views.stock_update, name='panel_stock'),
+    path('panel/categorias/', panel_views.categorias, name='panel_categorias'),
+    path('panel/categoria/<int:cat_id>/guardar/', panel_views.categoria_guardar, name='panel_categoria_guardar'),
+    path('panel/categoria/<int:cat_id>/borrar/', panel_views.categoria_borrar, name='panel_categoria_borrar'),
+    path('panel/usuarios/', panel_views.usuarios, name='panel_usuarios'),
+    path('panel/usuario/<int:user_id>/guardar/', panel_views.usuario_guardar, name='panel_usuario_guardar'),
 
     # Tienda (nuevo catálogo guest)
     path('', tienda_views.tienda, name='index'),

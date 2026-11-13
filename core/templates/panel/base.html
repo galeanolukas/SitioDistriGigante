@@ -48,6 +48,12 @@
                     <i class="bi bi-receipt"></i> Pedidos
                 </a>
                 {% if rol == 'admin' %}
+                <a href="{% url 'panel_categorias' %}" class="cat-chip {% if request.resolver_match.url_name == 'panel_categorias' %}active{% endif %}">
+                    <i class="bi bi-tags"></i> Categorías
+                </a>
+                <a href="{% url 'panel_usuarios' %}" class="cat-chip {% if request.resolver_match.url_name == 'panel_usuarios' %}active{% endif %}">
+                    <i class="bi bi-people"></i> Usuarios
+                </a>
                 <a href="{% url 'admin_panel' %}" class="cat-chip">
                     <i class="bi bi-gear"></i> Contenido
                 </a>

@@ -1,0 +1,141 @@
+{% extends 'panel/base.html' %}
+{% block title %}Usuarios — Panel GIGANTE{% endblock %}
+
+{% block content %}
+<h1 class="seccion-titulo mb-1">Usuarios</h1>
+<p class="text-muted small mb-3">Creá usuarios y asignales un rol. El rol define a qué secciones del panel acceden.</p>
+
+<div class="panel-card mb-4">
+    <h2 class="h6 fw-bold mb-3"><i class="bi bi-person-plus"></i> Nuevo usuario</h2>
+    <form method="post" class="row g-2">
+        {% csrf_token %}
+        <div class="col-6 col-md-2">
+            <label class="form-label small mb-1">Usuario *</label>
+            <input type="text" name="username" class="form-control form-control-sm" required>
+        </div>
+        <div class="col-6 col-md-2">
+            <label class="form-label small mb-1">Contraseña *</label>
+            <input type="text" name="password" class="form-control form-control-sm" required>
+        </div>
+        <div class="col-6 col-md-2">
+            <label class="form-label small mb-1">Nombre</label>
+            <input type="text" name="nombre" class="form-control form-control-sm">
+        </div>
+        <div class="col-6 col-md-2">
+            <label class="form-label small mb-1">Email</label>
+            <input type="email" name="email" class="form-control form-control-sm">
+        </div>
+        <div class="col-6 col-md-2">
+            <label class="form-label small mb-1">Rol</label>
+            <select name="rol" class="form-select form-select-sm">
+                {% for val, label in roles %}
+                <option value="{{ val }}">{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-6 col-md-2 d-flex align-items-end gap-2">
+            <div class="form-check mb-1">
+                <input class="form-check-input" type="checkbox" name="es_admin" id="newAdmin">
+                <label class="form-check-label small" for="newAdmin">Admin</label>
+            </div>
+            <button class="btn-cta btn-sm ms-auto">Crear</button>
+        </div>
+    </form>
+</div>
+
+<div class="panel-card p-0 overflow-hidden">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Usuario</th>
+                    <th class="d-none d-md-table-cell">Nombre / Email</th>
+                    <th>Rol</th>
+                    <th class="text-center">Activo</th>
+                    <th class="text-end"></th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for u in usuarios %}
+                <tr class="{% if not u.is_active %}table-secondary text-muted{% endif %}">
+                    <td class="fw-semibold">
+                        {{ u.username }}
+                        {% if u.is_superuser %}<span class="badge text-bg-danger">Admin</span>{% endif %}
+                    </td>
+                    <td class="d-none d-md-table-cell">
+                        {{ u.first_name|default:'—' }}
+                        <div class="small text-muted">{{ u.email|default:'' }}</div>
+                    </td>
+                    <td><span class="badge rounded-pill text-bg-light">{{ u.perfil.get_tipo_usuario_display|default:'—' }}</span></td>
+                    <td class="text-center">
+                        {% if u.is_active %}<i class="bi bi-check-circle-fill text-success"></i>
+                        {% else %}<i class="bi bi-x-circle-fill text-danger"></i>{% endif %}
+                    </td>
+                    <td class="text-end">
+                        <button class="btn btn-sm btn-outline-primary" type="button"
+                                data-bs-toggle="collapse" data-bs-target="#edit-{{ u.id }}">
+                            <i class="bi bi-pencil"></i> Editar
+                        </button>
+                    </td>
+                </tr>
+                <tr class="collapse" id="edit-{{ u.id }}">
+                    <td colspan="5" class="bg-light">
+                        <form method="post" action="{% url 'panel_usuario_guardar' u.id %}" class="row g-2 p-2">
+                            {% csrf_token %}
+                            <div class="col-6 col-md-2">
+                                <label class="form-label small mb-1">Nombre</label>
+                                <input type="text" name="nombre" value="{{ u.first_name }}"
+                                       class="form-control form-control-sm">
+                            </div>
+                            <div class="col-6 col-md-2">
+                                <label class="form-label small mb-1">Email</label>
+                                <input type="email" name="email" value="{{ u.email }}"
+                                       class="form-control form-control-sm">
+                            </div>
+                            <div class="col-6 col-md-2">
+                                <label class="form-label small mb-1">Nueva contraseña</label>
+                                <input type="text" name="password" placeholder="(sin cambio)"
+                                       class="form-control form-control-sm">
+                            </div>
+                            <div class="col-6 col-md-2">
+                                <label class="form-label small mb-1">Rol</label>
+                                <select name="rol" class="form-select form-select-sm">
+                                    {% for val, label in roles %}
+                                    <option value="{{ val }}" {% if u.perfil.tipo_usuario == val %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-4 d-flex align-items-end gap-3">
+                                <div class="form-check mb-1">
+                                    <input class="form-check-input" type="checkbox" name="es_admin"
+                                           id="adm-{{ u.id }}" {% if u.is_superuser %}checked{% endif %}>
+                                    <label class="form-check-label small" for="adm-{{ u.id }}">Admin</label>
+                                </div>
+                                <div class="form-check mb-1">
+                                    <input class="form-check-input" type="checkbox" name="is_active"
+                                           id="act-{{ u.id }}" {% if u.is_active %}checked{% endif %}>
+                                    <label class="form-check-label small" for="act-{{ u.id }}">Activo</label>
+                                </div>
+                                <button class="btn btn-sm btn-primary ms-auto">Guardar</button>
+                            </div>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="panel-card mt-4">
+    <h2 class="h6 fw-bold mb-2"><i class="bi bi-info-circle"></i> Roles</h2>
+    <ul class="small text-muted mb-0">
+        <li><strong>Mostrador</strong>: recibe y aprueba pedidos, confirma al cliente.</li>
+        <li><strong>Depósito</strong>: prepara pedidos, controla stock, resuelve envío/retiro.</li>
+        <li><strong>Caja</strong>: movimientos, pagos y retiros del día.</li>
+        <li><strong>Vendedor</strong>: ventas atribuidas vía link <code>?ref=usuario</code> (sin acceso al panel).</li>
+        <li><strong>Cliente</strong>: usuario registrado de la tienda (sin acceso al panel).</li>
+        <li><strong>Admin</strong>: acceso total, incluida esta sección y contenido del sitio.</li>
+    </ul>
+</div>
+{% endblock %}

@@ -62,5 +62,23 @@
         </div>
     </div>
     {% endif %}
+    {% if rol == 'admin' %}
+    <div class="col-md-4">
+        <div class="panel-card text-center">
+            <i class="bi bi-tags fs-1 text-warning"></i>
+            <h2 class="mt-2">Categorías</h2>
+            <p class="text-muted small">Orden y visibilidad de las categorías en la tienda.</p>
+            <a href="{% url 'panel_categorias' %}" class="btn-cta" style="background:#e6a700">Entrar</a>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="panel-card text-center">
+            <i class="bi bi-people fs-1 text-secondary"></i>
+            <h2 class="mt-2">Usuarios</h2>
+            <p class="text-muted small">Crear usuarios, asignar roles y permisos de acceso.</p>
+            <a href="{% url 'panel_usuarios' %}" class="btn-cta" style="background:#6c757d">Entrar</a>
+        </div>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}

@@ -72,7 +72,7 @@ def tienda(request, tp=None):
 
     context = {
         'products': page_obj,
-        'categorias': Category.objects.select_related('main').all(),
+        'categorias': Category.objects.filter(visible=True).select_related('main'),
         'ofertas': Oferta.objects.filter(activa=True).select_related('producto')[:12],
         'flyers': CarruselImages.objects.all(),
         'destacados': Product.objects.filter(destacado=True, stock__gt=0)[:8],
