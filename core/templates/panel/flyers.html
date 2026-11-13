@@ -1,0 +1,113 @@
+{% extends 'panel/base.html' %}
+{% block title %}Flyers — Panel GIGANTE{% endblock %}
+
+{% block content %}
+<h1 class="seccion-titulo mb-1">Flyers del carrusel</h1>
+<p class="text-muted small mb-3">Los carteles que se muestran en el carrusel promocional de la tienda.</p>
+
+<div class="panel-card mb-4">
+    <h2 class="h6 fw-bold mb-3"><i class="bi bi-plus-circle"></i> Nuevo flyer</h2>
+    <form method="post" enctype="multipart/form-data" class="row g-2">
+        {% csrf_token %}
+        <div class="col-12 col-md-4">
+            <label class="form-label small mb-1">Título *</label>
+            <input type="text" name="titulo" class="form-control form-control-sm" required>
+        </div>
+        <div class="col-12 col-md-4">
+            <label class="form-label small mb-1">Imagen *</label>
+            <input type="file" name="imagen" accept="image/*" class="form-control form-control-sm" required>
+        </div>
+        <div class="col-6 col-md-2">
+            <label class="form-label small mb-1">Color texto</label>
+            <input type="color" name="color_texto" value="#FFFFFF" class="form-control form-control-color form-control-sm w-100">
+        </div>
+        <div class="col-6 col-md-2">
+            <label class="form-label small mb-1">Color fondo</label>
+            <input type="color" name="color_fondo" value="#0d2570" class="form-control form-control-color form-control-sm w-100">
+        </div>
+        <div class="col-12">
+            <label class="form-label small mb-1">Texto (opcional)</label>
+            <textarea name="texto" rows="2" class="form-control form-control-sm"
+                      placeholder="Ej: ¡Promos imperdibles esta semana!"></textarea>
+        </div>
+        <div class="col-12">
+            <button class="btn-cta btn-sm">Crear flyer</button>
+        </div>
+    </form>
+</div>
+
+<div class="row g-3">
+    {% for flyer in flyers %}
+    <div class="col-md-6 col-lg-4">
+        <div class="panel-card p-0 overflow-hidden h-100 d-flex flex-column">
+            <div class="position-relative" style="background:{{ flyer.color_fondo }}; min-height:140px;
+                        display:flex; align-items:center; justify-content:center;">
+                <img src="{{ flyer.imagen.url }}" alt="{{ flyer.titulo }}"
+                     style="width:100%; max-height:200px; object-fit:cover;">
+                <div class="position-absolute bottom-0 start-0 p-2" style="color:{{ flyer.color_texto }}; text-shadow:0 1px 4px rgba(0,0,0,.5)">
+                    <strong>{{ flyer.titulo }}</strong>
+                    {% if flyer.texto %}<div class="small">{{ flyer.texto|truncatewords:12 }}</div>{% endif %}
+                </div>
+            </div>
+            <div class="p-2 d-flex gap-2 mt-auto">
+                <button class="btn btn-sm btn-outline-primary flex-fill" type="button"
+                        data-bs-toggle="collapse" data-bs-target="#fedit-{{ flyer.id }}">
+                    <i class="bi bi-pencil"></i> Editar
+                </button>
+                <button form="fdel-{{ flyer.id }}" class="btn btn-sm btn-outline-danger"
+                        onclick="return confirm('¿Eliminar {{ flyer.titulo }}?')">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
+            <div class="collapse" id="fedit-{{ flyer.id }}">
+                <form method="post" action="{% url 'panel_flyer_guardar' flyer.id %}"
+                      enctype="multipart/form-data" class="p-2 border-top bg-light">
+                    {% csrf_token %}
+                    <div class="row g-2">
+                        <div class="col-12">
+                            <label class="form-label small mb-1">Título</label>
+                            <input type="text" name="titulo" value="{{ flyer.titulo }}"
+                                   class="form-control form-control-sm" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small mb-1">Texto</label>
+                            <textarea name="texto" rows="2" class="form-control form-control-sm">{{ flyer.texto }}</textarea>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small mb-1">Color texto</label>
+                            <input type="color" name="color_texto" value="{{ flyer.color_texto }}"
+                                   class="form-control form-control-color form-control-sm w-100">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small mb-1">Color fondo</label>
+                            <input type="color" name="color_fondo" value="{{ flyer.color_fondo }}"
+                                   class="form-control form-control-color form-control-sm w-100">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small mb-1">Reemplazar imagen (opcional)</label>
+                            <input type="file" name="imagen" accept="image/*" class="form-control form-control-sm">
+                        </div>
+                        <div class="col-12">
+                            <button class="btn btn-sm btn-primary w-100">Guardar cambios</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="panel-card text-center text-muted py-4">
+            <i class="bi bi-images fs-1"></i>
+            <p class="mb-0 mt-2">No hay flyers cargados. Creá el primero arriba.</p>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% for flyer in flyers %}
+<form id="fdel-{{ flyer.id }}" method="post" action="{% url 'panel_flyer_borrar' flyer.id %}" class="d-none">
+    {% csrf_token %}
+</form>
+{% endfor %}
+{% endblock %}

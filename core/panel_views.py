@@ -417,3 +417,68 @@ def usuario_guardar(request, user_id):
 
     messages.success(request, f"Usuario '{user.username}' actualizado.")
     return redirect('panel_usuarios')
+
+
+@panel_access
+def flyers(request):
+    """Gestión de flyers/carteles del carrusel de la tienda"""
+    if not _solo_admin(request):
+        return redirect('panel')
+    from .models import CarruselImages
+
+    if request.method == 'POST':
+        titulo = request.POST.get('titulo', '').strip()
+        imagen = request.FILES.get('imagen')
+        if not titulo:
+            messages.error(request, "El título es obligatorio.")
+        elif not imagen:
+            messages.error(request, "Subí una imagen para el flyer.")
+        else:
+            CarruselImages.objects.create(
+                titulo=titulo,
+                imagen=imagen,
+                texto=request.POST.get('texto', '').strip(),
+                color_texto=request.POST.get('color_texto') or '#FFFFFF',
+                color_fondo=request.POST.get('color_fondo') or '#000000',
+            )
+            messages.success(request, f"Flyer '{titulo}' creado.")
+        return redirect('panel_flyers')
+
+    context = {
+        'rol': request.rol,
+        'flyers': CarruselImages.objects.all(),
+    }
+    return render(request, 'panel/flyers.html', context)
+
+
+@panel_access
+@require_POST
+def flyer_guardar(request, flyer_id):
+    if not _solo_admin(request):
+        return redirect('panel')
+    from .models import CarruselImages
+    flyer = get_object_or_404(CarruselImages, id=flyer_id)
+
+    titulo = request.POST.get('titulo', '').strip()
+    if titulo:
+        flyer.titulo = titulo
+    flyer.texto = request.POST.get('texto', '').strip()
+    flyer.color_texto = request.POST.get('color_texto') or '#FFFFFF'
+    flyer.color_fondo = request.POST.get('color_fondo') or '#000000'
+    if request.FILES.get('imagen'):
+        flyer.imagen = request.FILES['imagen']
+    flyer.save()
+    messages.success(request, f"Flyer '{flyer.titulo}' actualizado.")
+    return redirect('panel_flyers')
+
+
+@panel_access
+@require_POST
+def flyer_borrar(request, flyer_id):
+    if not _solo_admin(request):
+        return redirect('panel')
+    from .models import CarruselImages
+    flyer = get_object_or_404(CarruselImages, id=flyer_id)
+    flyer.delete()
+    messages.success(request, "Flyer eliminado.")
+    return redirect('panel_flyers')

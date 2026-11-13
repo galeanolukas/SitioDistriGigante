@@ -54,6 +54,9 @@
                 <a href="{% url 'panel_usuarios' %}" class="cat-chip {% if request.resolver_match.url_name == 'panel_usuarios' %}active{% endif %}">
                     <i class="bi bi-people"></i> Usuarios
                 </a>
+                <a href="{% url 'panel_flyers' %}" class="cat-chip {% if request.resolver_match.url_name == 'panel_flyers' %}active{% endif %}">
+                    <i class="bi bi-images"></i> Flyers
+                </a>
                 <a href="{% url 'admin_panel' %}" class="cat-chip">
                     <i class="bi bi-gear"></i> Contenido
                 </a>

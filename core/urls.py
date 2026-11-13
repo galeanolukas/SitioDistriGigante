@@ -20,6 +20,9 @@ urlpatterns = [
     path('panel/categoria/<int:cat_id>/borrar/', panel_views.categoria_borrar, name='panel_categoria_borrar'),
     path('panel/usuarios/', panel_views.usuarios, name='panel_usuarios'),
     path('panel/usuario/<int:user_id>/guardar/', panel_views.usuario_guardar, name='panel_usuario_guardar'),
+    path('panel/flyers/', panel_views.flyers, name='panel_flyers'),
+    path('panel/flyer/<int:flyer_id>/guardar/', panel_views.flyer_guardar, name='panel_flyer_guardar'),
+    path('panel/flyer/<int:flyer_id>/borrar/', panel_views.flyer_borrar, name='panel_flyer_borrar'),
 
     # Tienda (nuevo catálogo guest)
     path('', tienda_views.tienda, name='index'),
