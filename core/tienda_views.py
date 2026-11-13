@@ -126,6 +126,43 @@ def api_carrito(request):
     })
 
 
+def api_producto(request, product_id):
+    """Datos del producto para la previsualización rápida (modal)"""
+    product = get_object_or_404(Product, id=product_id)
+    precio, oferta = tienda_cart.precio_producto(product)
+
+    oferta_data = None
+    if oferta and oferta.activa:
+        tipo = oferta.tipo_oferta
+        if tipo == 'descuento':
+            badge = f"-{oferta.descuento}% OFF"
+        elif tipo == 'multiplicidad':
+            badge = oferta.get_tipo_multiplicidad_display()
+        else:
+            badge = "COMBO"
+        oferta_data = {
+            'badge': badge,
+            'precio_final': float(oferta.precio_final),
+            'precio_anterior': float(product.precio),
+            'descripcion': str(oferta),
+        }
+
+    imagen = product.imagenurl or (product.imagen1.url if product.imagen1 else '')
+
+    return JsonResponse({
+        'id': product.id,
+        'nombre': product.nombre,
+        'marca': product.marca or '',
+        'pack': product.unidad_x_pack or 0,
+        'descripcion': product.descripcion or '',
+        'imagen': imagen,
+        'precio': float(precio),
+        'oferta': oferta_data,
+        'stock': product.stock,
+        'detalle_url': f'/producto/detalle/{product.id}/',
+    })
+
+
 def checkout(request):
     """Checkout rápido: nombre + teléfono + dirección, sin cuenta"""
     items, total, cantidad = tienda_cart.detalle(request.session)

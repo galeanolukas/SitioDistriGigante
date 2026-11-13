@@ -40,8 +40,71 @@
         bootstrap.Toast.getOrCreateInstance(el, { delay: 2500 }).show();
     }
 
-    // Agregar al carrito desde las tarjetas
+    // ---------- Previsualización rápida de producto ----------
+    var qvModal = null;
+    var qvProductId = null;
+    var qvQty = 1;
+
+    function fmt(n) { return '$' + Math.round(n).toLocaleString('es-AR'); }
+
+    function openQuickView(productId) {
+        fetch('/tienda/api/producto/' + productId + '/')
+            .then(function (r) { return r.json(); })
+            .then(function (p) {
+                qvProductId = p.id;
+                qvQty = 1;
+                document.getElementById('qvCantidad').textContent = qvQty;
+                document.getElementById('qvImg').src = p.imagen;
+                document.getElementById('qvImg').alt = p.nombre;
+                document.getElementById('qvMarca').textContent = p.marca;
+                document.getElementById('qvNombre').textContent = p.nombre;
+                document.getElementById('qvPack').textContent =
+                    p.pack ? 'x' + p.pack + ' unidades' : '';
+                document.getElementById('qvDescripcion').innerHTML = p.descripcion;
+                document.getElementById('qvDetalle').href = p.detalle_url;
+
+                var badge = document.getElementById('qvBadge');
+                var tachado = document.getElementById('qvPrecioTachado');
+                if (p.oferta) {
+                    badge.textContent = p.oferta.badge;
+                    badge.hidden = false;
+                    tachado.textContent = fmt(p.oferta.precio_anterior);
+                    tachado.hidden = false;
+                } else {
+                    badge.hidden = true;
+                    tachado.hidden = true;
+                }
+                document.getElementById('qvPrecio').textContent = fmt(p.precio);
+
+                qvModal = qvModal || new bootstrap.Modal('#quickView');
+                qvModal.show();
+            });
+    }
+
     document.addEventListener('click', function (e) {
+        var qv = e.target.closest('[data-quick-view]');
+        if (qv) {
+            e.preventDefault();
+            openQuickView(qv.dataset.productId);
+            return;
+        }
+        if (e.target.id === 'qvMas' || e.target.id === 'qvMenos') {
+            qvQty = Math.max(1, qvQty + (e.target.id === 'qvMas' ? 1 : -1));
+            document.getElementById('qvCantidad').textContent = qvQty;
+            return;
+        }
+        if (e.target.closest('#qvAgregar')) {
+            postCart({ action: 'add', product_id: qvProductId, cantidad: qvQty })
+                .then(function (data) {
+                    if (data.ok) {
+                        updateBadges(data.count);
+                        toast('Producto agregado al pedido');
+                        if (qvModal) qvModal.hide();
+                    }
+                });
+            return;
+        }
+
         var btn = e.target.closest('[data-add-cart]');
         if (btn) {
             e.preventDefault();

@@ -1,5 +1,5 @@
 <div class="prod-card">
-    <a href="{% url 'product_detail' product.id %}" class="prod-img-wrap">
+    <a href="{% url 'product_detail' product.id %}" class="prod-img-wrap" data-quick-view data-product-id="{{ product.id }}">
         {% if product.imagenurl %}
             <img src="{{ product.imagenurl }}" alt="{{ product.nombre }}" loading="lazy">
         {% else %}
@@ -14,6 +14,7 @@
                 <span class="badge-oferta">COMBO</span>
             {% endif %}
         {% endif %}
+        <span class="qv-hint"><i class="bi bi-eye"></i></span>
     </a>
     <div class="prod-body">
         {% if product.marca %}<span class="prod-marca">{{ product.marca }}</span>{% endif %}

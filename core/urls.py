@@ -23,6 +23,7 @@ urlpatterns = [
     path('catalogo/<str:tp>/', tienda_views.tienda, name='ordenar_x'),
     path('tienda/carrito/', tienda_views.carrito, name='tienda_carrito'),
     path('tienda/api/carrito/', tienda_views.api_carrito, name='api_carrito_tienda'),
+    path('tienda/api/producto/<int:product_id>/', tienda_views.api_producto, name='api_producto'),
     path('tienda/checkout/', tienda_views.checkout, name='checkout'),
     path('tienda/pedido/<int:pedido_id>/', tienda_views.pedido_confirmado, name='pedido_confirmado'),
     path('tienda/pedido/<int:pedido_id>/pago/', tienda_views.pedido_pago_mp, name='pedido_pago_mp'),

@@ -27,7 +27,7 @@
     {% endif %}
 
     <header class="tienda-header">
-        <div class="container d-flex align-items-center gap-2 gap-md-3 py-2">
+        <div class="container-fluid catalog-wrap d-flex align-items-center gap-2 gap-md-3 py-2">
             <a href="{% url 'index' %}" class="brand">
                 <img src="{% static 'img/Logo.png' %}" alt="GIGANTE Distribuidora">
             </a>
@@ -68,7 +68,7 @@
         </div>
 
         <div class="cats-bar">
-            <div class="container cats-scroll">
+            <div class="container-fluid catalog-wrap cats-scroll">
                 <a href="{% url 'catalogo' %}" class="cat-chip {% if not tp and not q %}active{% endif %}">Todos</a>
                 <a href="{% url 'ordenar_x' 'ofertas' %}" class="cat-chip chip-oferta {% if tp == 'ofertas' %}active{% endif %}">
                     <i class="bi bi-lightning-charge-fill"></i> Ofertas
@@ -80,7 +80,7 @@
         </div>
     </header>
 
-    <main class="container py-3 pb-5">
+    <main class="container-fluid catalog-wrap py-3 pb-5">
         {% if messages %}
             {% for message in messages %}
             <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show">
@@ -94,7 +94,7 @@
     </main>
 
     <footer class="tienda-footer">
-        <div class="container py-4 text-center">
+        <div class="container-fluid catalog-wrap py-4 text-center">
             {% if tienda_cfg.texto_envios %}
             <p class="mb-1"><i class="bi bi-truck"></i> {{ tienda_cfg.texto_envios }}</p>
             {% endif %}
@@ -112,6 +112,44 @@
        target="_blank" rel="noopener" aria-label="WhatsApp">
         <i class="bi bi-whatsapp"></i>
     </a>
+
+    <!-- Modal previsualización de producto -->
+    <div class="modal fade" id="quickView" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content qv-content">
+                <button type="button" class="btn-close qv-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                <div class="row g-0">
+                    <div class="col-md-6 qv-img-wrap">
+                        <img id="qvImg" src="" alt="">
+                        <span id="qvBadge" class="badge-oferta" hidden></span>
+                    </div>
+                    <div class="col-md-6 qv-body">
+                        <span id="qvMarca" class="prod-marca"></span>
+                        <h3 id="qvNombre" class="qv-nombre"></h3>
+                        <span id="qvPack" class="prod-pack"></span>
+                        <div id="qvDescripcion" class="qv-descripcion"></div>
+                        <div class="qv-precio">
+                            <span id="qvPrecioTachado" class="precio-tachado" hidden></span>
+                            <span id="qvPrecio" class="precio-final"></span>
+                        </div>
+                        <div class="qv-acciones">
+                            <div class="qty-stepper">
+                                <button type="button" id="qvMenos">−</button>
+                                <span id="qvCantidad">1</span>
+                                <button type="button" id="qvMas">+</button>
+                            </div>
+                            <button class="btn-cta mt-0" id="qvAgregar">
+                                <i class="bi bi-plus-lg"></i> Agregar
+                            </button>
+                        </div>
+                        <a id="qvDetalle" href="#" class="btn-secundario mt-2">
+                            Ver detalle completo <i class="bi bi-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div class="toast-container position-fixed bottom-0 end-0 p-3">
         <div id="cartToast" class="toast align-items-center" role="alert">
