@@ -307,7 +307,7 @@ def login_view(request):
             messages.error(request, f"No se pudo ingresar: {error}")
 
     # GET o login fallido: mostrar el formulario de acceso
-    return render(request, 'login.html', {'error': error, 'next': next_page})
+    return render(request, 'tienda/login.html', {'error': error, 'next': next_page})
 
 def logout_view(request):
     logout(request)
