@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 import os
 from pathlib import Path
+from decouple import config
 from django.contrib import messages #import messages
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -98,12 +99,30 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',  # Cambia esta configuración según tu base de datos preferida
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+POSTGRES_DB = config('POSTGRES_DB', default=None)
+POSTGRES_USER = config('POSTGRES_USER', default=None)
+POSTGRES_PASSWORD = config('POSTGRES_PASSWORD', default=None)
+POSTGRES_HOST = config('POSTGRES_HOST', default=None)
+POSTGRES_PORT = config('POSTGRES_PORT', default='5432')
+
+if all([POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_HOST]):
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': POSTGRES_DB,
+            'USER': POSTGRES_USER,
+            'PASSWORD': POSTGRES_PASSWORD,
+            'HOST': POSTGRES_HOST,
+            'PORT': POSTGRES_PORT,
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        }
+    }
 
 
 # Password validation
