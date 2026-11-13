@@ -4,7 +4,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Distribuidora Gigante{% endblock %}</title>
+    <title>{% block title %}GIGANTE Distribuidora{% endblock %}</title>
+    <meta name="description" content="{% block meta_description %}Catálogo mayorista de Distribuidora Gigante. Pedí fácil y rápido por WhatsApp.{% endblock %}">
+    <link rel="icon" href="{% static 'img/icon.ico' %}">
+
+    <!-- Open Graph para compartir en redes sociales -->
+    <meta property="og:title" content="{% block og_title %}GIGANTE Distribuidora — Catálogo{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}Catálogo mayorista. Pedí fácil y rápido por WhatsApp.{% endblock %}">
+    <meta property="og:image" content="{% block og_image %}{{ request.scheme }}://{{ request.get_host }}{% static 'img/Logo.png' %}{% endblock %}">
+    <meta property="og:url" content="{{ request.scheme }}://{{ request.get_host }}{{ request.path }}">
+    <meta property="og:type" content="{% block og_type %}website{% endblock %}">
+    <meta property="og:site_name" content="GIGANTE Distribuidora">
+    <meta name="twitter:card" content="summary_large_image">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="{% static 'css/tienda.css' %}">
@@ -17,7 +28,9 @@
 
     <header class="tienda-header">
         <div class="container d-flex align-items-center gap-2 gap-md-3 py-2">
-            <a href="{% url 'index' %}" class="brand">GIGANTE</a>
+            <a href="{% url 'index' %}" class="brand">
+                <img src="{% static 'img/Logo.png' %}" alt="GIGANTE Distribuidora">
+            </a>
 
             <form class="search-form flex-grow-1" action="{% url 'catalogo' %}" method="get">
                 <i class="bi bi-search"></i>
@@ -31,6 +44,11 @@
                 <a href="{% url 'mis_pedidos' %}" class="nav-link-tienda">
                     <i class="bi bi-receipt"></i> Mis pedidos
                 </a>
+                {% if user.is_authenticated %}
+                <a href="{% url 'panel' %}" class="nav-link-tienda">
+                    <i class="bi bi-speedometer2"></i> Panel
+                </a>
+                {% endif %}
             </nav>
 
             <a href="{% url 'tienda_carrito' %}" class="cart-btn" aria-label="Carrito">

@@ -3,9 +3,19 @@ from django.conf import settings
 from django.conf.urls.static import static
 from . import views
 from . import tienda_views
+from . import panel_views
 from . import google_auth
 
 urlpatterns = [
+    # Panel operativo (mostrador / depósito / caja / admin)
+    path('panel/', panel_views.home, name='panel'),
+    path('panel/mostrador/', panel_views.mostrador, name='panel_mostrador'),
+    path('panel/deposito/', panel_views.deposito, name='panel_deposito'),
+    path('panel/caja/', panel_views.caja, name='panel_caja'),
+    path('panel/pedidos/', panel_views.pedidos, name='panel_pedidos'),
+    path('panel/pedido/<int:pedido_id>/accion/', panel_views.pedido_accion, name='panel_pedido_accion'),
+    path('panel/stock/', panel_views.stock_update, name='panel_stock'),
+
     # Tienda (nuevo catálogo guest)
     path('', tienda_views.tienda, name='index'),
     path('catalogo/', tienda_views.tienda, name='catalogo'),

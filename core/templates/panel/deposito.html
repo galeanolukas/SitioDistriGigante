@@ -1,0 +1,117 @@
+{% extends 'panel/base.html' %}
+{% block title %}Depósito — GIGANTE{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <div class="col-lg-7">
+        <h1 class="seccion-titulo mb-3"><i class="bi bi-box-seam"></i> A preparar</h1>
+
+        {% for pedido in a_preparar %}
+        <div class="pedido-row">
+            <div class="pedido-head">
+                <div>
+                    <strong>#{{ pedido.id }}</strong> — {{ pedido.contacto_nombre }}
+                    <span class="badge badge-{{ pedido.estado }}">{{ pedido.get_estado_display }}</span>
+                </div>
+                <div class="text-muted small">{{ pedido.fecha_pedido|date:"d/m H:i" }}</div>
+            </div>
+            <div class="items-mini">
+                {% for det in pedido.detalles_pedido.all %}
+                <div>{{ det.cantidad }}× {{ det.producto.nombre }} <span class="text-muted">(stock: {{ det.producto.stock|default:'—' }})</span></div>
+                {% endfor %}
+            </div>
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <span class="text-muted small">
+                    {% if pedido.opcion_envio %}<i class="bi bi-truck"></i> {{ pedido.opcion_envio.nombre }} ·{% endif %}
+                    {% if pedido.cliente.direccion %}{{ pedido.cliente.direccion }}{% if pedido.cliente.localidad %}, {{ pedido.cliente.localidad }}{% endif %}{% endif %}
+                </span>
+                <div class="acciones-pedido">
+                    {% if pedido.estado == 'aprobado' %}
+                    <form method="post" action="{% url 'panel_pedido_accion' pedido.id %}">
+                        {% csrf_token %}<input type="hidden" name="accion" value="preparar">
+                        <button class="btn-acc btn-preparar"><i class="bi bi-box2"></i> Preparar</button>
+                    </form>
+                    {% endif %}
+                    {% if pedido.estado == 'preparando' or pedido.estado == 'aprobado' %}
+                    <form method="post" action="{% url 'panel_pedido_accion' pedido.id %}">
+                        {% csrf_token %}<input type="hidden" name="accion" value="despachar">
+                        <button class="btn-acc btn-despachar"><i class="bi bi-truck"></i> Despachar</button>
+                    </form>
+                    <form method="post" action="{% url 'panel_pedido_accion' pedido.id %}">
+                        {% csrf_token %}<input type="hidden" name="accion" value="entregar">
+                        <button class="btn-acc btn-entregar"><i class="bi bi-bag-check"></i> Entregado</button>
+                    </form>
+                    {% endif %}
+                    {% if pedido.wa_notificar_url %}
+                    <a href="{{ pedido.wa_notificar_url }}" target="_blank" class="btn-acc btn-wa-mini"><i class="bi bi-whatsapp"></i></a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="empty-state"><i class="bi bi-check2-circle"></i><p>Nada para preparar.</p></div>
+        {% endfor %}
+
+        {% if despachados %}
+        <h2 class="seccion-titulo mt-4 mb-3">Despachados / entregados hoy</h2>
+        <div class="panel-card table-responsive">
+            <table class="table tabla-panel align-middle mb-0">
+                <thead><tr><th>#</th><th>Cliente</th><th>Estado</th></tr></thead>
+                <tbody>
+                {% for pedido in despachados %}
+                    <tr>
+                        <td><strong>#{{ pedido.id }}</strong></td>
+                        <td>{{ pedido.contacto_nombre }}</td>
+                        <td><span class="badge badge-{{ pedido.estado }}">{{ pedido.get_estado_display }}</span></td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="col-lg-5">
+        <h2 class="seccion-titulo mb-3"><i class="bi bi-clipboard-data"></i> Control de stock</h2>
+        <div class="panel-card">
+            <form method="get" class="d-flex gap-2 mb-3">
+                <input type="search" name="q" class="form-control" value="{{ q }}" placeholder="Buscar producto...">
+                <button class="btn btn-dark">Buscar</button>
+            </form>
+
+            {% if productos is not None %}
+                {% for p in productos %}
+                <form method="post" action="{% url 'panel_stock' %}" class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                    {% csrf_token %}
+                    <input type="hidden" name="product_id" value="{{ p.id }}">
+                    <span class="small">{{ p.nombre|truncatechars:38 }}</span>
+                    <span class="d-flex align-items-center gap-2">
+                        <input type="number" name="stock" value="{{ p.stock }}" min="0" class="form-control form-control-sm stock-input">
+                        <button class="btn btn-sm btn-outline-dark"><i class="bi bi-check"></i></button>
+                    </span>
+                </form>
+                {% empty %}
+                <p class="text-muted small mb-0">Sin resultados para "{{ q }}".</p>
+                {% endfor %}
+            {% else %}
+                {% if sin_stock %}
+                <p class="text-muted small fw-bold mb-2"><i class="bi bi-exclamation-triangle text-warning"></i> Sin stock:</p>
+                {% for p in sin_stock %}
+                <form method="post" action="{% url 'panel_stock' %}" class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                    {% csrf_token %}
+                    <input type="hidden" name="product_id" value="{{ p.id }}">
+                    <span class="small">{{ p.nombre|truncatechars:38 }}</span>
+                    <span class="d-flex align-items-center gap-2">
+                        <input type="number" name="stock" value="{{ p.stock }}" min="0" class="form-control form-control-sm stock-input">
+                        <button class="btn btn-sm btn-outline-dark"><i class="bi bi-check"></i></button>
+                    </span>
+                </form>
+                {% endfor %}
+                {% else %}
+                <p class="text-muted small mb-0">Buscá un producto para ajustar su stock.</p>
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

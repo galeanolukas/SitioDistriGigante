@@ -1,0 +1,66 @@
+{% extends 'panel/base.html' %}
+{% block title %}Panel — GIGANTE{% endblock %}
+
+{% block content %}
+<h1 class="seccion-titulo mb-3">Hola, {{ user.first_name|default:user.username }} <span class="text-muted fs-6 fw-normal">({{ rol_label }})</span></h1>
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="stat-card destacado">
+            <span class="stat-num">{{ pendientes }}</span>
+            <span class="stat-label"><i class="bi bi-inbox"></i> Pedidos nuevos</span>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <span class="stat-num">{{ a_preparar }}</span>
+            <span class="stat-label"><i class="bi bi-box-seam"></i> A preparar</span>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <span class="stat-num">{{ pedidos_hoy }}</span>
+            <span class="stat-label"><i class="bi bi-receipt"></i> Pedidos de hoy</span>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <span class="stat-num">${{ vendido_hoy|floatformat:0 }}</span>
+            <span class="stat-label"><i class="bi bi-cash"></i> Vendido hoy</span>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    {% if rol == 'admin' or rol == 'mostrador' %}
+    <div class="col-md-4">
+        <div class="panel-card text-center">
+            <i class="bi bi-inbox fs-1" style="color:var(--accent)"></i>
+            <h2 class="mt-2">Mostrador</h2>
+            <p class="text-muted small">Recibí pedidos nuevos, aprobálos y confirmá al cliente por WhatsApp.</p>
+            <a href="{% url 'panel_mostrador' %}" class="btn-cta">Entrar</a>
+        </div>
+    </div>
+    {% endif %}
+    {% if rol == 'admin' or rol == 'deposito' %}
+    <div class="col-md-4">
+        <div class="panel-card text-center">
+            <i class="bi bi-box-seam fs-1" style="color:var(--primary)"></i>
+            <h2 class="mt-2">Depósito</h2>
+            <p class="text-muted small">Prepará pedidos, controlá stock y resolvé envíos o retiros.</p>
+            <a href="{% url 'panel_deposito' %}" class="btn-cta" style="background:var(--primary)">Entrar</a>
+        </div>
+    </div>
+    {% endif %}
+    {% if rol == 'admin' or rol == 'caja' %}
+    <div class="col-md-4">
+        <div class="panel-card text-center">
+            <i class="bi bi-cash-stack fs-1 text-success"></i>
+            <h2 class="mt-2">Caja</h2>
+            <p class="text-muted small">Seguimiento de pedidos, pagos, retiros y movimientos del día.</p>
+            <a href="{% url 'panel_caja' %}" class="btn-cta" style="background:#198754">Entrar</a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -62,3 +62,9 @@ class ConfiguracionTiendaAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+
+@admin.register(MovimientoCaja)
+class MovimientoCajaAdmin(admin.ModelAdmin):
+    list_display = ('tipo', 'monto', 'descripcion', 'user', 'fecha')
+    list_filter = ('tipo', 'fecha')

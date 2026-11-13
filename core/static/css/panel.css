@@ -1,0 +1,96 @@
+/* Panel operativo — sobre la base de tienda.css */
+
+.panel-body { background: var(--bg); }
+
+.panel-header {
+    background: var(--card);
+    box-shadow: 0 1px 6px rgba(0,0,0,.08);
+    position: sticky;
+    top: 0;
+    z-index: 1020;
+}
+.panel-tabs { border-top: 1px solid #eee; }
+
+.stat-card {
+    background: var(--card);
+    border: 1px solid #ececec;
+    border-radius: 1rem;
+    padding: 1.1rem 1.2rem;
+    display: flex;
+    flex-direction: column;
+    gap: .2rem;
+    height: 100%;
+}
+.stat-card .stat-num { font-size: 1.9rem; font-weight: 800; line-height: 1.1; }
+.stat-card .stat-label { font-size: .82rem; color: #888; font-weight: 600; }
+.stat-card.destacado { border-color: var(--accent); }
+.stat-card.destacado .stat-num { color: var(--accent); }
+
+.panel-card {
+    background: var(--card);
+    border: 1px solid #ececec;
+    border-radius: 1rem;
+    padding: 1.1rem;
+    margin-bottom: 1rem;
+}
+.panel-card h2 { font-size: 1.05rem; font-weight: 800; margin-bottom: .8rem; }
+
+.pedido-row {
+    border: 1px solid #ececec;
+    border-radius: .9rem;
+    padding: .9rem;
+    margin-bottom: .7rem;
+    background: #fff;
+}
+.pedido-row .pedido-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: .5rem;
+    flex-wrap: wrap;
+}
+.pedido-row .items-mini {
+    font-size: .82rem;
+    color: #777;
+    margin: .4rem 0;
+}
+.acciones-pedido { display: flex; gap: .4rem; flex-wrap: wrap; }
+.acciones-pedido form { display: inline; }
+
+.btn-acc {
+    border: 0;
+    border-radius: .6rem;
+    font-size: .8rem;
+    font-weight: 700;
+    padding: .45rem .8rem;
+    color: #fff;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: .3rem;
+}
+.btn-aprobar { background: #198754; }
+.btn-preparar { background: #0d6efd; }
+.btn-despachar { background: var(--primary); }
+.btn-entregar { background: #6f42c1; }
+.btn-cancelar { background: #dc3545; }
+.btn-pagar { background: #009ee3; }
+.btn-wa-mini { background: var(--wa); }
+.btn-acc:hover { color: #fff; filter: brightness(.9); }
+
+.badge-pendiente { background: #fff3cd; color: #856404; }
+.badge-aprobado { background: #cfe2ff; color: #084298; }
+.badge-preparando { background: #e2d9f3; color: #4b2d85; }
+.badge-despachado { background: #cff4fc; color: #055160; }
+.badge-procesando { background: #cfe2ff; color: #084298; }
+.badge-entregado { background: #d1e7dd; color: #0f5132; }
+.badge-pagado { background: #d1e7dd; color: #0f5132; }
+.badge-cancelado { background: #f8d7da; color: #842029; }
+
+.stock-input { width: 5.5rem; display: inline-block; }
+.tabla-panel { font-size: .88rem; }
+.tabla-panel th { font-size: .78rem; text-transform: uppercase; color: #999; }
+
+.mov-tipo-ingreso { color: #198754; font-weight: 700; }
+.mov-tipo-egreso { color: #dc3545; font-weight: 700; }
+.mov-tipo-retiro { color: #fd7e14; font-weight: 700; }

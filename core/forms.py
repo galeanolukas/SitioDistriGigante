@@ -226,7 +226,10 @@ class UserEditForm(forms.ModelForm):
                 'admin': 'admin',
                 'vendedor': 'vendedor',
                 'cliente': 'cliente',
-                # Agrega más mapeos según tus grupos y tipos de usuario
+                'mostrador': 'mostrador',
+                'deposito': 'deposito',
+                'depósito': 'deposito',
+                'caja': 'caja',
             }
 
             # Determinar el tipo_usuario basado en el grupo

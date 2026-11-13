@@ -76,6 +76,9 @@ class CarruselImages(models.Model):
 class Pedido(models.Model):
     ESTADO_CHOICES = [
         ('pendiente', 'Pendiente'),
+        ('aprobado', 'Aprobado'),
+        ('preparando', 'En preparación'),
+        ('despachado', 'Despachado'),
         ('procesando', 'Procesando'),
         ('entregado', 'Entregado'),
         ('cancelado', 'Cancelado'),
@@ -582,6 +585,9 @@ class Perfil(models.Model):
     TIPOS_USUARIO = [
         ('cliente', 'Cliente'),
         ('vendedor', 'Vendedor'),
+        ('mostrador', 'Mostrador'),
+        ('deposito', 'Depósito'),
+        ('caja', 'Caja'),
         ('admin', 'Administrador'),
     ]
 
@@ -1061,3 +1067,29 @@ class ConfiguracionTienda(models.Model):
     def get(cls):
         obj, _ = cls.objects.get_or_create(pk=1)
         return obj
+
+
+class MovimientoCaja(models.Model):
+    """Movimientos manuales de caja: ingresos, egresos y retiros"""
+    TIPO_CHOICES = [
+        ('ingreso', 'Ingreso'),
+        ('egreso', 'Egreso / Gasto'),
+        ('retiro', 'Retiro'),
+    ]
+
+    tipo = models.CharField(max_length=10, choices=TIPO_CHOICES, verbose_name="Tipo")
+    monto = models.DecimalField(max_digits=12, decimal_places=0, verbose_name="Monto")
+    descripcion = models.CharField(max_length=300, verbose_name="Descripción")
+    pedido = models.ForeignKey('Pedido', on_delete=models.SET_NULL, null=True, blank=True,
+                               related_name='movimientos_caja', verbose_name="Pedido asociado")
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True,
+                             verbose_name="Registrado por")
+    fecha = models.DateTimeField(auto_now_add=True, verbose_name="Fecha")
+
+    class Meta:
+        verbose_name = 'Movimiento de Caja'
+        verbose_name_plural = 'Movimientos de Caja'
+        ordering = ['-fecha']
+
+    def __str__(self):
+        return f"{self.get_tipo_display()} ${self.monto} - {self.fecha.strftime('%d/%m %H:%i')}"

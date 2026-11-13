@@ -1,7 +1,8 @@
 :root {
-    --accent: #d62828;
-    --accent-dark: #a31f1f;
-    --ink: #1a1a1a;
+    --primary: #2c3e50;
+    --accent: #ec1c24;
+    --accent-dark: #b9151c;
+    --ink: #2c3e50;
     --bg: #f6f6f7;
     --card: #ffffff;
     --wa: #25d366;
@@ -36,12 +37,14 @@ body {
 }
 
 .brand {
-    font-size: 1.5rem;
-    font-weight: 800;
-    color: var(--accent) !important;
+    display: flex;
+    align-items: center;
     text-decoration: none;
-    letter-spacing: -.5px;
     white-space: nowrap;
+}
+.brand img {
+    max-height: 38px;
+    width: auto;
 }
 
 .search-form {

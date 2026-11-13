@@ -1,0 +1,71 @@
+{% extends 'panel/base.html' %}
+{% block title %}Mostrador — GIGANTE{% endblock %}
+
+{% block content %}
+<h1 class="seccion-titulo mb-3"><i class="bi bi-inbox"></i> Pedidos entrantes</h1>
+
+{% for pedido in nuevos %}
+<div class="pedido-row">
+    <div class="pedido-head">
+        <div>
+            <strong>#{{ pedido.id }}</strong> — {{ pedido.contacto_nombre }}
+            <span class="badge badge-{{ pedido.estado }}">{{ pedido.get_estado_display }}</span>
+        </div>
+        <div class="text-muted small">{{ pedido.fecha_pedido|date:"d/m H:i" }}</div>
+    </div>
+    <div class="items-mini">
+        {% for det in pedido.detalles_pedido.all %}{{ det.cantidad }}× {{ det.producto.nombre }}{% if not forloop.last %} · {% endif %}{% endfor %}
+    </div>
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+            <strong>${{ pedido.total_precio|add:pedido.costo_envio|floatformat:0 }}</strong>
+            <span class="text-muted small">
+                · {{ pedido.get_metodo_pago_display }}
+                {% if pedido.opcion_envio %}· {{ pedido.opcion_envio.nombre }}{% endif %}
+                {% if pedido.contacto_telefono %}· <i class="bi bi-telephone"></i> {{ pedido.contacto_telefono }}{% endif %}
+            </span>
+            {% if pedido.observaciones %}<div class="text-muted small"><i class="bi bi-chat-left-text"></i> {{ pedido.observaciones }}</div>{% endif %}
+        </div>
+        <div class="acciones-pedido">
+            <form method="post" action="{% url 'panel_pedido_accion' pedido.id %}">
+                {% csrf_token %}<input type="hidden" name="accion" value="aprobar">
+                <button class="btn-acc btn-aprobar"><i class="bi bi-check-lg"></i> Aprobar</button>
+            </form>
+            {% if pedido.wa_notificar_url %}
+            <a href="{{ pedido.wa_notificar_url }}" target="_blank" class="btn-acc btn-wa-mini"><i class="bi bi-whatsapp"></i></a>
+            {% endif %}
+            <form method="post" action="{% url 'panel_pedido_accion' pedido.id %}">
+                {% csrf_token %}<input type="hidden" name="accion" value="cancelar">
+                <button class="btn-acc btn-cancelar" onclick="return confirm('¿Cancelar pedido #{{ pedido.id }}?')"><i class="bi bi-x-lg"></i></button>
+            </form>
+        </div>
+    </div>
+</div>
+{% empty %}
+<div class="empty-state"><i class="bi bi-check2-circle"></i><p>No hay pedidos nuevos. Todo al día.</p></div>
+{% endfor %}
+
+{% if gestionados %}
+<h2 class="seccion-titulo mt-4 mb-3">Gestionados hoy</h2>
+<div class="panel-card table-responsive">
+    <table class="table tabla-panel align-middle mb-0">
+        <thead><tr><th>#</th><th>Cliente</th><th>Total</th><th>Estado</th><th></th></tr></thead>
+        <tbody>
+        {% for pedido in gestionados %}
+            <tr>
+                <td><strong>#{{ pedido.id }}</strong></td>
+                <td>{{ pedido.contacto_nombre }}</td>
+                <td>${{ pedido.total_precio|add:pedido.costo_envio|floatformat:0 }}</td>
+                <td><span class="badge badge-{{ pedido.estado }}">{{ pedido.get_estado_display }}</span></td>
+                <td class="text-end">
+                    {% if pedido.wa_notificar_url %}
+                    <a href="{{ pedido.wa_notificar_url }}" target="_blank" class="btn-acc btn-wa-mini"><i class="bi bi-whatsapp"></i></a>
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+{% endblock %}
