@@ -74,7 +74,9 @@
                     badge.hidden = true;
                     tachado.hidden = true;
                 }
-                document.getElementById('qvPrecio').textContent = fmt(p.precio);
+                var qvPrecio = document.getElementById('qvPrecio');
+                qvPrecio.textContent = fmt(p.precio);
+                qvPrecio.className = 'precio-final' + (p.oferta ? ' oferta' : '');
 
                 qvModal = qvModal || new bootstrap.Modal('#quickView');
                 qvModal.show();

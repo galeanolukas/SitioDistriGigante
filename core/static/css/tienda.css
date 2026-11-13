@@ -6,6 +6,10 @@
     --bg: #f6f6f7;
     --card: #ffffff;
     --wa: #25d366;
+    /* Paleta flyer publicitario */
+    --blue: #1e4fd8;
+    --blue-dark: #0d2570;
+    --yellow: #ffd21f;
 }
 
 * { box-sizing: border-box; }
@@ -34,16 +38,16 @@ body {
 
 /* ---------- Header ---------- */
 .top-banner {
-    background: var(--ink);
-    color: #ffd166;
+    background: var(--yellow);
+    color: var(--blue-dark);
     text-align: center;
     font-size: .85rem;
     padding: .4rem 1rem;
-    font-weight: 600;
+    font-weight: 700;
 }
 
 .tienda-header {
-    background: var(--primary);
+    background: linear-gradient(90deg, var(--blue-dark) 0%, var(--blue) 100%);
     box-shadow: 0 1px 6px rgba(0,0,0,.15);
     position: sticky;
     top: 0;
@@ -125,7 +129,7 @@ body {
 
 /* ---------- Categorías ---------- */
 .cats-bar {
-    background: var(--accent);
+    background: linear-gradient(90deg, var(--accent-dark) 0%, var(--accent) 60%, #f0434a 100%);
     border-top: 1px solid rgba(0,0,0,.08);
 }
 .cats-scroll {
@@ -149,7 +153,7 @@ body {
 }
 .cat-chip:hover { background: rgba(255,255,255,.3); color: #fff; }
 .cat-chip.active { background: #fff; color: var(--accent); border-color: #fff; }
-.cat-chip.chip-oferta { background: var(--primary); border-color: var(--primary); color: #ffd166; }
+.cat-chip.chip-oferta { background: var(--yellow); border-color: var(--yellow); color: var(--blue-dark); font-weight: 800; }
 .cat-chip.chip-oferta.active { background: #fff; color: var(--accent); border-color: #fff; }
 
 /* ---------- Flyers ---------- */
@@ -179,11 +183,13 @@ body {
 
 /* ---------- Secciones ---------- */
 .seccion-titulo {
-    font-size: 1.3rem;
-    font-weight: 800;
+    font-size: 1.35rem;
+    font-weight: 900;
+    font-style: italic;
+    color: var(--blue-dark);
     margin: 0;
     padding-left: .6rem;
-    border-left: 4px solid var(--accent);
+    border-left: 5px solid var(--accent);
 }
 .ver-todas { font-size: .85rem; font-weight: 600; color: var(--accent); text-decoration: none; }
 
@@ -214,15 +220,16 @@ body {
 
 .prod-card {
     background: var(--card);
-    border-radius: 1rem;
+    border-radius: 1.3rem;
     overflow: hidden;
     display: flex;
     flex-direction: column;
     border: 1px solid #ececec;
+    box-shadow: 0 2px 10px rgba(13,37,112,.06);
     transition: box-shadow .15s, transform .15s;
 }
 .prod-card:hover {
-    box-shadow: 0 6px 20px rgba(0,0,0,.09);
+    box-shadow: 0 8px 24px rgba(13,37,112,.14);
     transform: translateY(-2px);
     border-color: var(--accent);
 }
@@ -271,7 +278,9 @@ body {
 .prod-marca { font-size: .7rem; color: #999; text-transform: uppercase; font-weight: 700; letter-spacing: .5px; }
 .prod-nombre {
     font-size: .9rem;
-    font-weight: 600;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: var(--blue-dark);
     margin: .15rem 0;
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -281,8 +290,16 @@ body {
 }
 .prod-pack { font-size: .72rem; color: #888; }
 .prod-precio { margin-top: auto; display: flex; align-items: baseline; gap: .4rem; flex-wrap: wrap; }
-.precio-final { font-size: 1.2rem; font-weight: 800; }
-.precio-final.oferta { color: var(--accent); }
+.precio-final {
+    display: inline-block;
+    font-size: 1.05rem;
+    font-weight: 800;
+    background: var(--blue-dark);
+    color: #fff;
+    padding: .18rem .65rem;
+    border-radius: .55rem;
+}
+.precio-final.oferta { background: var(--accent); }
 .precio-tachado { font-size: .8rem; color: #999; text-decoration: line-through; }
 
 .btn-add {
@@ -292,7 +309,7 @@ body {
     font-weight: 700;
     font-size: .85rem;
     padding: .55rem;
-    border-radius: 0 0 1rem 1rem;
+    border-radius: 0 0 1.3rem 1.3rem;
     transition: background .15s;
 }
 .btn-add:hover { background: var(--accent-dark); }
@@ -379,22 +396,24 @@ body {
 .btn-cta {
     display: block;
     width: 100%;
-    background: var(--accent);
-    color: #fff;
+    background: var(--yellow);
+    color: var(--blue-dark);
     border: 0;
     border-radius: .8rem;
     padding: .85rem;
-    font-weight: 800;
+    font-weight: 900;
+    font-style: italic;
     font-size: 1rem;
     text-align: center;
     text-decoration: none;
     margin-top: 1rem;
+    box-shadow: 0 3px 0 rgba(0,0,0,.15);
 }
-.btn-cta:hover { background: var(--accent-dark); color: #fff; }
-.btn-wa { background: var(--wa); }
-.btn-wa:hover { background: #1eb856; }
-.btn-mp { background: #009ee3; }
-.btn-mp:hover { background: #0082ba; }
+.btn-cta:hover { background: #ffdf52; color: var(--blue-dark); }
+.btn-wa { background: var(--wa); color: #fff; }
+.btn-wa:hover { background: #1eb856; color: #fff; }
+.btn-mp { background: #009ee3; color: #fff; }
+.btn-mp:hover { background: #0082ba; color: #fff; }
 .btn-secundario {
     display: block;
     width: 100%;
@@ -589,3 +608,103 @@ body {
 .btn-fb { background: #1877f2; }
 .btn-tw { background: #000; }
 .btn-copy { background: var(--primary); }
+
+/* ---------- Hero promocional estilo flyer ---------- */
+.promo-hero {
+    position: relative;
+    overflow: hidden;
+    background: radial-gradient(ellipse at 80% 20%, #2b63f0 0%, var(--blue) 40%, var(--blue-dark) 100%);
+    border-radius: 1.5rem;
+    padding: 2.2rem 1.5rem;
+    text-align: center;
+    color: #fff;
+    box-shadow: 0 10px 30px rgba(13,37,112,.25);
+}
+.promo-hero::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 260px; height: 260px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(236,28,36,.85), rgba(236,28,36,0) 70%);
+}
+.promo-hero::after {
+    content: '';
+    position: absolute;
+    bottom: -80px; left: -50px;
+    width: 220px; height: 220px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,210,31,.35), rgba(255,210,31,0) 70%);
+}
+.promo-hero > * { position: relative; z-index: 1; }
+
+.promo-badge {
+    display: inline-block;
+    background: var(--accent);
+    color: #fff;
+    font-size: clamp(1.5rem, 5vw, 2.6rem);
+    font-weight: 900;
+    font-style: italic;
+    letter-spacing: .5px;
+    padding: .35rem 1.6rem;
+    border-radius: .7rem;
+    transform: rotate(-2deg);
+    box-shadow: 0 6px 0 rgba(0,0,0,.25);
+    text-transform: uppercase;
+    margin-bottom: .8rem;
+}
+.promo-sub {
+    display: inline-block;
+    background: var(--yellow);
+    color: var(--blue-dark);
+    font-weight: 700;
+    font-size: clamp(.85rem, 2.5vw, 1.05rem);
+    padding: .3rem 1.1rem;
+    border-radius: .4rem;
+    transform: rotate(-1deg);
+    margin-bottom: 1.1rem;
+}
+.promo-cta {
+    display: inline-block;
+    background: var(--yellow);
+    color: var(--blue-dark);
+    font-weight: 900;
+    font-style: italic;
+    font-size: 1.15rem;
+    text-decoration: none;
+    padding: .7rem 2.2rem;
+    border-radius: 2rem;
+    box-shadow: 0 4px 0 rgba(0,0,0,.25);
+    transition: transform .15s, box-shadow .15s;
+}
+.promo-cta:hover {
+    color: var(--blue-dark);
+    background: #ffdf52;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 0 rgba(0,0,0,.25);
+}
+
+/* ---------- Barra de beneficios (franja inferior del flyer) ---------- */
+.benefits-bar {
+    background: linear-gradient(90deg, var(--blue-dark), var(--blue));
+    border-radius: 1.2rem;
+    color: #fff;
+    padding: 1rem .5rem;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1.5rem;
+}
+.benefit {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    font-size: .9rem;
+    max-width: 15rem;
+}
+.benefit i {
+    font-size: 1.7rem;
+    color: var(--yellow);
+    flex: 0 0 auto;
+}
+.benefit strong { color: var(--yellow); font-style: italic; }

@@ -3,6 +3,16 @@
 
 {% block content %}
 
+{% if not flyers and not q and not tp %}
+<div class="promo-hero mb-4">
+    <span class="promo-badge">¡Promos imperdibles!</span>
+    <br>
+    <span class="promo-sub">Tus productos favoritos, al mejor precio</span>
+    <br>
+    <a href="#catalogo-grid" class="promo-cta">¡Pedí ahora! <i class="bi bi-hand-index"></i></a>
+</div>
+{% endif %}
+
 {% if flyers and not q and not tp %}
 <div id="flyers" class="carousel slide mb-4" data-bs-ride="carousel">
     <div class="carousel-inner rounded-4 overflow-hidden">
@@ -47,7 +57,7 @@
 </section>
 {% endif %}
 
-<section>
+<section id="catalogo-grid">
     <div class="d-flex justify-content-between align-items-baseline mb-3">
         <h2 class="seccion-titulo">
             {% if q %}Resultados para "{{ q }}"

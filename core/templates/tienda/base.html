@@ -94,7 +94,23 @@
     </main>
 
     <footer class="tienda-footer">
-        <div class="container-fluid catalog-wrap py-4 text-center">
+        <div class="container-fluid catalog-wrap pt-4">
+            <div class="benefits-bar mb-4">
+                <div class="benefit">
+                    <i class="bi bi-cart3"></i>
+                    <span>Comprá <strong>ONLINE</strong> en nuestro catálogo</span>
+                </div>
+                <div class="benefit">
+                    <i class="bi bi-truck"></i>
+                    <span>Recibí tu pedido <strong>en tu casa o en tu negocio</strong></span>
+                </div>
+                <div class="benefit">
+                    <i class="bi bi-whatsapp"></i>
+                    <span>Pedidos y consultas <strong>por WhatsApp</strong></span>
+                </div>
+            </div>
+        </div>
+        <div class="container-fluid catalog-wrap pb-4 text-center">
             {% if tienda_cfg.texto_envios %}
             <p class="mb-1"><i class="bi bi-truck"></i> {{ tienda_cfg.texto_envios }}</p>
             {% endif %}
