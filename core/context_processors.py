@@ -1,14 +1,19 @@
-from .models import ConfiguracionOrdenCatalogo
+from .models import ConfiguracionTienda
+from . import tienda_cart
 
-def config_orden_catalogo(request):
+
+def tienda_context(request):
     """
-    Context processor para agregar la configuración de orden a todos los templates
+    Expone la configuración de la tienda y el carrito de sesión
+    en todos los templates.
     """
     try:
-        config = ConfiguracionOrdenCatalogo.objects.get(activo=True)
-    except ConfiguracionOrdenCatalogo.DoesNotExist:
+        config = ConfiguracionTienda.get()
+    except Exception:
         config = None
 
     return {
-        'config_orden': config
+        'tienda_cfg': config,
+        'wa_numero': config.whatsapp_numero if config else '5493705262361',
+        'tienda_cart_count': tienda_cart.cantidad_total(request.session),
     }

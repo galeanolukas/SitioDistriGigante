@@ -1303,9 +1303,14 @@ def respuesta_pago_mp(request, pedido_id):
             pedido = get_object_or_404(Pedido, id=pedido_id)
         elif request.user.groups.filter(name__in=['vendedor']).exists():
             pedido = get_object_or_404(Pedido, id=pedido_id, vendedor=request.user)
+        elif not request.user.is_authenticated:
+            # Pedidos guest: solo accesibles desde la sesión que los creó
+            if pedido_id not in request.session.get('pedidos_tienda', []):
+                raise Pedido.DoesNotExist
+            pedido = get_object_or_404(Pedido, id=pedido_id, user__isnull=True)
         else:
             pedido = get_object_or_404(Pedido, id=pedido_id, user=request.user)
-        
+
         # Determinar el estado desde la URL
         if 'pago-exitoso' in request.path:
             estado = 'exito'
@@ -2664,7 +2669,7 @@ def procesar_pago(request, pedido_id):
         total_con_envio = float(pedido.total_precio) + float(pedido.costo_envio or 0)
         
         mp_checkout.config(
-            titulo=f"PEDIDO N°:{pedido.id} - {pedido.user.username}",
+            titulo=f"PEDIDO N°:{pedido.id} - {pedido.contacto_nombre}",
             monto=total_con_envio,
             unidad=1,
             ID="service",
@@ -2860,7 +2865,7 @@ def generar_pdf_pedido(request, pedido_id):
         # Crear QR code con información del pedido
         qr_data = f"""
         Pedido ID: {pedido.id}
-        Cliente: {pedido.user.username}
+        Cliente: {pedido.contacto_nombre}
         Total: ${pedido.total_precio}
         Fecha: {pedido.fecha_pedido.strftime('%d/%m/%Y %H:%M')}
         Estado: {pedido.estado}

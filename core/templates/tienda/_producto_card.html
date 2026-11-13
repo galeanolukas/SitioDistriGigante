@@ -1,0 +1,34 @@
+<div class="prod-card">
+    <a href="{% url 'product_detail' product.id %}" class="prod-img-wrap">
+        {% if product.imagenurl %}
+            <img src="{{ product.imagenurl }}" alt="{{ product.nombre }}" loading="lazy">
+        {% else %}
+            <img src="{{ product.imagen1.url }}" alt="{{ product.nombre }}" loading="lazy">
+        {% endif %}
+        {% if product.en_oferta and product.en_oferta.activa %}
+            {% if product.en_oferta.tipo_oferta == 'descuento' %}
+                <span class="badge-oferta">-{{ product.en_oferta.descuento }}%</span>
+            {% elif product.en_oferta.tipo_oferta == 'multiplicidad' %}
+                <span class="badge-oferta">{{ product.en_oferta.get_tipo_multiplicidad_display }}</span>
+            {% else %}
+                <span class="badge-oferta">COMBO</span>
+            {% endif %}
+        {% endif %}
+    </a>
+    <div class="prod-body">
+        {% if product.marca %}<span class="prod-marca">{{ product.marca }}</span>{% endif %}
+        <h3 class="prod-nombre">{{ product.nombre }}</h3>
+        {% if product.unidad_x_pack %}<span class="prod-pack">x{{ product.unidad_x_pack }} unidades</span>{% endif %}
+        <div class="prod-precio">
+            {% if product.en_oferta and product.en_oferta.activa %}
+                <span class="precio-tachado">${{ product.precio|floatformat:0 }}</span>
+                <span class="precio-final">${{ product.en_oferta.precio_final|floatformat:0 }}</span>
+            {% else %}
+                <span class="precio-final">${{ product.precio|floatformat:0 }}</span>
+            {% endif %}
+        </div>
+    </div>
+    <button class="btn-add" data-add-cart data-product-id="{{ product.id }}">
+        <i class="bi bi-plus-lg"></i> Agregar
+    </button>
+</div>

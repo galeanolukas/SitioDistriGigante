@@ -1,0 +1,49 @@
+{% extends 'tienda/base.html' %}
+{% block title %}Mis pedidos — Distribuidora Gigante{% endblock %}
+
+{% block content %}
+<div class="confirmado-wrap">
+    <h1 class="seccion-titulo"><i class="bi bi-receipt"></i> Mis pedidos</h1>
+    <p class="text-muted">Ingresá el teléfono con el que hiciste el pedido.</p>
+
+    <form method="get" class="d-flex gap-2 mb-4">
+        <input type="tel" name="telefono" class="form-control" required
+               value="{{ telefono }}" placeholder="Ej: 3705123456">
+        <button type="submit" class="btn btn-dark px-4">Buscar</button>
+    </form>
+
+    {% if cliente %}
+        <p>Hola <strong>{{ cliente.nombre }}</strong>, estos son tus pedidos:</p>
+    {% endif %}
+
+    {% for pedido in pedidos %}
+    <div class="pedido-card">
+        <div class="d-flex justify-content-between align-items-center">
+            <strong>Pedido #{{ pedido.id }}</strong>
+            <span class="badge estado-{{ pedido.estado }}">{{ pedido.get_estado_display }}</span>
+        </div>
+        <small class="text-muted">{{ pedido.fecha_pedido|date:"d/m/Y H:i" }}</small>
+        <div class="resumen-items mt-2">
+            {% for det in pedido.detalles_pedido.all %}
+            <div class="resumen-item">
+                <span>{{ det.cantidad }}× {{ det.producto.nombre|truncatechars:35 }}</span>
+                <span>${{ det.subtotal|floatformat:0 }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="d-flex justify-content-between align-items-center mt-2">
+            <strong>Total: ${{ pedido.total_precio|add:pedido.costo_envio|floatformat:0 }}</strong>
+            <a class="btn btn-sm btn-outline-success"
+               href="https://wa.me/{{ wa_consulta_numero }}?text=Hola,%20consulto%20por%20mi%20pedido%20%23{{ pedido.id }}"
+               target="_blank" rel="noopener">
+                <i class="bi bi-whatsapp"></i> Consultar
+            </a>
+        </div>
+    </div>
+    {% empty %}
+        {% if pedidos is not None %}
+        <div class="empty-state"><i class="bi bi-inbox"></i><p>No tenés pedidos todavía.</p></div>
+        {% endif %}
+    {% endfor %}
+</div>
+{% endblock %}

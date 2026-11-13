@@ -70,7 +70,7 @@
                 <tbody>
                     {% for pedido in pedidos_panel %}
                     <tr class="w3-hover-light-grey">
-                        <td>{{ pedido.user.username|truncatechars:15 }}</td>
+                        <td>{{ pedido.contacto_nombre|truncatechars:15 }}</td>
                         <td>
                             {% if pedido.vendedor %}
                                 {{ pedido.vendedor.username|truncatechars:15 }}
@@ -108,7 +108,18 @@
                                         <i class="fas fa-eye"></i>
                                     </a>
                                 </div>
-                                
+
+                                {% if pedido.wa_notificar_url %}
+                                <!-- Botón Notificar por WhatsApp -->
+                                <div class="w3-cell">
+                                    <a href="{{ pedido.wa_notificar_url }}" target="_blank" rel="noopener"
+                                       class="w3-button w3-round w3-tiny" title="Avisar al cliente por WhatsApp"
+                                       style="background-color:#25d366;color:#fff;">
+                                        <i class="fab fa-whatsapp"></i>
+                                    </a>
+                                </div>
+                                {% endif %}
+
                                 {% if pedido.estado == 'pendiente' and not pedido.pagado %}
                                 <!-- Botón Pagar Online (solo para clientes y pedidos pendientes) -->
                                 <div class="w3-cell">

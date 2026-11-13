@@ -1,0 +1,51 @@
+{% extends 'tienda/base.html' %}
+{% block title %}Pedido #{{ pedido.id }} — Distribuidora Gigante{% endblock %}
+
+{% block content %}
+<div class="confirmado-wrap">
+    <div class="confirmado-icono"><i class="bi bi-check-lg"></i></div>
+    <h1>¡Pedido #{{ pedido.id }} registrado!</h1>
+    <p class="text-muted">Recibimos tu pedido. Enviá el detalle por WhatsApp para confirmarlo más rápido.</p>
+
+    <div class="resumen-card text-start">
+        <h2>Detalle</h2>
+        <div class="resumen-items">
+            {% for det in pedido.detalles_pedido.all %}
+            <div class="resumen-item">
+                <span>{{ det.cantidad }}× {{ det.producto.nombre }}</span>
+                <span>${{ det.subtotal|floatformat:0 }}</span>
+            </div>
+            {% endfor %}
+            {% if pedido.costo_envio > 0 %}
+            <div class="resumen-item">
+                <span>Envío{% if pedido.opcion_envio %} ({{ pedido.opcion_envio.nombre }}){% endif %}</span>
+                <span>${{ pedido.costo_envio|floatformat:0 }}</span>
+            </div>
+            {% endif %}
+        </div>
+        <div class="resumen-linea total">
+            <span>Total</span>
+            <strong>${{ pedido.total_precio|add:pedido.costo_envio|floatformat:0 }}</strong>
+        </div>
+        <div class="resumen-linea text-muted">
+            <span>Estado</span>
+            <span class="badge bg-warning text-dark">{{ pedido.get_estado_display }}</span>
+        </div>
+    </div>
+
+    <div class="d-grid gap-2 mt-4">
+        <a href="{{ wa_pedido_url }}" target="_blank" rel="noopener" class="btn-cta btn-wa">
+            <i class="bi bi-whatsapp"></i> Enviar pedido por WhatsApp
+        </a>
+        {% if mp_disponible %}
+        <a href="{% url 'pedido_pago_mp' pedido.id %}" class="btn-cta btn-mp">
+            <i class="bi bi-credit-card"></i> Pagar con MercadoPago
+        </a>
+        {% endif %}
+        <a href="{% url 'mis_pedidos' %}?telefono={{ pedido.cliente.telefono }}" class="btn-secundario">
+            Ver mis pedidos
+        </a>
+        <a href="{% url 'catalogo' %}" class="btn-secundario">Volver al catálogo</a>
+    </div>
+</div>
+{% endblock %}

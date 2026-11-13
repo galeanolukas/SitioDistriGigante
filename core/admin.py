@@ -46,3 +46,19 @@ admin.site.register(Ubicacion)
 admin.site.register(CargaArchivo)
 admin.site.register(MercadoPagoCuenta)
 admin.site.register(ClienteVendedor)
+
+
+@admin.register(Cliente)
+class ClienteAdmin(admin.ModelAdmin):
+    list_display = ('nombre', 'telefono', 'localidad', 'vendedor', 'ultima_compra')
+    search_fields = ('nombre', 'telefono', 'localidad')
+    list_filter = ('localidad', 'vendedor')
+
+
+@admin.register(ConfiguracionTienda)
+class ConfiguracionTiendaAdmin(admin.ModelAdmin):
+    def has_add_permission(self, request):
+        return not ConfiguracionTienda.objects.exists()
+
+    def has_delete_permission(self, request, obj=None):
+        return False

@@ -81,12 +81,22 @@ class Pedido(models.Model):
         ('cancelado', 'Cancelado'),
     ]
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Usuario")
+    METODO_PAGO_CHOICES = [
+        ('acordado', 'A acordar por WhatsApp'),
+        ('mercadopago', 'MercadoPago'),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Usuario", null=True, blank=True)
+    cliente = models.ForeignKey('Cliente', on_delete=models.SET_NULL, null=True, blank=True,
+                                related_name='pedidos', verbose_name="Cliente")
     fecha_pedido = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de Pedido")
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='pendiente', verbose_name="Estado")
     total_cantidad = models.PositiveIntegerField(default=0, verbose_name="Total de Cantidad")
     total_precio = models.DecimalField(max_digits=10, decimal_places=0, default=0, verbose_name="Total de Precio")
     pagado = models.BooleanField(default=False)
+    metodo_pago = models.CharField(max_length=20, choices=METODO_PAGO_CHOICES, default='acordado',
+                                 verbose_name="Método de pago")
+    observaciones = models.TextField(blank=True, verbose_name="Observaciones")
     vendedor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,
 								 related_name='ventas',
 								 limit_choices_to=Q(groups__name="vendedor") | Q(groups__name="admin"), help_text="Vendedor asignado al pedido")
@@ -113,6 +123,45 @@ class Pedido(models.Model):
 
         # Guarda los cambios en el pedido
         self.save()
+
+    @property
+    def contacto_nombre(self):
+        """Nombre del cliente para mostrar, sea guest o usuario registrado"""
+        if self.cliente:
+            return self.cliente.nombre
+        if self.user_id:
+            perfil = getattr(self.user, 'perfil', None)
+            return (perfil.nombre if perfil and perfil.nombre else self.user.username)
+        return "Sin identificar"
+
+    @property
+    def contacto_telefono(self):
+        """Teléfono de contacto del pedido, sea guest o usuario registrado"""
+        if self.cliente:
+            return self.cliente.telefono
+        if self.user_id:
+            perfil = getattr(self.user, 'perfil', None)
+            if perfil and perfil.telefono:
+                return perfil.telefono
+        return ""
+
+    @property
+    def total_comision(self):
+        """Comisión estimada: 5% línea MIX, 3% resto de los productos"""
+        total = 0
+        for det in self.detalles_pedido.select_related('producto'):
+            tasa = 0.05 if det.producto.es_linea_mix else 0.03
+            total += float(det.subtotal) * tasa
+        return round(total, 2)
+
+    @property
+    def wa_notificar_url(self):
+        """Link wa.me para avisar al cliente el estado de su pedido"""
+        telefono = self.contacto_telefono
+        if not telefono:
+            return ''
+        from .whatsapp import wa_url, mensaje_estado
+        return wa_url(telefono, mensaje_estado(self))
 
 class OpcionEnvio(models.Model):
     TIPO_ENVIO_CHOICES = [
@@ -229,6 +278,8 @@ class Product(models.Model):
 	contador_clicks = models.PositiveIntegerField(default=0)
 	contador_carrito = models.PositiveIntegerField(default=0)
 	destacado = models.BooleanField(default=False, verbose_name="Producto Destacado")
+	es_linea_mix = models.BooleanField(default=False, verbose_name="Línea MIX",
+		help_text="Productos de la línea MIX (comisión 5% para vendedores)")
 
 	class Meta:
 		verbose_name = 'Producto'
@@ -935,3 +986,78 @@ class ConfirmacionEntrega(models.Model):
     
     def __str__(self):
         return f"Confirmación envío #{self.envio.id}"
+
+
+class Cliente(models.Model):
+    """Cliente liviano identificado por teléfono, sin cuenta de usuario.
+    Se crea/actualiza automáticamente en el checkout rápido de la tienda."""
+
+    nombre = models.CharField(max_length=200, verbose_name="Nombre")
+    telefono = models.CharField(max_length=30, unique=True, verbose_name="Teléfono / WhatsApp")
+    direccion = models.CharField(max_length=200, blank=True, verbose_name="Dirección")
+    localidad = models.CharField(max_length=150, blank=True, verbose_name="Barrio/Ciudad")
+    notas = models.TextField(blank=True, verbose_name="Notas")
+    vendedor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,
+                                 related_name='clientes_captados', verbose_name="Vendedor asignado")
+    fecha_registro = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de registro")
+    ultima_compra = models.DateTimeField(null=True, blank=True, verbose_name="Última compra")
+
+    class Meta:
+        verbose_name = 'Cliente'
+        verbose_name_plural = 'Clientes'
+        ordering = ['-ultima_compra', '-fecha_registro']
+
+    def __str__(self):
+        return f"{self.nombre} ({self.telefono})"
+
+    @staticmethod
+    def normalizar_telefono(telefono):
+        """Deja solo dígitos para usar el teléfono como identidad"""
+        return ''.join(c for c in (telefono or '') if c.isdigit())
+
+    @classmethod
+    def obtener_o_crear(cls, telefono, defaults=None):
+        """Busca por teléfono normalizado; crea o actualiza los datos"""
+        tel = cls.normalizar_telefono(telefono)
+        cliente = cls.objects.filter(telefono=tel).first()
+        if cliente is None:
+            cliente = cls(telefono=tel)
+        for campo, valor in (defaults or {}).items():
+            if valor:
+                setattr(cliente, campo, valor)
+        cliente.save()
+        return cliente
+
+
+class ConfiguracionTienda(models.Model):
+    """Configuración global de la tienda (singleton, pk=1)"""
+
+    whatsapp_numero = models.CharField(
+        max_length=30, default='5493705262361',
+        verbose_name="Número de WhatsApp",
+        help_text="Formato internacional sin +, ej: 5493705262361")
+    whatsapp_mensaje = models.CharField(
+        max_length=300, blank=True,
+        default='Hola, me interesa obtener más información de Distribuidora Gigante',
+        verbose_name="Mensaje por defecto de WhatsApp")
+    texto_envios = models.CharField(
+        max_length=200, blank=True,
+        default='Entregas: miércoles y viernes',
+        verbose_name="Texto de días de entrega")
+    banner_texto = models.CharField(
+        max_length=200, blank=True, verbose_name="Texto del banner superior")
+    banner_activo = models.BooleanField(default=False, verbose_name="Mostrar banner")
+    mp_habilitado = models.BooleanField(
+        default=True, verbose_name="Permitir pago con MercadoPago")
+
+    class Meta:
+        verbose_name = 'Configuración de la Tienda'
+        verbose_name_plural = 'Configuración de la Tienda'
+
+    def __str__(self):
+        return "Configuración de la Tienda"
+
+    @classmethod
+    def get(cls):
+        obj, _ = cls.objects.get_or_create(pk=1)
+        return obj

@@ -2,14 +2,23 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from . import views
+from . import tienda_views
 from . import google_auth
 
 urlpatterns = [
-    path('', views.index, name='index'),
-    path('buscar/', views.buscar_productos, name='buscar_productos'),
-    path('catalogo/', views.catalogo, name='catalogo'),
+    # Tienda (nuevo catálogo guest)
+    path('', tienda_views.tienda, name='index'),
+    path('catalogo/', tienda_views.tienda, name='catalogo'),
     path('catalogo/random/', views.productos_orden, name='ordenar_catalogo'),
-    path('catalogo/<str:tp>/', views.catalogo, name='ordenar_x'),
+    path('catalogo/<str:tp>/', tienda_views.tienda, name='ordenar_x'),
+    path('tienda/carrito/', tienda_views.carrito, name='tienda_carrito'),
+    path('tienda/api/carrito/', tienda_views.api_carrito, name='api_carrito_tienda'),
+    path('tienda/checkout/', tienda_views.checkout, name='checkout'),
+    path('tienda/pedido/<int:pedido_id>/', tienda_views.pedido_confirmado, name='pedido_confirmado'),
+    path('tienda/pedido/<int:pedido_id>/pago/', tienda_views.pedido_pago_mp, name='pedido_pago_mp'),
+    path('mis-pedidos/', tienda_views.mis_pedidos, name='mis_pedidos'),
+
+    path('buscar/', views.buscar_productos, name='buscar_productos'),
     path('accounts/login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
     path('registro/', views.register, name='register'),

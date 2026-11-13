@@ -1,0 +1,99 @@
+{% extends 'tienda/base.html' %}
+{% block title %}Catálogo — Distribuidora Gigante{% endblock %}
+
+{% block content %}
+
+{% if flyers and not q and not tp %}
+<div id="flyers" class="carousel slide mb-4" data-bs-ride="carousel">
+    <div class="carousel-inner rounded-4 overflow-hidden">
+        {% for flyer in flyers %}
+        <div class="carousel-item {% if forloop.first %}active{% endif %}">
+            <div class="flyer-slide" style="background-color: {{ flyer.color_fondo }}">
+                <img src="{{ flyer.imagen.url }}" alt="{{ flyer.titulo }}">
+                {% if flyer.titulo or flyer.texto %}
+                <div class="flyer-caption" style="color: {{ flyer.color_texto }}">
+                    <h2>{{ flyer.titulo }}</h2>
+                    {% if flyer.texto %}<p>{{ flyer.texto }}</p>{% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% if flyers|length > 1 %}
+    <button class="carousel-control-prev" data-bs-target="#flyers" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon"></span>
+    </button>
+    <button class="carousel-control-next" data-bs-target="#flyers" data-bs-slide="next">
+        <span class="carousel-control-next-icon"></span>
+    </button>
+    {% endif %}
+</div>
+{% endif %}
+
+{% if ofertas and not q and tp != 'ofertas' %}
+<section class="mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h2 class="seccion-titulo"><i class="bi bi-lightning-charge-fill text-danger"></i> Ofertas</h2>
+        <a href="{% url 'ordenar_x' 'ofertas' %}" class="ver-todas">Ver todas <i class="bi bi-arrow-right"></i></a>
+    </div>
+    <div class="ofertas-scroll">
+        {% for oferta in ofertas %}
+            {% with product=oferta.producto %}
+                {% include 'tienda/_producto_card.html' %}
+            {% endwith %}
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<section>
+    <div class="d-flex justify-content-between align-items-baseline mb-3">
+        <h2 class="seccion-titulo">
+            {% if q %}Resultados para "{{ q }}"
+            {% elif tp == 'ofertas' %}Ofertas
+            {% elif tp %}{{ tp }}
+            {% else %}Catálogo{% endif %}
+        </h2>
+        <span class="text-muted small">{{ products.paginator.count }} productos</span>
+    </div>
+
+    {% if products %}
+    <div class="prod-grid">
+        {% for product in products %}
+            {% include 'tienda/_producto_card.html' %}
+        {% endfor %}
+    </div>
+
+    {% if products.paginator.num_pages > 1 %}
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if products.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ products.previous_page_number }}{% if q %}&q={{ q }}{% endif %}">«</a>
+            </li>
+            {% endif %}
+            {% for n in products.paginator.page_range %}
+            <li class="page-item {% if n == products.number %}active{% endif %}">
+                <a class="page-link" href="?page={{ n }}{% if q %}&q={{ q }}{% endif %}">{{ n }}</a>
+            </li>
+            {% endfor %}
+            {% if products.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ products.next_page_number }}{% if q %}&q={{ q }}{% endif %}">»</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+
+    {% else %}
+    <div class="empty-state">
+        <i class="bi bi-search"></i>
+        <p>No encontramos productos{% if q %} para "{{ q }}"{% endif %}.</p>
+        <a href="{% url 'catalogo' %}" class="btn btn-outline-dark btn-sm">Ver todo el catálogo</a>
+    </div>
+    {% endif %}
+</section>
+
+{% endblock %}

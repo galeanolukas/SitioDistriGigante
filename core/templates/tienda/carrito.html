@@ -1,0 +1,60 @@
+{% extends 'tienda/base.html' %}
+{% block title %}Carrito — Distribuidora Gigante{% endblock %}
+
+{% block content %}
+<h1 class="seccion-titulo mb-4"><i class="bi bi-cart3"></i> Tu pedido</h1>
+
+{% if items %}
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="cart-list">
+            {% for item in items %}
+            <div class="cart-item" data-cart-item="{{ item.product.id }}">
+                <div class="cart-item-img">
+                    {% if item.product.imagenurl %}
+                        <img src="{{ item.product.imagenurl }}" alt="{{ item.product.nombre }}">
+                    {% else %}
+                        <img src="{{ item.product.imagen1.url }}" alt="{{ item.product.nombre }}">
+                    {% endif %}
+                </div>
+                <div class="cart-item-info">
+                    <h3>{{ item.product.nombre }}</h3>
+                    <span class="precio-unit">${{ item.precio|floatformat:0 }} c/u</span>
+                    {% if item.en_oferta %}<span class="badge bg-danger">Oferta</span>{% endif %}
+                </div>
+                <div class="qty-stepper">
+                    <button data-qty="-1" data-product-id="{{ item.product.id }}">−</button>
+                    <span data-item-qty>{{ item.cantidad }}</span>
+                    <button data-qty="1" data-product-id="{{ item.product.id }}">+</button>
+                </div>
+                <div class="cart-item-subtotal" data-item-subtotal>${{ item.subtotal|floatformat:0 }}</div>
+                <button class="btn-remove" data-remove-item data-product-id="{{ item.product.id }}" aria-label="Quitar">
+                    <i class="bi bi-trash3"></i>
+                </button>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="resumen-card">
+            <h2>Resumen</h2>
+            <div class="resumen-linea">
+                <span>Productos (<span data-cart-count-inline>{{ cantidad }}</span>)</span>
+                <strong data-cart-total>${{ total|floatformat:0 }}</strong>
+            </div>
+            <p class="text-muted small">El costo de envío se elige en el siguiente paso.</p>
+            <a href="{% url 'checkout' %}" class="btn-cta">Confirmar pedido <i class="bi bi-arrow-right"></i></a>
+            <a href="{% url 'catalogo' %}" class="btn-secundario">Seguir comprando</a>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<div class="empty-state">
+    <i class="bi bi-cart-x"></i>
+    <p>Tu carrito está vacío.</p>
+    <a href="{% url 'catalogo' %}" class="btn btn-dark">Ir al catálogo</a>
+</div>
+{% endif %}
+{% endblock %}

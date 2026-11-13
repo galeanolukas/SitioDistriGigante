@@ -21,12 +21,24 @@
                         <div class="w3-white w3-padding w3-round-large">
                             <h5 class="w3-text-red">Información del Cliente</h5>
                             <p class="w3-small">
+                                <strong>Nombre:</strong> {{ pedido.contacto_nombre }}<br>
+                                {% if pedido.contacto_telefono %}
+                                <strong>Teléfono:</strong> {{ pedido.contacto_telefono }}<br>
+                                {% endif %}
+                                {% if pedido.user %}
                                 <strong>Usuario:</strong> {{ pedido.user.username }}<br>
                                 <strong>Email:</strong> {{ pedido.user.email }}<br>
-                                {% if pedido.user.first_name %}
-                                <strong>Nombre:</strong> {{ pedido.user.first_name }} {{ pedido.user.last_name }}
+                                {% endif %}
+                                {% if pedido.cliente and pedido.cliente.direccion %}
+                                <strong>Dirección:</strong> {{ pedido.cliente.direccion }}{% if pedido.cliente.localidad %}, {{ pedido.cliente.localidad }}{% endif %}<br>
                                 {% endif %}
                             </p>
+                            {% if pedido.wa_notificar_url %}
+                            <a href="{{ pedido.wa_notificar_url }}" target="_blank" rel="noopener"
+                               class="w3-button w3-round w3-small" style="background-color:#25d366;color:#fff;">
+                                <i class="fab fa-whatsapp"></i> Avisar por WhatsApp
+                            </a>
+                            {% endif %}
                         </div>
                     </div>
                     <div class="w3-third">
@@ -174,7 +186,7 @@
                 <div class="w3-panel w3-light-grey w3-leftbar w3-border-grey w3-round-large">
                     <p><strong>Pedido #:</strong> {{ pedido.id }}</p>
                     <p><strong>Total:</strong> ${{ pedido.total_precio }}</p>
-                    <p><strong>Cliente:</strong> {{ pedido.user.username }}</p>
+                    <p><strong>Cliente:</strong> {{ pedido.contacto_nombre }}</p>
                 </div>
                 <p class="w3-text-red w3-center"><strong>¡Esta acción no se puede deshacer!</strong></p>
             </div>

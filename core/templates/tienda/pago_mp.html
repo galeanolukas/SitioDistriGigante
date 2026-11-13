@@ -1,0 +1,16 @@
+{% extends 'tienda/base.html' %}
+{% block title %}Pagar pedido #{{ pedido.id }} — Distribuidora Gigante{% endblock %}
+
+{% block content %}
+<div class="confirmado-wrap">
+    <h1>Pago del pedido #{{ pedido.id }}</h1>
+    <p class="text-muted">Total a pagar: <strong>${{ pedido.total_precio|add:pedido.costo_envio|floatformat:0 }}</strong></p>
+
+    <div class="resumen-card text-center py-4">
+        <div id="boton_mp"></div>
+        <script>{{ boton_mp|safe }}</script>
+    </div>
+
+    <a href="{% url 'pedido_confirmado' pedido.id %}" class="btn-secundario mt-3">Volver al pedido</a>
+</div>
+{% endblock %}

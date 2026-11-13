@@ -1,0 +1,110 @@
+{% extends 'tienda/base.html' %}
+{% block title %}Confirmar pedido — Distribuidora Gigante{% endblock %}
+
+{% block content %}
+<h1 class="seccion-titulo mb-4">Confirmar pedido</h1>
+
+<form method="post" class="row g-4">
+    {% csrf_token %}
+    <div class="col-lg-7">
+        <div class="form-card">
+            <h2>Tus datos</h2>
+            <p class="text-muted small">Solo necesitamos esto para coordinar tu pedido.</p>
+
+            <div class="mb-3">
+                <label class="form-label">Nombre y apellido *</label>
+                <input type="text" name="nombre" class="form-control" required
+                       value="{{ datos.nombre|default:'' }}" placeholder="Ej: Juan Pérez">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Teléfono / WhatsApp *</label>
+                <input type="tel" name="telefono" class="form-control" required
+                       value="{{ datos.telefono|default:'' }}" placeholder="Ej: 3705123456">
+            </div>
+            <div class="row">
+                <div class="col-md-7 mb-3">
+                    <label class="form-label">Dirección</label>
+                    <input type="text" name="direccion" class="form-control"
+                           value="{{ datos.direccion|default:'' }}" placeholder="Calle y número">
+                </div>
+                <div class="col-md-5 mb-3">
+                    <label class="form-label">Barrio / Ciudad</label>
+                    <input type="text" name="localidad" class="form-control"
+                           value="{{ datos.localidad|default:'' }}">
+                </div>
+            </div>
+            <div class="mb-0">
+                <label class="form-label">Observaciones</label>
+                <textarea name="observaciones" class="form-control" rows="2"
+                          placeholder="Horario de entrega, referencias, etc."></textarea>
+            </div>
+        </div>
+
+        <div class="form-card">
+            <h2>Entrega</h2>
+            {% for op in opciones_envio %}
+            <label class="opcion-radio">
+                <input type="radio" name="opcion_envio" value="{{ op.id }}" required>
+                <span class="opcion-info">
+                    <strong>{{ op.nombre }}</strong>
+                    {% if op.descripcion %}<small>{{ op.descripcion }}</small>{% endif %}
+                    {% if op.tiempo_entrega %}<small><i class="bi bi-clock"></i> {{ op.tiempo_entrega }}</small>{% endif %}
+                </span>
+                <span class="opcion-costo">{% if op.costo > 0 %}${{ op.costo|floatformat:0 }}{% else %}Gratis{% endif %}</span>
+            </label>
+            {% empty %}
+            <p class="text-muted">Coordinaremos la entrega por WhatsApp.</p>
+            {% endfor %}
+            {% if tienda_cfg.texto_envios %}
+            <p class="text-muted small mt-2 mb-0"><i class="bi bi-truck"></i> {{ tienda_cfg.texto_envios }}</p>
+            {% endif %}
+        </div>
+
+        <div class="form-card">
+            <h2>Pago</h2>
+            <label class="opcion-radio">
+                <input type="radio" name="metodo_pago" value="acordado" checked>
+                <span class="opcion-info">
+                    <strong><i class="bi bi-whatsapp text-success"></i> Acordar por WhatsApp</strong>
+                    <small>Coordinamos pago y entrega por chat. Efectivo o transferencia.</small>
+                </span>
+            </label>
+            {% if mp_disponible %}
+            <label class="opcion-radio">
+                <input type="radio" name="metodo_pago" value="mercadopago">
+                <span class="opcion-info">
+                    <strong><i class="bi bi-credit-card"></i> MercadoPago</strong>
+                    <small>Pagás online ahora con tarjeta, débito o saldo MP.</small>
+                </span>
+            </label>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="resumen-card sticky-lg-top">
+            <h2>Tu pedido</h2>
+            <div class="resumen-items">
+                {% for item in items %}
+                <div class="resumen-item">
+                    <span>{{ item.cantidad }}× {{ item.product.nombre|truncatechars:32 }}</span>
+                    <span>${{ item.subtotal|floatformat:0 }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="resumen-linea">
+                <span>Subtotal</span>
+                <strong>${{ total|floatformat:0 }}</strong>
+            </div>
+            <div class="resumen-linea text-muted">
+                <span>Envío</span>
+                <span>según opción elegida</span>
+            </div>
+            <button type="submit" class="btn-cta">
+                <i class="bi bi-check2-circle"></i> Confirmar pedido
+            </button>
+            <a href="{% url 'tienda_carrito' %}" class="btn-secundario">Volver al carrito</a>
+        </div>
+    </div>
+</form>
+{% endblock %}
