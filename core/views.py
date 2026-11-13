@@ -1932,28 +1932,30 @@ def product_detail(request, product_id):
     else:
         precio_x_unidad = 0
 
-    # Configurar meta tags para Open Graph (Facebook)
-    request.META['OG_TITLE'] = f"{(product.nombre or 'Producto')} - Distribuidora Gigante"
-    request.META['OG_DESCRIPTION'] = f"{product.descripcion[:200]}..." if product.descripcion and len(product.descripcion) > 200 else product.descripcion or ""
-    request.META['OG_IMAGE'] = f"{request.scheme}://{request.get_host()}{product.imagen1.url}" if product.imagen1 and product.imagen1 != "default_image.png" else f"{request.scheme}://{request.get_host()}/static/img/logo.png"
-    request.META['OG_URL'] = f"{request.scheme}://{request.get_host()}{request.path}"
-    request.META['OG_TYPE'] = "product"
-    request.META['OG_SITE_NAME'] = "Distribuidora Gigante"
+    # Imagen absoluta para Open Graph (redes sociales)
+    base_url = f"{request.scheme}://{request.get_host()}"
+    if product.imagenurl:
+        og_image = product.imagenurl
+    elif product.imagen1 and product.imagen1.name != "default_image.png":
+        og_image = base_url + product.imagen1.url
+    else:
+        og_image = base_url + "/static/img/og_image.png"
+
+    relacionados = Product.objects.filter(
+        categoria=product.categoria
+    ).exclude(id=product.id).select_related('en_oferta')[:5]
 
     context = {
-        'product': product, 
-        'precio_x_unidad': round(precio_x_unidad), 
+        'product': product,
+        'precio_x_unidad': round(precio_x_unidad),
         'precio_final': precio_final,
-        'og_title': request.META['OG_TITLE'],
-        'og_description': request.META['OG_DESCRIPTION'],
-        'og_image': request.META['OG_IMAGE'],
-        'og_url': request.META['OG_URL'],
-        'og_type': request.META['OG_TYPE'],
-        'og_site_name': request.META['OG_SITE_NAME']
+        'og_image': og_image,
+        'share_url': base_url + request.path,
+        'relacionados': relacionados,
     }
 
     registrar_accion(product, "click")
-    return render(request, 'product_detail.html', context)
+    return render(request, 'tienda/producto.html', context)
 
 def acerca(request):
     template_name = "acerca.html"

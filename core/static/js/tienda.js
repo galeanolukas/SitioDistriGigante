@@ -105,6 +105,39 @@
             return;
         }
 
+        // Detalle de producto: stepper + agregar + copiar link
+        if (e.target.id === 'detMas' || e.target.id === 'detMenos') {
+            var detSpan = document.getElementById('detCantidad');
+            var detQty = Math.max(1, parseInt(detSpan.textContent, 10) +
+                                  (e.target.id === 'detMas' ? 1 : -1));
+            detSpan.textContent = detQty;
+            return;
+        }
+        var detBtn = e.target.closest('#detAgregar');
+        if (detBtn) {
+            var cant = parseInt(document.getElementById('detCantidad').textContent, 10);
+            postCart({ action: 'add', product_id: detBtn.dataset.productId, cantidad: cant })
+                .then(function (data) {
+                    if (data.ok) {
+                        updateBadges(data.count);
+                        toast('Producto agregado al pedido');
+                    }
+                });
+            return;
+        }
+        var copyBtn = e.target.closest('#copiarLink');
+        if (copyBtn) {
+            var url = copyBtn.dataset.url;
+            (navigator.clipboard
+                ? navigator.clipboard.writeText(url)
+                : Promise.reject()).then(function () {
+                    copyBtn.innerHTML = '<i class="bi bi-check2"></i> Copiado';
+                }).catch(function () {
+                    window.prompt('Copiá el link:', url);
+                });
+            return;
+        }
+
         var btn = e.target.closest('[data-add-cart]');
         if (btn) {
             e.preventDefault();

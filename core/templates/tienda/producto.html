@@ -1,0 +1,103 @@
+{% extends 'tienda/base.html' %}
+{% block title %}{{ product.nombre }} — GIGANTE Distribuidora{% endblock %}
+{% block meta_description %}{{ product.descripcion|striptags|truncatewords:30 }}{% if precio_final %} · ${{ precio_final|floatformat:0 }}{% endif %}{% endblock %}
+{% block og_title %}{{ product.nombre }} — GIGANTE Distribuidora{% endblock %}
+{% block og_description %}{{ product.descripcion|striptags|truncatewords:30 }}{% if precio_final %} · ${{ precio_final|floatformat:0 }}{% endif %}{% endblock %}
+{% block og_image %}{{ og_image }}{% endblock %}
+{% block og_type %}product{% endblock %}
+
+{% block content %}
+<nav class="mb-3">
+    <a href="{% url 'catalogo' %}" class="nav-link-tienda small">
+        <i class="bi bi-arrow-left"></i> Volver al catálogo
+    </a>
+</nav>
+
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="prod-detalle-img">
+            {% if product.imagenurl %}
+                <img src="{{ product.imagenurl }}" alt="{{ product.nombre }}">
+            {% else %}
+                <img src="{{ product.imagen1.url }}" alt="{{ product.nombre }}">
+            {% endif %}
+            {% if product.en_oferta and product.en_oferta.activa %}
+                {% if product.en_oferta.tipo_oferta == 'descuento' %}
+                    <span class="badge-oferta">-{{ product.en_oferta.descuento }}% OFF</span>
+                {% elif product.en_oferta.tipo_oferta == 'multiplicidad' %}
+                    <span class="badge-oferta">{{ product.en_oferta.get_tipo_multiplicidad_display }}</span>
+                {% else %}
+                    <span class="badge-oferta">COMBO</span>
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="form-card h-100 d-flex flex-column">
+            {% if product.marca %}<span class="prod-marca">{{ product.marca }}</span>{% endif %}
+            <h1 class="qv-nombre">{{ product.nombre }}</h1>
+            {% if product.unidad_x_pack %}
+            <span class="prod-pack">Pack x{{ product.unidad_x_pack }} unidades
+                {% if precio_x_unidad %}— ${{ precio_x_unidad|floatformat:0 }} c/u{% endif %}
+            </span>
+            {% endif %}
+
+            <div class="qv-descripcion mt-2" style="max-height:none">{{ product.descripcion|safe }}</div>
+
+            <div class="qv-precio mt-auto">
+                {% if product.en_oferta and product.en_oferta.activa %}
+                    <span class="precio-tachado">${{ product.precio|floatformat:0 }}</span>
+                    <span class="precio-final oferta">${{ precio_final|floatformat:0 }}</span>
+                {% else %}
+                    <span class="precio-final">${{ precio_final|floatformat:0 }}</span>
+                {% endif %}
+            </div>
+
+            <div class="qv-acciones">
+                <div class="qty-stepper">
+                    <button type="button" id="detMenos">−</button>
+                    <span id="detCantidad">1</span>
+                    <button type="button" id="detMas">+</button>
+                </div>
+                <button class="btn-cta mt-0" id="detAgregar" data-product-id="{{ product.id }}">
+                    <i class="bi bi-cart-plus"></i> Agregar al pedido
+                </button>
+            </div>
+
+            <hr>
+            <div class="compartir">
+                <span class="small fw-bold text-muted">Compartir:</span>
+                <div class="d-flex gap-2 mt-2 flex-wrap">
+                    <a class="btn-share btn-wa" target="_blank" rel="noopener"
+                       href="https://wa.me/?text={{ product.nombre }}%20—%20{{ share_url|urlencode }}">
+                        <i class="bi bi-whatsapp"></i> WhatsApp
+                    </a>
+                    <a class="btn-share btn-fb" target="_blank" rel="noopener"
+                       href="https://www.facebook.com/sharer/sharer.php?u={{ share_url|urlencode }}">
+                        <i class="bi bi-facebook"></i> Facebook
+                    </a>
+                    <a class="btn-share btn-tw" target="_blank" rel="noopener"
+                       href="https://twitter.com/intent/tweet?text={{ product.nombre|urlencode }}&url={{ share_url|urlencode }}">
+                        <i class="bi bi-twitter-x"></i>
+                    </a>
+                    <button class="btn-share btn-copy" id="copiarLink" data-url="{{ share_url }}">
+                        <i class="bi bi-link-45deg"></i> Copiar link
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if relacionados %}
+<section class="mt-5">
+    <h2 class="seccion-titulo mb-3">También te puede interesar</h2>
+    <div class="prod-grid">
+        {% for product in relacionados %}
+            {% include 'tienda/_producto_card.html' %}
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+{% endblock %}
