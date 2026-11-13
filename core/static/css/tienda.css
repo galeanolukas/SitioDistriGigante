@@ -43,12 +43,29 @@ body {
 }
 
 .tienda-header {
-    background: var(--card);
-    box-shadow: 0 1px 6px rgba(0,0,0,.08);
+    background: var(--primary);
+    box-shadow: 0 1px 6px rgba(0,0,0,.15);
     position: sticky;
     top: 0;
     z-index: 1020;
 }
+.tienda-header .nav-link-tienda { color: #dfe7ef; }
+.tienda-header .nav-link-tienda:hover { color: #fff; }
+.tienda-header .cart-btn { color: #fff; }
+.tienda-header .search-form {
+    background: rgba(255,255,255,.14);
+    border-color: transparent;
+}
+.tienda-header .search-form:focus-within {
+    background: #fff;
+    border-color: #fff;
+}
+.tienda-header .search-form i { color: rgba(255,255,255,.7); }
+.tienda-header .search-form:focus-within i { color: #888; }
+.tienda-header .search-form input { color: #fff; }
+.tienda-header .search-form input::placeholder { color: rgba(255,255,255,.6); }
+.tienda-header .search-form:focus-within input { color: var(--ink); }
+.tienda-header .search-form:focus-within input::placeholder { color: #999; }
 
 .brand {
     display: flex;

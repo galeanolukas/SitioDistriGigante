@@ -3,13 +3,15 @@
 .panel-body { background: var(--bg); }
 
 .panel-header {
-    background: var(--card);
-    box-shadow: 0 1px 6px rgba(0,0,0,.08);
+    background: var(--primary);
+    box-shadow: 0 1px 6px rgba(0,0,0,.15);
     position: sticky;
     top: 0;
     z-index: 1020;
 }
-.panel-tabs { border-top: 1px solid #eee; }
+.panel-header .nav-link-tienda { color: #dfe7ef; }
+.panel-header .nav-link-tienda:hover { color: #fff; }
+.panel-tabs { border-top: 1px solid rgba(0,0,0,.1); }
 
 .stat-card {
     background: var(--card);
