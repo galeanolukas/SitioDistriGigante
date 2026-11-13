@@ -286,7 +286,7 @@ def catalogo(request, tp=None):
 
 def login_view(request):
     # Obtener la URL de la página anterior o la actual
-    next_page = request.GET.get('next')
+    next_page = request.GET.get('next') or request.POST.get('next')
     error = None
     if not next_page:
         # Si no hay 'next', usar HTTP_REFERER o la página por defecto
@@ -300,14 +300,14 @@ def login_view(request):
         if user is not None:
             login(request, user)
             # Redirigir a la página que estaba intentando acceder
-            pass
+            return redirect(next_page)
         else:
             # Pasar el 'next' al template para mantenerlo en el formulario
             error = "Usuario o contraseña invalidos!.."
             messages.error(request, f"No se pudo ingresar: {error}")
 
-    # Pasar el 'next' al template para el formulario GET
-    return redirect(next_page)
+    # GET o login fallido: mostrar el formulario de acceso
+    return render(request, 'login.html', {'error': error, 'next': next_page})
 
 def logout_view(request):
     logout(request)

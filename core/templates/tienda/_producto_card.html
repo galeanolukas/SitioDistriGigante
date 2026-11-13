@@ -22,7 +22,7 @@
         <div class="prod-precio">
             {% if product.en_oferta and product.en_oferta.activa %}
                 <span class="precio-tachado">${{ product.precio|floatformat:0 }}</span>
-                <span class="precio-final">${{ product.en_oferta.precio_final|floatformat:0 }}</span>
+                <span class="precio-final oferta">${{ product.en_oferta.precio_final|floatformat:0 }}</span>
             {% else %}
                 <span class="precio-final">${{ product.precio|floatformat:0 }}</span>
             {% endif %}

@@ -93,7 +93,10 @@ body {
 }
 
 /* ---------- Categorías ---------- */
-.cats-bar { border-top: 1px solid #eee; }
+.cats-bar {
+    background: var(--accent);
+    border-top: 1px solid rgba(0,0,0,.08);
+}
 .cats-scroll {
     display: flex;
     gap: .5rem;
@@ -106,17 +109,17 @@ body {
     flex: 0 0 auto;
     padding: .3rem .9rem;
     border-radius: 2rem;
-    background: var(--bg);
-    color: var(--ink);
+    background: rgba(255,255,255,.14);
+    color: #fff;
     text-decoration: none;
     font-size: .85rem;
     font-weight: 600;
-    border: 1px solid #e5e5e5;
+    border: 1px solid rgba(255,255,255,.25);
 }
-.cat-chip:hover { border-color: var(--accent); color: var(--accent); }
-.cat-chip.active { background: var(--ink); color: #fff; border-color: var(--ink); }
-.cat-chip.chip-oferta { color: var(--accent); }
-.cat-chip.chip-oferta.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.cat-chip:hover { background: rgba(255,255,255,.3); color: #fff; }
+.cat-chip.active { background: #fff; color: var(--accent); border-color: #fff; }
+.cat-chip.chip-oferta { background: var(--primary); border-color: var(--primary); color: #ffd166; }
+.cat-chip.chip-oferta.active { background: #fff; color: var(--accent); border-color: #fff; }
 
 /* ---------- Flyers ---------- */
 .flyer-slide {
@@ -144,7 +147,13 @@ body {
 .flyer-caption p { font-size: clamp(.9rem, 2vw, 1.1rem); max-width: 30rem; }
 
 /* ---------- Secciones ---------- */
-.seccion-titulo { font-size: 1.3rem; font-weight: 800; margin: 0; }
+.seccion-titulo {
+    font-size: 1.3rem;
+    font-weight: 800;
+    margin: 0;
+    padding-left: .6rem;
+    border-left: 4px solid var(--accent);
+}
 .ver-todas { font-size: .85rem; font-weight: 600; color: var(--accent); text-decoration: none; }
 
 .ofertas-scroll {
@@ -177,7 +186,11 @@ body {
     border: 1px solid #ececec;
     transition: box-shadow .15s, transform .15s;
 }
-.prod-card:hover { box-shadow: 0 6px 20px rgba(0,0,0,.09); transform: translateY(-2px); }
+.prod-card:hover {
+    box-shadow: 0 6px 20px rgba(0,0,0,.09);
+    transform: translateY(-2px);
+    border-color: var(--accent);
+}
 
 .prod-img-wrap {
     position: relative;
@@ -217,11 +230,12 @@ body {
 .prod-pack { font-size: .72rem; color: #888; }
 .prod-precio { margin-top: auto; display: flex; align-items: baseline; gap: .4rem; flex-wrap: wrap; }
 .precio-final { font-size: 1.15rem; font-weight: 800; }
+.precio-final.oferta { color: var(--accent); }
 .precio-tachado { font-size: .8rem; color: #999; text-decoration: line-through; }
 
 .btn-add {
     border: 0;
-    background: var(--ink);
+    background: var(--accent);
     color: #fff;
     font-weight: 700;
     font-size: .85rem;
@@ -229,7 +243,7 @@ body {
     border-radius: 0 0 1rem 1rem;
     transition: background .15s;
 }
-.btn-add:hover { background: var(--accent); }
+.btn-add:hover { background: var(--accent-dark); }
 .btn-add.added { background: var(--wa); }
 
 /* ---------- Carrito ---------- */
@@ -408,10 +422,21 @@ body {
 .mobile-nav a:hover, .mobile-nav a.active { color: var(--accent); }
 
 .tienda-footer {
-    background: var(--card);
-    border-top: 1px solid #ececec;
+    background: var(--primary);
+    color: #cfd8e3;
     font-size: .9rem;
+    border-top: 4px solid var(--accent);
 }
 .tienda-footer a { color: var(--wa); font-weight: 600; text-decoration: none; }
+.tienda-footer .text-muted { color: #8fa3b8 !important; }
+
+/* Paginación en rojo de marca */
+.page-link { color: var(--ink); }
+.page-item.active .page-link {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+}
+.page-link:hover { color: var(--accent); }
 
 #cartToast { background: var(--ink); color: #fff; border: 0; }
