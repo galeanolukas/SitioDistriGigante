@@ -358,14 +358,51 @@ body {
 
 /* ---------- Resumen / formularios ---------- */
 .resumen-card, .form-card, .pedido-card {
-    background: var(--card);
+    background: var(--blue);
+    color: #fff;
     border-radius: 1rem;
-    border: 1px solid #ececec;
+    border: 0;
     padding: 1.2rem;
 }
 .form-card { margin-bottom: 1rem; }
 .resumen-card h2, .form-card h2 { font-size: 1.05rem; font-weight: 800; margin-bottom: .8rem; }
 .pedido-card { margin-bottom: 1rem; }
+
+/* Contraste dentro de las cards azules */
+.resumen-card .text-muted, .form-card .text-muted, .pedido-card .text-muted {
+    color: rgba(255, 255, 255, .75) !important;
+}
+.form-card .form-label { color: #fff; }
+.form-card .prod-marca, .form-card .prod-pack { color: rgba(255, 255, 255, .7); }
+.form-card .qv-descripcion { color: rgba(255, 255, 255, .85); }
+.form-card .precio-tachado, .pedido-card .precio-tachado { color: rgba(255, 255, 255, .65); }
+.resumen-card hr, .form-card hr, .pedido-card hr { border-color: rgba(255, 255, 255, .25); opacity: 1; }
+.resumen-card a:not([class*="btn"]), .form-card a:not([class*="btn"]),
+.pedido-card a:not([class*="btn"]) { color: var(--yellow); }
+
+.resumen-card .opcion-radio, .form-card .opcion-radio {
+    background: rgba(255, 255, 255, .08);
+    border-color: rgba(255, 255, 255, .3);
+    color: #fff;
+}
+.resumen-card .opcion-radio:has(input:checked),
+.form-card .opcion-radio:has(input:checked) {
+    border-color: var(--yellow);
+    background: rgba(255, 255, 255, .15);
+}
+.resumen-card .opcion-info small, .form-card .opcion-info small { color: rgba(255, 255, 255, .72); }
+.resumen-card .opcion-costo, .form-card .opcion-costo { color: var(--yellow); }
+
+.resumen-card .resumen-linea { border-top-color: rgba(255, 255, 255, .25); }
+.resumen-card .resumen-linea.total strong { color: var(--yellow); }
+
+.resumen-card .btn-secundario, .form-card .btn-secundario { color: rgba(255, 255, 255, .9); }
+.resumen-card .btn-secundario:hover, .form-card .btn-secundario:hover { color: var(--yellow); }
+
+.form-card .qty-stepper { background: #fff; border-color: transparent; color: var(--ink); }
+.pedido-card .btn-outline-success { color: #fff; border-color: rgba(255, 255, 255, .7); }
+.pedido-card .btn-outline-success:hover { background: #fff; color: var(--blue); border-color: #fff; }
+.form-card .btn-copy { background: var(--blue-dark); }
 
 .resumen-items { display: flex; flex-direction: column; gap: .35rem; margin-bottom: .8rem; max-height: 300px; overflow-y: auto; }
 .resumen-item { display: flex; justify-content: space-between; gap: 1rem; font-size: .88rem; }
@@ -522,10 +559,11 @@ body {
     position: absolute;
     top: .8rem; right: .8rem;
     z-index: 5;
-    background: #fff;
+    background: #fff url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23dc3545'%3e%3cpath d='M.293.293a1 1 0 0 1 1.414 0L8 6.586 14.293.293a1 1 0 1 1 1.414 1.414L9.414 8l6.293 6.293a1 1 0 0 1-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 0 1-1.414-1.414L6.586 8 .293 1.707a1 1 0 0 1 0-1.414z'/%3e%3c/svg%3e") center/.9em auto no-repeat;
     border-radius: 50%;
-    opacity: .9;
+    opacity: 1;
     padding: .5rem;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .3);
 }
 .qv-img-wrap {
     position: relative;

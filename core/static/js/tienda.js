@@ -192,4 +192,34 @@
                 });
         }
     });
+
+    // Auto-scroll de la barra de categorías: loop infinito que pausa
+    // al pasar el mouse o al arrastrar (touch/puntero)
+    var catsBar = document.querySelector('.cats-scroll');
+    var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (catsBar && !reducedMotion && catsBar.scrollWidth > catsBar.clientWidth) {
+        var origChips = catsBar.children.length;
+        catsBar.innerHTML += catsBar.innerHTML;
+        // punto donde arranca la copia clonada = largo exacto de una vuelta
+        var resetPoint = catsBar.children[origChips].offsetLeft
+                       - catsBar.children[0].offsetLeft;
+
+        var paused = false;
+        ['mouseenter', 'touchstart', 'pointerdown'].forEach(function (ev) {
+            catsBar.addEventListener(ev, function () { paused = true; }, { passive: true });
+        });
+        ['mouseleave', 'touchend', 'touchcancel', 'pointerup'].forEach(function (ev) {
+            catsBar.addEventListener(ev, function () { paused = false; }, { passive: true });
+        });
+
+        (function autoScroll() {
+            if (!paused) {
+                catsBar.scrollLeft += 0.5;
+                if (catsBar.scrollLeft >= resetPoint) {
+                    catsBar.scrollLeft -= resetPoint;
+                }
+            }
+            requestAnimationFrame(autoScroll);
+        })();
+    }
 })();
