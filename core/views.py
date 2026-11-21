@@ -623,7 +623,7 @@ def admin_panel(request):
     if mensaje_ultimo:
         mensaje_ultimo = mensaje_ultimo.fecha
 
-    cont_visitas = VisitNumber.objects.all()[0]
+    cont_visitas = VisitNumber.objects.first() or VisitNumber(count=0)
     
     # Determinar tipo de usuario
     es_vendedor = request.user.groups.filter(name='vendedor').exists() or (Perfil.objects.filter(user=request.user).first() and Perfil.objects.filter(user=request.user).first().tipo_usuario == 'vendedor')
@@ -656,7 +656,7 @@ def admin_panel(request):
                "total_vendedores":usuarios.filter(groups__name='vendedor').count,
                "mensaje_ultimo":mensaje_ultimo,
                'total_visitas':cont_visitas,
-               'total_visitas_hoy':cont_visitas_hoy.count,
+               'total_visitas_hoy':cont_visitas_hoy.count if cont_visitas_hoy else 0,
                'pedidos':pedidos.count(),
                'clientes_sin_vendedor': clientes_sin_vendedor,
                'mis_clientes_count': mis_clientes_count,
