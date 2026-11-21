@@ -23,6 +23,14 @@ urlpatterns = [
     path('panel/flyers/', panel_views.flyers, name='panel_flyers'),
     path('panel/flyer/<int:flyer_id>/guardar/', panel_views.flyer_guardar, name='panel_flyer_guardar'),
     path('panel/flyer/<int:flyer_id>/borrar/', panel_views.flyer_borrar, name='panel_flyer_borrar'),
+    path('panel/productos/', panel_views.productos, name='panel_productos'),
+    path('panel/producto/nuevo/', panel_views.producto_form, name='panel_producto_nuevo'),
+    path('panel/producto/<int:product_id>/editar/', panel_views.producto_form, name='panel_producto_editar'),
+    path('panel/producto/<int:product_id>/borrar/', panel_views.producto_borrar, name='panel_producto_borrar'),
+    path('panel/cargar/', panel_views.cargar_lista, name='panel_cargar'),
+    path('panel/mercadopago/', panel_views.mercadopago, name='panel_mp'),
+    path('panel/mercadopago/cuenta/', panel_views.mp_cuenta, name='panel_mp_crear'),
+    path('panel/mercadopago/cuenta/<int:cuenta_id>/', panel_views.mp_cuenta, name='panel_mp_cuenta'),
 
     # Tienda (nuevo catálogo guest)
     path('', tienda_views.tienda, name='index'),

@@ -1,0 +1,96 @@
+{% extends 'panel/base.html' %}
+{% block title %}{% if producto %}Editar{% else %}Nuevo{% endif %} producto — Panel GIGANTE{% endblock %}
+
+{% block content %}
+{{ form.media }}
+<h1 class="seccion-titulo mb-3">
+    {% if producto %}Editar: {{ producto.nombre|truncatechars:40 }}{% else %}Nuevo producto{% endif %}
+</h1>
+
+<div class="panel-card">
+    <form method="post" enctype="multipart/form-data" class="row g-3">
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger py-2">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <div class="col-md-8">
+            <label class="form-label">Nombre *</label>
+            {{ form.nombre }}
+            {{ form.nombre.errors }}
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Cod. / Número</label>
+            {{ form.numero }}
+        </div>
+
+        <div class="col-md-3 col-6">
+            <label class="form-label">Precio *</label>
+            {{ form.precio }}
+        </div>
+        <div class="col-md-3 col-6">
+            <label class="form-label">Precio mayorista</label>
+            {{ form.precio_m }}
+        </div>
+        <div class="col-md-3 col-6">
+            <label class="form-label">Stock *</label>
+            {{ form.stock }}
+        </div>
+        <div class="col-md-3 col-6">
+            <label class="form-label">Unid. x pack</label>
+            {{ form.unidad_x_pack }}
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label">Marca</label>
+            {{ form.marca }}
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Categoría</label>
+            {{ form.categoria }}
+        </div>
+
+        <div class="col-12">
+            <label class="form-label">URL de imagen</label>
+            {{ form.imagenurl }}
+            <small class="text-muted">Si tiene URL no hace falta subir archivo.</small>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Imagen 1 (archivo)</label>
+            {{ form.imagen1 }}
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Imagen 2 (archivo)</label>
+            {{ form.imagen2 }}
+        </div>
+        {% if producto and producto.imagenurl %}
+        <div class="col-12">
+            <img src="{{ producto.imagenurl }}" style="max-height:120px;object-fit:contain" alt="Imagen actual">
+        </div>
+        {% endif %}
+
+        <div class="col-12">
+            <label class="form-label">Descripción</label>
+            {{ form.descripcion }}
+        </div>
+
+        <div class="col-12 d-flex gap-4">
+            <div class="form-check">
+                {{ form.destacado }}
+                <label class="form-check-label" for="{{ form.destacado.id_for_label }}">Destacado en tienda</label>
+            </div>
+            <div class="form-check">
+                {{ form.es_linea_mix }}
+                <label class="form-check-label" for="{{ form.es_linea_mix.id_for_label }}">Línea MIX</label>
+            </div>
+        </div>
+
+        <div class="col-12 d-flex gap-2">
+            <button type="submit" class="btn-cta">
+                <i class="bi bi-check-lg"></i> Guardar producto
+            </button>
+            <a href="{% url 'panel_productos' %}" class="btn btn-outline-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

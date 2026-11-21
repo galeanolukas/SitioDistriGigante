@@ -276,6 +276,37 @@ class ProductForm(forms.ModelForm):
         super(ProductForm, self).__init__(*args, **kwargs)
         self.fields["descripcion"].required = False
 
+class PanelProductForm(forms.ModelForm):
+    """Form de producto para el panel nuevo, con clases bootstrap"""
+    class Meta:
+        model = Product
+        fields = ['nombre', 'numero', 'precio', 'precio_m', 'marca', 'stock',
+                  'unidad_x_pack', 'categoria', 'imagenurl', 'imagen1',
+                  'imagen2', 'descripcion', 'destacado', 'es_linea_mix']
+        widgets = {
+            "descripcion": CKEditor5Widget(
+                attrs={"class": "django_ckeditor_5"},
+                config_name="extends"
+            ),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for name, field in self.fields.items():
+            if isinstance(field.widget, forms.CheckboxInput):
+                field.widget.attrs['class'] = 'form-check-input'
+            elif not isinstance(field.widget, CKEditor5Widget):
+                field.widget.attrs['class'] = 'form-control'
+        self.fields["descripcion"].required = False
+        self.fields["categoria"].required = False
+        self.fields["imagenurl"].required = False
+        self.fields["imagen1"].required = False
+        self.fields["imagen2"].required = False
+        self.fields["marca"].required = False
+        self.fields["numero"].required = False
+        self.fields["precio_m"].required = False
+        self.fields["unidad_x_pack"].required = False
+
 class CartelForm(forms.ModelForm):
     class Meta:
         model = CarruselImages

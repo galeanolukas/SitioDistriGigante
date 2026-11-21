@@ -1,0 +1,83 @@
+{% extends 'panel/base.html' %}
+{% block title %}Pagos — Panel GIGANTE{% endblock %}
+
+{% block content %}
+<h1 class="seccion-titulo mb-1">MercadoPago</h1>
+<p class="text-muted small mb-3">Configurá la cuenta de cobro y habilitá el pago online en el checkout.</p>
+
+<div class="panel-card mb-4">
+    <form method="post" class="d-flex align-items-center justify-content-between">
+        {% csrf_token %}
+        <div>
+            <strong>Pago con MercadoPago en la tienda</strong><br>
+            <small class="text-muted">Si está apagado, los pedidos se acuerdan por WhatsApp.</small>
+        </div>
+        <div class="form-check form-switch fs-4">
+            <input class="form-check-input" type="checkbox" name="mp_habilitado"
+                   {% if cfg.mp_habilitado %}checked{% endif %} onchange="this.form.submit()">
+        </div>
+    </form>
+</div>
+
+<div class="panel-card mb-4">
+    <h2 class="h6 fw-bold mb-3"><i class="bi bi-plus-circle"></i> Agregar cuenta</h2>
+    <form method="post" action="{% url 'panel_mp_crear' %}" class="row g-2">
+        {% csrf_token %}
+        <div class="col-md-6">
+            <label class="form-label small mb-1">Nombre</label>
+            <input type="text" name="nombre" class="form-control form-control-sm" required placeholder="Ej: Cuenta principal">
+        </div>
+        <div class="col-md-6">
+            <label class="form-label small mb-1">Public Key</label>
+            <input type="text" name="public_key" class="form-control form-control-sm" required placeholder="APP_USR-... o TEST-...">
+        </div>
+        <div class="col-md-6">
+            <label class="form-label small mb-1">Access Token</label>
+            <input type="password" name="access_token" class="form-control form-control-sm" required autocomplete="off">
+        </div>
+        <div class="col-md-6">
+            <label class="form-label small mb-1">Client Secret (opcional)</label>
+            <input type="password" name="client_secret" class="form-control form-control-sm" autocomplete="off">
+        </div>
+        <div class="col-12">
+            <button class="btn-cta btn-sm"><i class="bi bi-plus-lg"></i> Agregar</button>
+        </div>
+    </form>
+</div>
+
+<div class="panel-card p-0 overflow-hidden">
+    <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+            <tr><th>Cuenta</th><th class="d-none d-md-table-cell">Public Key</th><th class="text-center">Activa</th><th class="text-end">Acciones</th></tr>
+        </thead>
+        <tbody>
+        {% for c in cuentas %}
+            <tr>
+                <td><strong>{{ c.nombre|default:'(sin nombre)' }}</strong></td>
+                <td class="d-none d-md-table-cell"><small class="text-muted">{{ c.public_key|truncatechars:25 }}</small></td>
+                <td class="text-center">
+                    {% if c.activa %}<span class="badge text-bg-success">Activa</span>
+                    {% else %}
+                    <form method="post" action="{% url 'panel_mp_cuenta' c.id %}" class="d-inline">
+                        {% csrf_token %}
+                        <button name="accion" value="activar" class="btn btn-sm btn-outline-success">Activar</button>
+                    </form>
+                    {% endif %}
+                </td>
+                <td class="text-end">
+                    <form method="post" action="{% url 'panel_mp_cuenta' c.id %}" class="d-inline">
+                        {% csrf_token %}
+                        <button name="accion" value="borrar" class="btn btn-sm btn-outline-danger"
+                                onclick="return confirm('¿Eliminar cuenta {{ c.nombre }}?')">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </form>
+                </td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="4" class="text-center text-muted py-4">No hay cuentas configuradas.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

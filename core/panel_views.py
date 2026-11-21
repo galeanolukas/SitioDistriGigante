@@ -1,3 +1,6 @@
+import os
+import tempfile
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User, Group
@@ -7,7 +10,10 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
-from .models import Pedido, Product, MovimientoCaja, Category, Perfil
+from .forms import PanelProductForm, MercadoPagoCuentaForm
+from .importer import importar_lista_precios
+from .models import (Pedido, Product, MovimientoCaja, Category, Perfil,
+                     DetallePedido, MercadoPagoCuenta, ConfiguracionTienda)
 
 
 # ---------- Roles ----------
@@ -482,3 +488,167 @@ def flyer_borrar(request, flyer_id):
     flyer.delete()
     messages.success(request, "Flyer eliminado.")
     return redirect('panel_flyers')
+
+
+# ---------- Productos (solo admin) ----------
+
+@panel_access
+def productos(request):
+    """Listado de productos con búsqueda y acceso a crear/editar"""
+    if not _solo_admin(request):
+        return redirect('panel')
+
+    q = request.GET.get('q', '').strip()
+    qs = Product.objects.select_related('categoria').order_by('nombre')
+    if q:
+        qs = qs.filter(Q(nombre__icontains=q) | Q(marca__icontains=q)
+                       | Q(numero__icontains=q))
+
+    context = {
+        'rol': request.rol,
+        'q': q,
+        'productos': Paginator(qs, 30).get_page(request.GET.get('page')),
+    }
+    return render(request, 'panel/productos.html', context)
+
+
+@panel_access
+def producto_form(request, product_id=None):
+    """Crear o editar un producto"""
+    if not _solo_admin(request):
+        return redirect('panel')
+
+    producto = (get_object_or_404(Product, id=product_id)
+                if product_id else None)
+    form = PanelProductForm(request.POST or None, request.FILES or None,
+                            instance=producto)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        messages.success(request,
+                         f"Producto '{form.instance.nombre}' guardado.")
+        return redirect('panel_productos')
+
+    return render(request, 'panel/producto_form.html',
+                  {'rol': request.rol, 'form': form, 'producto': producto})
+
+
+@panel_access
+@require_POST
+def producto_borrar(request, product_id):
+    """Borra el producto; si tiene pedidos históricos queda con stock 0"""
+    if not _solo_admin(request):
+        return redirect('panel')
+    producto = get_object_or_404(Product, id=product_id)
+
+    if DetallePedido.objects.filter(producto=producto).exists():
+        producto.stock = 0
+        producto.save()
+        messages.warning(request,
+            f"'{producto.nombre}' figura en pedidos: quedó con stock 0 "
+            "en vez de borrarse.")
+    else:
+        producto.delete()
+        messages.success(request, f"Producto '{producto.nombre}' eliminado.")
+    return redirect('panel_productos')
+
+
+# ---------- Carga de lista Excel (solo admin) ----------
+
+@panel_access
+def cargar_lista(request):
+    """Subir lista de precios: preview del reporte y botón para aplicar"""
+    if not _solo_admin(request):
+        return redirect('panel')
+
+    context = {'rol': request.rol}
+    tmp_path = request.session.get('lista_tmp')
+
+    if request.method == 'POST':
+        if 'archivo' in request.FILES:
+            ext = (os.path.splitext(request.FILES['archivo'].name)[1]
+                   or '.xlsx')
+            tmp_path = os.path.join(tempfile.gettempdir(),
+                                    f'lista_{request.user.id}{ext}')
+            with open(tmp_path, 'wb') as f:
+                for chunk in request.FILES['archivo'].chunks():
+                    f.write(chunk)
+            try:
+                context['reporte'] = importar_lista_precios(tmp_path)
+                request.session['lista_tmp'] = tmp_path
+            except Exception as e:
+                messages.error(request, f'No se pudo leer la lista: {e}')
+                request.session.pop('lista_tmp', None)
+        elif request.POST.get('aplicar'):
+            if tmp_path and os.path.exists(tmp_path):
+                try:
+                    context['reporte'] = importar_lista_precios(
+                        tmp_path, aplicar=True, usuario=request.user)
+                    messages.success(request, 'Lista aplicada al catálogo.')
+                except Exception as e:
+                    messages.error(request, f'Error al aplicar: {e}')
+                os.unlink(tmp_path)
+                request.session.pop('lista_tmp', None)
+            else:
+                messages.error(request, 'Subí la lista de nuevo.')
+        elif request.POST.get('descartar'):
+            if tmp_path and os.path.exists(tmp_path):
+                os.unlink(tmp_path)
+            request.session.pop('lista_tmp', None)
+            return redirect('panel_cargar')
+
+    return render(request, 'panel/cargar_lista.html', context)
+
+
+# ---------- MercadoPago (solo admin) ----------
+
+@panel_access
+def mercadopago(request):
+    """Cuentas de MercadoPago y toggle de pago online en la tienda"""
+    if not _solo_admin(request):
+        return redirect('panel')
+
+    if request.method == 'POST':
+        cfg = ConfiguracionTienda.get()
+        cfg.mp_habilitado = request.POST.get('mp_habilitado') == 'on'
+        cfg.save()
+        messages.success(request, 'Configuración guardada.')
+        return redirect('panel_mp')
+
+    context = {
+        'rol': request.rol,
+        'cfg': ConfiguracionTienda.get(),
+        'cuentas': MercadoPagoCuenta.objects.all(),
+        'form': MercadoPagoCuentaForm(),
+    }
+    return render(request, 'panel/mercadopago.html', context)
+
+
+@panel_access
+@require_POST
+def mp_cuenta(request, cuenta_id=None):
+    """accion=crear (sin id) | activar | borrar (con id)"""
+    if not _solo_admin(request):
+        return redirect('panel')
+    accion = request.POST.get('accion', 'crear')
+
+    if accion == 'borrar' and cuenta_id:
+        get_object_or_404(MercadoPagoCuenta, id=cuenta_id).delete()
+        messages.success(request, 'Cuenta eliminada.')
+    elif accion == 'activar' and cuenta_id:
+        cuenta = get_object_or_404(MercadoPagoCuenta, id=cuenta_id)
+        MercadoPagoCuenta.objects.exclude(id=cuenta_id).update(activa=False)
+        cuenta.activa = True
+        cuenta.save()
+        messages.success(request, f"Cuenta '{cuenta.nombre}' activada.")
+    else:
+        form = MercadoPagoCuentaForm(request.POST)
+        if form.is_valid():
+            cuenta = form.save(commit=False)
+            if not MercadoPagoCuenta.objects.exists():
+                cuenta.activa = True
+            cuenta.save()
+            messages.success(request, f"Cuenta '{cuenta.nombre}' agregada.")
+        else:
+            messages.error(request, 'Revisá los datos de la cuenta.')
+
+    return redirect('panel_mp')

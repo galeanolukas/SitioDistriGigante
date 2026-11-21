@@ -1,0 +1,81 @@
+{% extends 'panel/base.html' %}
+{% block title %}Cargar lista — Panel GIGANTE{% endblock %}
+
+{% block content %}
+<h1 class="seccion-titulo mb-1">Cargar lista de precios</h1>
+<p class="text-muted small mb-3">Subí el Excel de la lista. Primero ves un resumen de qué va a pasar; recién después se aplica.</p>
+
+<div class="panel-card mb-4">
+    <form method="post" enctype="multipart/form-data" class="row g-2 align-items-end">
+        {% csrf_token %}
+        <div class="col-md-9">
+            <label class="form-label small mb-1">Archivo Excel (.xlsx)</label>
+            <input type="file" name="archivo" class="form-control" accept=".xlsx,.xls,.csv" required>
+        </div>
+        <div class="col-md-3">
+            <button class="btn-cta w-100"><i class="bi bi-eye"></i> Previsualizar</button>
+        </div>
+    </form>
+</div>
+
+{% if reporte %}
+<div class="panel-card">
+    <h2 class="h6 fw-bold mb-3">
+        {% if reporte.aplicado %}<i class="bi bi-check-circle text-success"></i> Lista aplicada
+        {% else %}<i class="bi bi-eye"></i> Previsualización — nada se guardó todavía{% endif %}
+    </h2>
+
+    <ul class="list-group list-group-flush mb-3">
+        <li class="list-group-item d-flex justify-content-between">
+            <span><i class="bi bi-arrow-repeat"></i> Actualizados por Cod.</span>
+            <strong>{{ reporte.por_cod }}</strong></li>
+        <li class="list-group-item d-flex justify-content-between">
+            <span><i class="bi bi-arrow-repeat"></i> Actualizados por nombre</span>
+            <strong>{{ reporte.por_nombre }}</strong></li>
+        <li class="list-group-item d-flex justify-content-between">
+            <span><i class="bi bi-stars"></i> Actualizados por nombre similar</span>
+            <strong>{{ reporte.por_fuzzy }}</strong></li>
+        <li class="list-group-item d-flex justify-content-between">
+            <span><i class="bi bi-plus-circle"></i> Nuevos (sin imagen)</span>
+            <strong class="text-primary">{{ reporte.nuevos }}</strong></li>
+        <li class="list-group-item d-flex justify-content-between">
+            <span><i class="bi bi-trash"></i> Eliminados (fuera de lista, sin pedidos)</span>
+            <strong class="text-danger">{{ reporte.eliminados }}</strong></li>
+        <li class="list-group-item d-flex justify-content-between">
+            <span><i class="bi bi-pause-circle"></i> Stock 0 (fuera de lista, con pedidos)</span>
+            <strong>{{ reporte.stock_cero|length }}</strong></li>
+        <li class="list-group-item d-flex justify-content-between">
+            <span><i class="bi bi-skip-forward"></i> Omitidos</span>
+            <strong>{{ reporte.omitidos|length }}</strong></li>
+    </ul>
+
+    {% if reporte.fuzzy_pares %}
+    <div class="alert alert-warning py-2 small">
+        <strong>Matches por similitud — revisar:</strong>
+        <ul class="mb-0">
+            {% for xl, db in reporte.fuzzy_pares %}
+            <li>"{{ xl }}" &harr; "{{ db }}"</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+    {% for p in reporte.stock_cero %}
+        <small class="text-muted d-block">Stock 0 con pedidos: #{{ p.numero }} {{ p.nombre }}</small>
+    {% endfor %}
+    {% for art, motivo in reporte.omitidos %}
+        <small class="text-muted d-block">Omitido: {{ art }} — {{ motivo }}</small>
+    {% endfor %}
+
+    {% if not reporte.aplicado %}
+    <form method="post" class="d-flex gap-2 mt-3">
+        {% csrf_token %}
+        <button name="aplicar" value="1" class="btn-cta"
+                onclick="return confirm('¿Aplicar la lista al catálogo?')">
+            <i class="bi bi-check-lg"></i> Aplicar al catálogo
+        </button>
+        <button name="descartar" value="1" class="btn btn-outline-danger">Descartar</button>
+    </form>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

@@ -57,11 +57,14 @@
                 <a href="{% url 'panel_flyers' %}" class="cat-chip {% if request.resolver_match.url_name == 'panel_flyers' %}active{% endif %}">
                     <i class="bi bi-images"></i> Flyers
                 </a>
-                <a href="{% url 'admin_panel' %}" class="cat-chip">
-                    <i class="bi bi-gear"></i> Contenido
+                <a href="{% url 'panel_productos' %}" class="cat-chip {% if 'producto' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="bi bi-box-seam"></i> Productos
                 </a>
-                <a href="{% url 'pedidos_panel' %}" class="cat-chip">
-                    <i class="bi bi-kanban"></i> Panel clásico
+                <a href="{% url 'panel_cargar' %}" class="cat-chip {% if request.resolver_match.url_name == 'panel_cargar' %}active{% endif %}">
+                    <i class="bi bi-file-earmark-excel"></i> Excel
+                </a>
+                <a href="{% url 'panel_mp' %}" class="cat-chip {% if request.resolver_match.url_name == 'panel_mp' %}active{% endif %}">
+                    <i class="bi bi-credit-card"></i> Pagos
                 </a>
                 {% endif %}
             </div>
