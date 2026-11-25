@@ -1,3 +1,4 @@
+import json
 import os
 import tempfile
 
@@ -621,6 +622,59 @@ def mercadopago(request):
         'form': MercadoPagoCuentaForm(),
     }
     return render(request, 'panel/mercadopago.html', context)
+
+
+# ---------- Suplai (solo admin) ----------
+
+@panel_access
+def suplai(request):
+    """Configuración y control del sync de stock/precios con Suplai"""
+    if not _solo_admin(request):
+        return redirect('panel')
+
+    from .suplai import sync_suplai
+
+    cfg = ConfiguracionTienda.get()
+    context = {'rol': request.rol, 'cfg': cfg}
+
+    if request.method == 'POST':
+        accion = request.POST.get('accion', 'guardar')
+        if accion == 'guardar':
+            cfg.suplai_sync_activo = 'suplai_sync_activo' in request.POST
+            cfg.suplai_sync_precios = 'suplai_sync_precios' in request.POST
+            try:
+                cfg.suplai_sync_intervalo = max(
+                    5, int(request.POST.get('suplai_sync_intervalo') or 30))
+            except ValueError:
+                pass
+            cfg.save()
+            messages.success(request, 'Configuración guardada.')
+            return redirect('panel_suplai')
+        elif accion == 'preview':
+            try:
+                context['reporte'] = sync_suplai(
+                    aplicar=False, sync_precios=cfg.suplai_sync_precios)
+            except Exception as e:
+                messages.error(request, f'No se pudo conectar con Suplai: {e}')
+        elif accion == 'sync_ahora':
+            try:
+                context['reporte'] = sync_suplai(
+                    aplicar=True, usuario=request.user,
+                    sync_precios=cfg.suplai_sync_precios)
+                messages.success(request, 'Sync aplicado.')
+            except Exception as e:
+                messages.error(request, f'Error al sincronizar: {e}')
+
+    ultimo = None
+    if cfg.suplai_ultimo_reporte:
+        try:
+            ultimo = json.loads(cfg.suplai_ultimo_reporte)
+        except (json.JSONDecodeError, TypeError):
+            pass
+
+    context['ultimo'] = ultimo
+    context['webhook_url'] = request.build_absolute_uri('/api/suplai/webhook/')
+    return render(request, 'panel/suplai.html', context)
 
 
 @panel_access

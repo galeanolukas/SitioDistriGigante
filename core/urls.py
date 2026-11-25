@@ -29,6 +29,7 @@ urlpatterns = [
     path('panel/producto/<int:product_id>/borrar/', panel_views.producto_borrar, name='panel_producto_borrar'),
     path('panel/cargar/', panel_views.cargar_lista, name='panel_cargar'),
     path('panel/mercadopago/', panel_views.mercadopago, name='panel_mp'),
+    path('panel/suplai/', panel_views.suplai, name='panel_suplai'),
     path('panel/mercadopago/cuenta/', panel_views.mp_cuenta, name='panel_mp_crear'),
     path('panel/mercadopago/cuenta/<int:cuenta_id>/', panel_views.mp_cuenta, name='panel_mp_cuenta'),
 
@@ -137,6 +138,7 @@ urlpatterns = [
     
     # URLs de Uber API
     path('api/uber/webhook/', views.uber_webhook, name='uber_webhook'),
+    path('api/suplai/webhook/', views.suplai_webhook, name='suplai_webhook'),
     path('api/uber/crear-delivery/<int:envio_id>/', views.uber_crear_delivery, name='uber_crear_delivery'),
     path('api/uber/estado/<str:delivery_id>/', views.uber_estado_delivery, name='uber_estado_delivery'),
     path('api/uber/cancelar/<str:delivery_id>/', views.uber_cancelar_delivery, name='uber_cancelar_delivery'),

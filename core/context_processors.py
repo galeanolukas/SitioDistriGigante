@@ -9,6 +9,9 @@ def tienda_context(request):
     """
     try:
         config = ConfiguracionTienda.get()
+        if config and config.suplai_sync_activo:
+            from .suplai import quizas_sincronizar
+            quizas_sincronizar()
     except Exception:
         config = None
 

@@ -1059,6 +1059,20 @@ class ConfiguracionTienda(models.Model):
     mp_habilitado = models.BooleanField(
         default=True, verbose_name="Permitir pago con MercadoPago")
 
+    # Sync con el sistema Suplai (stock/precios)
+    suplai_sync_activo = models.BooleanField(
+        default=False, verbose_name="Sync automático con Suplai",
+        help_text="Actualiza stock y precios desde Suplai periódicamente")
+    suplai_sync_intervalo = models.PositiveIntegerField(
+        default=30, verbose_name="Intervalo de sync (minutos)")
+    suplai_sync_precios = models.BooleanField(
+        default=True, verbose_name="Actualizar también precios",
+        help_text="Si está apagado solo se actualiza el stock")
+    suplai_ultimo_sync = models.DateTimeField(
+        null=True, blank=True, verbose_name="Último sync Suplai")
+    suplai_ultimo_reporte = models.TextField(
+        blank=True, verbose_name="Reporte del último sync")
+
     class Meta:
         verbose_name = 'Configuración de la Tienda'
         verbose_name_plural = 'Configuración de la Tienda'

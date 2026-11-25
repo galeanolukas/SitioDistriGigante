@@ -1,0 +1,138 @@
+{% extends 'panel/base.html' %}
+{% block title %}Suplai — Panel GIGANTE{% endblock %}
+
+{% block content %}
+<h1 class="seccion-titulo mb-1">Sync con Suplai</h1>
+<p class="text-muted small mb-3">Actualización automática de stock y precios desde el sistema Suplai.</p>
+
+<div class="panel-card mb-4">
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="accion" value="guardar">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <div>
+                <strong>Sync automático</strong><br>
+                <small class="text-muted">Se corre solo cuando haya tráfico en el sitio (o por cron).</small>
+            </div>
+            <div class="form-check form-switch fs-4">
+                <input class="form-check-input" type="checkbox" name="suplai_sync_activo"
+                       {% if cfg.suplai_sync_activo %}checked{% endif %} onchange="this.form.submit()">
+            </div>
+        </div>
+        <div class="row g-2 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label small mb-1">Intervalo (minutos, mínimo 5)</label>
+                <input type="number" name="suplai_sync_intervalo" class="form-control form-control-sm"
+                       value="{{ cfg.suplai_sync_intervalo }}" min="5">
+            </div>
+            <div class="col-md-5">
+                <div class="form-check mt-4">
+                    <input class="form-check-input" type="checkbox" name="suplai_sync_precios"
+                           id="syncPrecios" {% if cfg.suplai_sync_precios %}checked{% endif %}>
+                    <label class="form-check-label small" for="syncPrecios">
+                        Actualizar también precios (apagado = solo stock)
+                    </label>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <button class="btn-cta btn-sm w-100"><i class="bi bi-save"></i> Guardar</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<div class="panel-card mb-4">
+    <h2 class="h6 fw-bold mb-3"><i class="bi bi-clock-history"></i> Estado</h2>
+    {% if cfg.suplai_ultimo_sync %}
+        <p class="mb-2"><strong>Último sync:</strong> {{ cfg.suplai_ultimo_sync|date:'d/m/Y H:i' }}</p>
+        {% if ultimo %}
+        <ul class="list-group list-group-flush mb-0">
+            {% if ultimo.error %}
+            <li class="list-group-item text-danger"><i class="bi bi-exclamation-triangle"></i> Error: {{ ultimo.error }}</li>
+            {% else %}
+            <li class="list-group-item d-flex justify-content-between">
+                <span>Productos en Suplai</span><strong>{{ ultimo.filas_suplai }}</strong></li>
+            <li class="list-group-item d-flex justify-content-between">
+                <span>Actualizados</span><strong>{{ ultimo.actualizados }}</strong></li>
+            <li class="list-group-item d-flex justify-content-between">
+                <span>Sin cambios</span><strong>{{ ultimo.sin_cambios }}</strong></li>
+            <li class="list-group-item d-flex justify-content-between">
+                <span>Nuevos</span><strong class="text-primary">{{ ultimo.nuevos }}</strong></li>
+            <li class="list-group-item d-flex justify-content-between">
+                <span>Bajas (stock=0)</span><strong>{{ ultimo.bajas }}</strong></li>
+            <li class="list-group-item d-flex justify-content-between">
+                <span>Locales sin match en Suplai</span><strong>{{ ultimo.sin_match }}</strong></li>
+            {% endif %}
+        </ul>
+        {% endif %}
+    {% else %}
+        <p class="text-muted mb-0">Todavía no se corrió ningún sync.</p>
+    {% endif %}
+</div>
+
+<div class="panel-card mb-4">
+    <h2 class="h6 fw-bold mb-3"><i class="bi bi-lightning"></i> Acciones manuales</h2>
+    <form method="post" class="d-flex gap-2">
+        {% csrf_token %}
+        <button name="accion" value="preview" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-eye"></i> Previsualizar (dry-run)
+        </button>
+        <button name="accion" value="sync_ahora" class="btn-cta btn-sm"
+                onclick="return confirm('¿Sincronizar ahora desde Suplai?')">
+            <i class="bi bi-arrow-repeat"></i> Sincronizar ahora
+        </button>
+    </form>
+    <small class="text-muted d-block mt-2">
+        "Sincronizar ahora" puede tardar si hay muchos cambios.
+    </small>
+</div>
+
+<div class="panel-card mb-4">
+    <h2 class="h6 fw-bold mb-2"><i class="bi bi-plugin"></i> Webhook (opcional)</h2>
+    <p class="small mb-1">Si el sistema Suplai puede avisar cambios, que haga un POST a:</p>
+    <code class="small d-block mb-2">{{ webhook_url }}</code>
+    <small class="text-muted">
+        Con <code>Authorization: Bearer &lt;SUPLAI_WEBHOOK_TOKEN&gt;</code> y body
+        <code>{"action": "sync"}</code> o <code>{"items": [{"sku": "...", "stock": N}]}</code>.
+        El token está en el <code>.env</code> del servidor.
+    </small>
+</div>
+
+{% if reporte %}
+<div class="panel-card">
+    <h2 class="h6 fw-bold mb-3">
+        {% if reporte.aplicado %}<i class="bi bi-check-circle text-success"></i> Sync aplicado
+        {% else %}<i class="bi bi-eye"></i> Previsualización — nada se guardó todavía{% endif %}
+    </h2>
+    <ul class="list-group list-group-flush mb-3">
+        <li class="list-group-item d-flex justify-content-between">
+            <span><i class="bi bi-database"></i> Filas en Suplai</span>
+            <strong>{{ reporte.filas_suplai }}</strong></li>
+        <li class="list-group-item d-flex justify-content-between">
+            <span><i class="bi bi-arrow-repeat"></i> Actualizados</span>
+            <strong>{{ reporte.actualizados }}</strong></li>
+        <li class="list-group-item d-flex justify-content-between">
+            <span><i class="bi bi-dash-circle"></i> Sin cambios</span>
+            <strong>{{ reporte.sin_cambios }}</strong></li>
+        <li class="list-group-item d-flex justify-content-between">
+            <span><i class="bi bi-plus-circle"></i> Nuevos</span>
+            <strong class="text-primary">{{ reporte.nuevos }}</strong></li>
+        <li class="list-group-item d-flex justify-content-between">
+            <span><i class="bi bi-pause-circle"></i> Bajas (stock=0)</span>
+            <strong>{{ reporte.bajas|length }}</strong></li>
+        <li class="list-group-item d-flex justify-content-between">
+            <span><i class="bi bi-skip-forward"></i> Sin match en Suplai (sin tocar)</span>
+            <strong>{{ reporte.sin_match }}</strong></li>
+    </ul>
+    {% if reporte.preview %}
+    <small class="text-muted d-block mb-1">Cambios de stock (primeros 20):</small>
+    {% for num, nombre, antes, despues in reporte.preview %}
+        <small class="text-muted d-block">#{{ num }} {{ nombre }}: {{ antes }} &rarr; {{ despues }}</small>
+    {% endfor %}
+    {% endif %}
+    {% for p in reporte.bajas %}
+        <small class="text-muted d-block">Baja: #{{ p.numero }} {{ p.nombre }}</small>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

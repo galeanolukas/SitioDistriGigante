@@ -1441,6 +1441,70 @@ def mercadopago_webhook(request):
         return JsonResponse({'error': str(e)}, status=500)
 
 
+@csrf_exempt
+@require_POST
+def suplai_webhook(request):
+    """
+    Webhook del sistema Suplai (stock).
+
+    Auth: header 'Authorization: Bearer <token>', 'X-Webhook-Token' o campo
+    'token' del JSON, validado contra SUPLAI_WEBHOOK_TOKEN del entorno.
+
+    Payloads:
+      {"action": "sync"}               -> corre sync completo desde la base remota
+      {"action": "sync", "dry_run": 1} -> solo reporta lo que cambiaría
+      {"items": [{"sku": "10202", "stock": 44, "precio": 9760}, ...]}
+                                       -> actualización directa de stock/precio
+    """
+    from decouple import config
+    from .suplai import sync_suplai, aplicar_items
+
+    token_esperado = config('SUPLAI_WEBHOOK_TOKEN', default='')
+    if not token_esperado:
+        return JsonResponse({'error': 'Webhook deshabilitado: falta SUPLAI_WEBHOOK_TOKEN'}, status=503)
+
+    try:
+        data = json.loads(request.body) if request.body else {}
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'JSON inválido'}, status=400)
+
+    auth = request.headers.get('Authorization', '')
+    token = (auth[7:] if auth.startswith('Bearer ') else
+             request.headers.get('X-Webhook-Token') or data.get('token') or '')
+    if not hmac.compare_digest(str(token), token_esperado):
+        return JsonResponse({'error': 'Token inválido'}, status=403)
+
+    try:
+        if 'items' in data:
+            items = data['items']
+            if not isinstance(items, list) or len(items) > 1000:
+                return JsonResponse({'error': 'items debe ser una lista de hasta 1000 elementos'}, status=400)
+            actualizados, no_encontrados = aplicar_items(items)
+            return JsonResponse({
+                'status': 'ok',
+                'actualizados': len(actualizados),
+                'no_encontrados': no_encontrados,
+            })
+
+        if data.get('action', 'sync') == 'sync':
+            r = sync_suplai(aplicar=not data.get('dry_run'),
+                            sync_precios=ConfiguracionTienda.get().suplai_sync_precios)
+            return JsonResponse({
+                'status': 'ok',
+                'aplicado': r['aplicado'],
+                'actualizados': r['actualizados'],
+                'sin_cambios': r['sin_cambios'],
+                'nuevos': r['nuevos'],
+                'bajas': len(r['bajas']),
+                'sin_match': r['sin_match'],
+            })
+
+        return JsonResponse({'error': f"Acción desconocida: {data.get('action')}"}, status=400)
+    except Exception as e:
+        print(f"Error en webhook de Suplai: {str(e)}")
+        return JsonResponse({'error': str(e)}, status=500)
+
+
 def respuesta_pago(request, estado=None, usuario=None):
     """Maneja las respuestas de pago de MercadoPago"""
     # Obtener el pedido desde los parámetros GET o POST

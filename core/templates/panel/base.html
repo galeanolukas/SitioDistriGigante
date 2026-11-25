@@ -66,6 +66,9 @@
                 <a href="{% url 'panel_mp' %}" class="cat-chip {% if request.resolver_match.url_name == 'panel_mp' %}active{% endif %}">
                     <i class="bi bi-credit-card"></i> Pagos
                 </a>
+                <a href="{% url 'panel_suplai' %}" class="cat-chip {% if request.resolver_match.url_name == 'panel_suplai' %}active{% endif %}">
+                    <i class="bi bi-arrow-repeat"></i> Suplai
+                </a>
                 {% endif %}
             </div>
         </div>
