@@ -156,6 +156,19 @@ body {
 .cat-chip.chip-oferta { background: var(--yellow); border-color: var(--yellow); color: var(--blue-dark); font-weight: 800; }
 .cat-chip.chip-oferta.active { background: #fff; color: var(--accent); border-color: #fff; }
 
+/* ---------- Subcategorías ---------- */
+.subs-bar {
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,.08);
+}
+.subs-bar .cat-chip {
+    background: #f0f2f5;
+    color: var(--blue-dark);
+    border-color: transparent;
+}
+.subs-bar .cat-chip:hover { background: #e2e6ea; color: var(--blue-dark); }
+.subs-bar .cat-chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
 /* ---------- Flyers ---------- */
 .flyer-slide {
     position: relative;

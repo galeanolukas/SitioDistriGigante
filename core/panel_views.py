@@ -6,7 +6,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User, Group
 from django.core.paginator import Paginator
-from django.db.models import Q, Sum, Count
+from django.db.models import Q, Sum, Count, Prefetch
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from django.views.decorators.http import require_POST
@@ -14,12 +14,13 @@ from django.views.decorators.http import require_POST
 from .forms import PanelProductForm, MercadoPagoCuentaForm
 from .importer import importar_lista_precios
 from .models import (Pedido, Product, MovimientoCaja, Category, Perfil,
-                     DetallePedido, MercadoPagoCuenta, ConfiguracionTienda)
+                     DetallePedido, MercadoPagoCuenta, ConfiguracionTienda,
+                     ClienteVendedor, MainCategory)
 
 
 # ---------- Roles ----------
 
-ROLES_PANEL = {'mostrador', 'deposito', 'caja', 'admin'}
+ROLES_PANEL = {'mostrador', 'deposito', 'caja', 'admin', 'vendedor'}
 
 ROL_LABELS = {
     'admin': 'Administrador',
@@ -115,6 +116,8 @@ def pedido_accion(request, pedido_id):
 
 @panel_access
 def home(request):
+    if request.rol == 'vendedor':
+        return redirect('panel_clientes')
     hoy = timezone.now().date()
     pedidos_hoy = Pedido.objects.filter(fecha_pedido__date=hoy).exclude(estado='cancelado')
 
@@ -251,6 +254,8 @@ def pedidos(request):
 
     qs = (Pedido.objects.select_related('cliente', 'vendedor', 'opcion_envio')
           .order_by('-fecha_pedido'))
+    if request.rol == 'vendedor':
+        qs = qs.filter(vendedor=request.user)
     if estado:
         qs = qs.filter(estado=estado)
     if q:
@@ -303,27 +308,44 @@ def _asignar_rol(user, rol, es_admin=False):
 
 @panel_access
 def categorias(request):
-    """Gestión de categorías: orden y visibilidad en la tienda"""
+    """Gestión de categorías (rubros) y subcategorías"""
     if not _solo_admin(request):
         return redirect('panel')
 
     if request.method == 'POST':
-        nombre = request.POST.get('nombre', '').strip()
-        if nombre:
-            ultimo = Category.objects.aggregate(m=Count('id'))['m'] or 0
-            Category.objects.get_or_create(
-                nombre=nombre,
-                defaults={'orden': request.POST.get('orden') or ultimo},
-            )
-            messages.success(request, f"Categoría '{nombre}' creada.")
-        else:
-            messages.error(request, "Ingresá un nombre para la categoría.")
+        if 'crear_rubro' in request.POST:
+            nombre = request.POST.get('nombre', '').strip()
+            if nombre:
+                MainCategory.objects.get_or_create(nombre=nombre)
+                messages.success(request, f"Categoría '{nombre}' creada.")
+            else:
+                messages.error(request, "Ingresá un nombre para la categoría.")
+        elif 'crear_sub' in request.POST:
+            nombre = request.POST.get('nombre', '').strip()
+            main = MainCategory.objects.filter(
+                id=_post_int(request, 'main_id')).first()
+            if nombre and main:
+                ultimo = Category.objects.aggregate(m=Count('id'))['m'] or 0
+                Category.objects.get_or_create(
+                    nombre=nombre,
+                    defaults={'main': main,
+                              'orden': request.POST.get('orden') or ultimo},
+                )
+                messages.success(request,
+                    f"Subcategoría '{nombre}' creada en {main.nombre}.")
+            else:
+                messages.error(request,
+                    "Ingresá nombre y elegí la categoría principal.")
         return redirect('panel_categorias')
 
+    subs = (Category.objects.select_related('main')
+            .annotate(total_productos=Count('categoria')))
+    rubros = (MainCategory.objects.all()
+              .prefetch_related(Prefetch('category_set', queryset=subs,
+                                         to_attr='subs')))
     context = {
         'rol': request.rol,
-        'categorias': Category.objects.annotate(
-            total_productos=Count('categoria')),
+        'rubros': rubros,
     }
     return render(request, 'panel/categorias.html', context)
 
@@ -339,8 +361,43 @@ def categoria_guardar(request, cat_id):
         cat.nombre = nombre
     cat.orden = request.POST.get('orden') or 0
     cat.visible = request.POST.get('visible') == 'on'
+    main = MainCategory.objects.filter(
+        id=_post_int(request, 'main_id')).first()
+    if main:
+        cat.main = main
     cat.save()
-    messages.success(request, f"Categoría '{cat.nombre}' actualizada.")
+    messages.success(request, f"Subcategoría '{cat.nombre}' actualizada.")
+    return redirect('panel_categorias')
+
+
+@panel_access
+@require_POST
+def rubro_guardar(request, rubro_id):
+    if not _solo_admin(request):
+        return redirect('panel')
+    rubro = get_object_or_404(MainCategory, id=rubro_id)
+    nombre = request.POST.get('nombre', '').strip()
+    if nombre:
+        rubro.nombre = nombre
+    rubro.mostrar = request.POST.get('mostrar') == 'on'
+    rubro.save()
+    messages.success(request, f"Categoría '{rubro.nombre}' actualizada.")
+    return redirect('panel_categorias')
+
+
+@panel_access
+@require_POST
+def rubro_borrar(request, rubro_id):
+    if not _solo_admin(request):
+        return redirect('panel')
+    rubro = get_object_or_404(MainCategory, id=rubro_id)
+    if rubro.category_set.exists():
+        messages.error(request,
+            f"'{rubro.nombre}' tiene subcategorías. "
+            "Reasignalas o borralas antes.")
+    else:
+        rubro.delete()
+        messages.success(request, "Categoría eliminada.")
     return redirect('panel_categorias')
 
 
@@ -424,6 +481,117 @@ def usuario_guardar(request, user_id):
 
     messages.success(request, f"Usuario '{user.username}' actualizado.")
     return redirect('panel_usuarios')
+
+
+# ---------- Clientes y vendedores (admin + vendedor) ----------
+
+def _post_int(request, key):
+    try:
+        return int(request.POST.get(key) or 0)
+    except (TypeError, ValueError):
+        return 0
+
+
+@panel_access
+def clientes(request):
+    """Gestión de clientes y su asignación a vendedores.
+    Admin: ve todo y asigna a cualquier vendedor.
+    Vendedor: ve sus clientes y se auto-asigna clientes libres."""
+    es_vendedor = request.rol == 'vendedor'
+    if not puede(request.rol, 'vendedor'):
+        messages.error(request, "Esta sección es para Admin y Vendedores.")
+        return redirect('panel')
+
+    perfil_usuario, _ = Perfil.objects.get_or_create(
+        user=request.user, defaults={'tipo_usuario': request.rol})
+
+    clientes_qs = Perfil.objects.filter(
+        tipo_usuario='cliente').select_related('user')
+
+    if es_vendedor:
+        asignaciones = ClienteVendedor.objects.filter(
+            vendedor=perfil_usuario).select_related('cliente__user', 'vendedor__user')
+        mios = asignaciones.values_list('cliente_id', flat=True)
+        todos_clientes = clientes_qs.exclude(id__in=mios)
+    else:
+        asignaciones = ClienteVendedor.objects.all().select_related(
+            'cliente__user', 'vendedor__user')
+        todos_clientes = clientes_qs
+
+    if request.method == 'POST':
+        if 'crear_cliente' in request.POST:
+            username = request.POST.get('username', '').strip()
+            password = request.POST.get('password', '').strip()
+            if not username or not password:
+                messages.error(request, "Usuario y contraseña son obligatorios.")
+            elif User.objects.filter(username=username).exists():
+                messages.error(request, f"El usuario '{username}' ya existe.")
+            else:
+                user = User.objects.create_user(
+                    username=username, password=password,
+                    first_name=request.POST.get('nombre', '').strip())
+                _asignar_rol(user, 'cliente')
+                if es_vendedor:
+                    ClienteVendedor.objects.create(
+                        cliente=user.perfil, vendedor=perfil_usuario)
+                    messages.success(request,
+                        f"Cliente '{username}' creado y asignado a tu cartera.")
+                else:
+                    messages.success(request, f"Cliente '{username}' creado.")
+
+        elif 'asignar_cliente' in request.POST:
+            cliente = Perfil.objects.filter(
+                id=_post_int(request, 'cliente_id'),
+                tipo_usuario='cliente').first()
+            if not cliente:
+                messages.error(request, "Seleccioná un cliente válido.")
+            else:
+                if es_vendedor:
+                    vendedor = perfil_usuario
+                else:
+                    vendedor = Perfil.objects.filter(
+                        id=_post_int(request, 'vendedor_id'),
+                        tipo_usuario__in=['vendedor', 'admin']).first()
+                    if not vendedor:
+                        messages.error(request, "Seleccioná un vendedor válido.")
+                        return redirect('panel_clientes')
+                asignacion, created = ClienteVendedor.objects.get_or_create(
+                    cliente=cliente, defaults={'vendedor': vendedor})
+                if not created:
+                    asignacion.vendedor = vendedor
+                    asignacion.save()
+                messages.success(request,
+                    f"'{cliente.user.username}' asignado a "
+                    f"'{vendedor.user.username}'.")
+
+        elif 'eliminar_asignacion' in request.POST:
+            qs = ClienteVendedor.objects.filter(
+                id=_post_int(request, 'asignacion_id'))
+            if es_vendedor:
+                qs = qs.filter(vendedor=perfil_usuario)
+            asignacion = qs.first()
+            if asignacion:
+                nombre = asignacion.cliente.user.username
+                asignacion.delete()
+                messages.success(request,
+                    f"Se quitó la asignación de '{nombre}'.")
+            else:
+                messages.error(request, "Asignación no encontrada.")
+
+        return redirect('panel_clientes')
+
+    context = {
+        'rol': request.rol,
+        'asignaciones': asignaciones,
+        'todos_clientes': todos_clientes.order_by('user__username'),
+        'vendedores': (Perfil.objects.filter(tipo_usuario__in=['vendedor', 'admin'],
+                                             user__is_active=True)
+                       .select_related('user').order_by('user__username')
+                       if not es_vendedor else None),
+        'sin_asignar': clientes_qs.exclude(
+            id__in=ClienteVendedor.objects.values('cliente_id')).count(),
+    }
+    return render(request, 'panel/clientes.html', context)
 
 
 @panel_access
@@ -642,6 +810,9 @@ def suplai(request):
         if accion == 'guardar':
             cfg.suplai_sync_activo = 'suplai_sync_activo' in request.POST
             cfg.suplai_sync_precios = 'suplai_sync_precios' in request.POST
+            lista = request.POST.get('suplai_lista_precio', '').strip()
+            if lista:
+                cfg.suplai_lista_precio = lista
             try:
                 cfg.suplai_sync_intervalo = max(
                     5, int(request.POST.get('suplai_sync_intervalo') or 30))
@@ -674,6 +845,11 @@ def suplai(request):
 
     context['ultimo'] = ultimo
     context['webhook_url'] = request.build_absolute_uri('/api/suplai/webhook/')
+    try:
+        from .suplai import fetch_listas_precios
+        context['listas'] = fetch_listas_precios()
+    except Exception:
+        context['listas'] = []
     return render(request, 'panel/suplai.html', context)
 
 

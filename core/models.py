@@ -1068,6 +1068,9 @@ class ConfiguracionTienda(models.Model):
     suplai_sync_precios = models.BooleanField(
         default=True, verbose_name="Actualizar también precios",
         help_text="Si está apagado solo se actualiza el stock")
+    suplai_lista_precio = models.CharField(
+        max_length=64, default='1', verbose_name="Lista de precios Suplai",
+        help_text="lista_id de SUPLAI_PRECIOS usada como precio de venta")
     suplai_ultimo_sync = models.DateTimeField(
         null=True, blank=True, verbose_name="Último sync Suplai")
     suplai_ultimo_reporte = models.TextField(

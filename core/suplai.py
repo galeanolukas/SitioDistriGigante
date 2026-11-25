@@ -34,16 +34,38 @@ def conectar():
         cursorclass=pymysql.cursors.DictCursor)
 
 
-def fetch_productos():
-    """Devuelve las filas de SUPLAI_PRODUCTOS como lista de dicts."""
+def fetch_productos(lista_id='1'):
+    """Devuelve las filas de SUPLAI_PRODUCTOS como lista de dicts.
+
+    El precio sale de la grilla SUPLAI_PRECIOS para la `lista_id`
+    configurada; si el SKU no está en esa lista se usa `precio1`
+    de la ficha del producto.
+    """
     conn = conectar()
     try:
         with conn.cursor() as cur:
             cur.execute("""
-                SELECT sku, nombre, nombre_largo, marca, categoria,
-                       subcategoria, stock_disponible, precio1,
-                       unidades_por_bulto, activo
-                FROM SUPLAI_PRODUCTOS
+                SELECT p.sku, p.nombre, p.nombre_largo, p.marca, p.categoria,
+                       p.subcategoria, p.stock_disponible,
+                       COALESCE(pr.precio_unidad, p.precio1) AS precio1,
+                       p.unidades_por_bulto, p.activo
+                FROM SUPLAI_PRODUCTOS p
+                LEFT JOIN SUPLAI_PRECIOS pr
+                       ON pr.sku = p.sku AND pr.lista_id = %s
+                """, (str(lista_id),))
+            return cur.fetchall()
+    finally:
+        conn.close()
+
+
+def fetch_listas_precios():
+    """Listas de precios disponibles en Suplai (para elegir en el panel)."""
+    conn = conectar()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT lista_id, nombre, activa
+                FROM SUPLAI_LISTAS_PRECIOS ORDER BY lista_id
                 """)
             return cur.fetchall()
     finally:
@@ -55,7 +77,8 @@ def _guardar_reporte(reporte):
     try:
         resumen = {k: v for k, v in reporte.items()
                    if k in ('filas_suplai', 'actualizados', 'sin_cambios',
-                            'nuevos', 'sin_match', 'aplicado', 'error')}
+                            'nuevos', 'sin_match', 'aplicado', 'error',
+                            'lista_precio')}
         resumen['bajas'] = len(reporte.get('bajas', []))
         cfg = ConfiguracionTienda.get()
         cfg.suplai_ultimo_sync = timezone.now()
@@ -65,15 +88,19 @@ def _guardar_reporte(reporte):
         pass
 
 
-def sync_suplai(aplicar=False, usuario=None, sync_precios=True):
+def sync_suplai(aplicar=False, usuario=None, sync_precios=True, lista_id=None):
     """Sincroniza Product con SUPLAI_PRODUCTOS.
 
     - sku presente y activo con precio > 0: actualiza (o crea) el producto
     - sku presente pero inactivo o precio <= 0: stock=0 (baja)
     - productos locales que no figuran en Suplai: no se tocan
     - sync_precios=False actualiza solo stock (conserva el precio local)
+    - el precio sale de la grilla SUPLAI_PRECIOS de `lista_id`
+      (por defecto la configurada en el panel; fallback a precio1)
     """
-    filas = fetch_productos()
+    if lista_id is None:
+        lista_id = (ConfiguracionTienda.get().suplai_lista_precio or '1').strip()
+    filas = fetch_productos(lista_id)
 
     productos_db = list(Product.objects.select_related('categoria').all())
     # numeros duplicados: preferir el producto que tiene imagen
@@ -134,6 +161,7 @@ def sync_suplai(aplicar=False, usuario=None, sync_precios=True):
     sin_match = [p for p in productos_db if p.id not in tocados]
 
     reporte = {
+        'lista_precio': lista_id,
         'filas_suplai': len(filas),
         'actualizados': len(actualizados),
         'sin_cambios': sin_cambios,

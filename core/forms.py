@@ -276,8 +276,19 @@ class ProductForm(forms.ModelForm):
         super(ProductForm, self).__init__(*args, **kwargs)
         self.fields["descripcion"].required = False
 
+class CategoriaChoiceField(forms.ModelChoiceField):
+    """Muestra la subcategoría con el prefijo de su categoría principal"""
+    def label_from_instance(self, obj):
+        return f"{obj.main} — {obj.nombre}" if obj.main_id else obj.nombre
+
+
 class PanelProductForm(forms.ModelForm):
     """Form de producto para el panel nuevo, con clases bootstrap"""
+    categoria = CategoriaChoiceField(
+        queryset=Category.objects.select_related('main')
+                .order_by('main__nombre', 'orden', 'nombre'),
+        required=False)
+
     class Meta:
         model = Product
         fields = ['nombre', 'numero', 'precio', 'precio_m', 'marca', 'stock',

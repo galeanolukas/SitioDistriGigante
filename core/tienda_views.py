@@ -14,6 +14,7 @@ from django.views.decorators.http import require_POST
 from .models import (Product, Category, Oferta, CarruselImages, Pedido,
                      DetallePedido, OpcionEnvio, Cliente, ConfiguracionTienda,
                      MercadoPagoCuenta)
+from .context_processors import subs_visibles
 from . import tienda_cart
 from .whatsapp import wa_url, mensaje_pedido
 from .utils import MPCheckOut, CuentaMpTest
@@ -47,36 +48,54 @@ def _pedido_es_mio(request, pedido):
 
 
 @ensure_csrf_cookie
-def tienda(request, tp=None):
-    """Catálogo principal: buscador, categorías, ofertas y flyers"""
+def tienda(request, tp=None, es_rubro=False):
+    """Catálogo principal: buscador, categorías, ofertas y flyers.
+    tp + es_rubro=True filtra por categoría principal; tp solo filtra
+    por subcategoría."""
     _guardar_ref_vendedor(request)
     Oferta.desactivar_ofertas_expiradas()
 
     q = request.GET.get('q', '').strip()
     orden = obtener_orden_configurado()
+    # Agrupa el catálogo por categoría y subcategoría
+    orden_jerarquico = ('categoria__main__nombre', 'categoria__orden',
+                        'categoria__nombre', orden)
 
+    rubro_activo = None
     if q:
         products = Product.objects.filter(
             Q(nombre__icontains=q) | Q(marca__icontains=q)
         ).order_by(orden)
     elif tp == 'ofertas':
         products = Product.objects.filter(en_oferta__activa=True).order_by(orden)
+    elif es_rubro:
+        products = Product.objects.filter(
+            categoria__main__nombre=tp).order_by(*orden_jerarquico)
+        rubro_activo = tp
     elif tp:
         products = Product.objects.filter(categoria__nombre=tp).order_by(orden)
+        cat = Category.objects.filter(nombre=tp).select_related('main').first()
+        if cat and cat.main_id:
+            rubro_activo = cat.main.nombre
     else:
-        products = Product.objects.all().order_by(orden)
+        products = Product.objects.all().order_by(*orden_jerarquico)
 
     paginator = Paginator(products.select_related('en_oferta', 'categoria'),
                           PRODUCTOS_POR_PAGINA)
     page_obj = paginator.get_page(request.GET.get('page'))
 
+    subs_activas = (subs_visibles().filter(main__nombre=rubro_activo)
+                    if rubro_activo else [])
+
     context = {
         'products': page_obj,
-        'categorias': Category.objects.filter(visible=True).select_related('main'),
         'ofertas': Oferta.objects.filter(activa=True).select_related('producto')[:12],
         'flyers': CarruselImages.objects.all(),
         'destacados': Product.objects.filter(destacado=True, stock__gt=0)[:8],
         'tp': tp,
+        'es_rubro': es_rubro,
+        'rubro_activo': rubro_activo,
+        'subs_activas': subs_activas,
         'q': q,
     }
     return render(request, 'tienda/catalogo.html', context)

@@ -73,11 +73,21 @@
                 <a href="{% url 'ordenar_x' 'ofertas' %}" class="cat-chip chip-oferta {% if tp == 'ofertas' %}active{% endif %}">
                     <i class="bi bi-lightning-charge-fill"></i> Ofertas
                 </a>
-                {% for cat in categorias %}
-                <a href="{% url 'ordenar_x' cat.nombre %}" class="cat-chip {% if tp == cat.nombre %}active{% endif %}">{{ cat.nombre }}</a>
+                {% for rubro in rubros %}
+                <a href="{% url 'ordenar_rubro' rubro.nombre %}" class="cat-chip {% if rubro_activo == rubro.nombre %}active{% endif %}">{{ rubro.nombre }}</a>
                 {% endfor %}
             </div>
         </div>
+        {% if subs_activas %}
+        <div class="subs-bar">
+            <div class="container-fluid catalog-wrap cats-scroll">
+                <a href="{% url 'ordenar_rubro' rubro_activo %}" class="cat-chip {% if es_rubro %}active{% endif %}">Todo</a>
+                {% for sub in subs_activas %}
+                <a href="{% url 'ordenar_x' sub.nombre %}" class="cat-chip {% if tp == sub.nombre and not es_rubro %}active{% endif %}">{{ sub.nombre }}</a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
     </header>
 
     <main class="container-fluid catalog-wrap py-3 pb-5">

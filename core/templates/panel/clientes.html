@@ -1,0 +1,144 @@
+{% extends 'panel/base.html' %}
+{% block title %}{% if rol == 'vendedor' %}Mis clientes{% else %}Clientes y vendedores{% endif %} — Panel GIGANTE{% endblock %}
+
+{% block content %}
+<h1 class="seccion-titulo mb-1">
+    {% if rol == 'vendedor' %}Mis clientes{% else %}Clientes y vendedores{% endif %}
+</h1>
+<p class="text-muted small mb-3">
+    {% if rol == 'vendedor' %}
+        Creá clientes y asignalos a tu cartera. Hay {{ sin_asignar }} sin vendedor asignado.
+    {% else %}
+        Asigná cada cliente a un vendedor. Hay {{ sin_asignar }} sin vendedor asignado.
+    {% endif %}
+</p>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="panel-card h-100">
+            <h2 class="h6 fw-bold mb-3"><i class="bi bi-person-plus"></i> Nuevo cliente</h2>
+            <form method="post" class="row g-2">
+                {% csrf_token %}
+                <input type="hidden" name="crear_cliente" value="1">
+                <div class="col-12">
+                    <label class="form-label small mb-1">Usuario *</label>
+                    <input type="text" name="username" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-6">
+                    <label class="form-label small mb-1">Contraseña *</label>
+                    <input type="text" name="password" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-6">
+                    <label class="form-label small mb-1">Nombre</label>
+                    <input type="text" name="nombre" class="form-control form-control-sm">
+                </div>
+                <div class="col-12">
+                    <button class="btn-cta btn-sm w-100">Crear cliente</button>
+                </div>
+                {% if rol == 'vendedor' %}
+                <small class="text-muted">Se asigna automáticamente a tu cartera.</small>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="panel-card h-100">
+            <h2 class="h6 fw-bold mb-3">
+                <i class="bi bi-link"></i>
+                {% if rol == 'vendedor' %}Asignar cliente a mi cartera{% else %}Asignar cliente a vendedor{% endif %}
+            </h2>
+            <form method="post" class="row g-2">
+                {% csrf_token %}
+                <input type="hidden" name="asignar_cliente" value="1">
+                <div class="col-12">
+                    <input type="text" id="filtroCliente" class="form-control form-control-sm"
+                           placeholder="Buscar cliente...">
+                </div>
+                <div class="col-{% if rol == 'vendedor' %}12{% else %}6{% endif %}">
+                    <label class="form-label small mb-1">Cliente</label>
+                    <select name="cliente_id" id="selectCliente" class="form-select form-select-sm" required size="6">
+                        {% for c in todos_clientes %}
+                        <option value="{{ c.id }}"
+                                data-txt="{{ c.user.username|lower }} {{ c.user.first_name|lower }} {{ c.user.email|lower }}">
+                            {{ c.user.username }}{% if c.user.first_name %} — {{ c.user.first_name }}{% endif %}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% if rol != 'vendedor' %}
+                <div class="col-6">
+                    <label class="form-label small mb-1">Vendedor</label>
+                    <select name="vendedor_id" class="form-select form-select-sm" required size="6">
+                        {% for v in vendedores %}
+                        <option value="{{ v.id }}">
+                            {{ v.user.username }}{% if v.user.first_name %} — {{ v.user.first_name }}{% endif %}
+                            ({{ v.get_tipo_usuario_display }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endif %}
+                <div class="col-12">
+                    <button class="btn-cta btn-sm w-100">Asignar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="panel-card p-0 overflow-hidden">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Cliente</th>
+                    {% if rol != 'vendedor' %}<th>Vendedor</th>{% endif %}
+                    <th class="d-none d-md-table-cell">Desde</th>
+                    <th class="text-end"></th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for a in asignaciones %}
+                <tr>
+                    <td class="fw-semibold">
+                        {{ a.cliente.user.username }}
+                        <div class="small text-muted fw-normal">{{ a.cliente.user.first_name }}</div>
+                    </td>
+                    {% if rol != 'vendedor' %}
+                    <td>
+                        {{ a.vendedor.user.username }}
+                        <span class="badge rounded-pill text-bg-light">{{ a.vendedor.get_tipo_usuario_display }}</span>
+                    </td>
+                    {% endif %}
+                    <td class="d-none d-md-table-cell text-muted small">{{ a.fecha_asignacion|date:'d/m/Y' }}</td>
+                    <td class="text-end">
+                        <form method="post" class="d-inline"
+                              onsubmit="return confirm('¿Quitar la asignación de {{ a.cliente.user.username }}?')">
+                            {% csrf_token %}
+                            <input type="hidden" name="eliminar_asignacion" value="1">
+                            <input type="hidden" name="asignacion_id" value="{{ a.id }}">
+                            <button class="btn btn-sm btn-outline-danger">
+                                <i class="bi bi-x-lg"></i> Quitar
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="4" class="text-center text-muted py-4">
+                    {% if rol == 'vendedor' %}Todavía no tenés clientes asignados.{% else %}No hay asignaciones.{% endif %}
+                </td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+document.getElementById('filtroCliente').addEventListener('input', function () {
+    const f = this.value.toLowerCase();
+    document.querySelectorAll('#selectCliente option').forEach(o => {
+        o.style.display = o.dataset.txt.includes(f) ? '' : 'none';
+    });
+});
+</script>
+{% endblock %}

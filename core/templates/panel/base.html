@@ -47,6 +47,11 @@
                 <a href="{% url 'panel_pedidos' %}" class="cat-chip {% if request.resolver_match.url_name == 'panel_pedidos' %}active{% endif %}">
                     <i class="bi bi-receipt"></i> Pedidos
                 </a>
+                {% if rol == 'admin' or rol == 'vendedor' %}
+                <a href="{% url 'panel_clientes' %}" class="cat-chip {% if request.resolver_match.url_name == 'panel_clientes' %}active{% endif %}">
+                    <i class="bi bi-person-lines-fill"></i> {% if rol == 'vendedor' %}Mis clientes{% else %}Clientes{% endif %}
+                </a>
+                {% endif %}
                 {% if rol == 'admin' %}
                 <a href="{% url 'panel_categorias' %}" class="cat-chip {% if request.resolver_match.url_name == 'panel_categorias' %}active{% endif %}">
                     <i class="bi bi-tags"></i> Categorías

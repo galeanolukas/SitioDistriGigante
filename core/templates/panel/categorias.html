@@ -3,40 +3,95 @@
 
 {% block content %}
 <h1 class="seccion-titulo mb-1">Categorías</h1>
-<p class="text-muted small mb-3">Definí qué categorías se muestran en la tienda y en qué orden (menor número = primero).</p>
+<p class="text-muted small mb-3">
+    La tienda muestra las categorías como botones y sus subcategorías debajo.
+    Solo aparecen las visibles que tienen productos. Orden: menor número = primero.
+</p>
 
-<div class="panel-card mb-4">
-    <h2 class="h6 fw-bold mb-3"><i class="bi bi-plus-circle"></i> Nueva categoría</h2>
-    <form method="post" class="row g-2 align-items-end">
-        {% csrf_token %}
-        <div class="col-8 col-md-6">
-            <label class="form-label small mb-1">Nombre</label>
-            <input type="text" name="nombre" class="form-control form-control-sm" required>
+<div class="row g-3 mb-4">
+    <div class="col-md-5">
+        <div class="panel-card h-100">
+            <h2 class="h6 fw-bold mb-3"><i class="bi bi-plus-circle"></i> Nueva categoría</h2>
+            <form method="post" class="row g-2 align-items-end">
+                {% csrf_token %}
+                <input type="hidden" name="crear_rubro" value="1">
+                <div class="col-8">
+                    <label class="form-label small mb-1">Nombre</label>
+                    <input type="text" name="nombre" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-4">
+                    <button class="btn-cta btn-sm w-100">Crear</button>
+                </div>
+            </form>
         </div>
-        <div class="col-4 col-md-3">
-            <label class="form-label small mb-1">Orden</label>
-            <input type="number" name="orden" class="form-control form-control-sm" min="0" placeholder="Auto">
+    </div>
+    <div class="col-md-7">
+        <div class="panel-card h-100">
+            <h2 class="h6 fw-bold mb-3"><i class="bi bi-plus-circle"></i> Nueva subcategoría</h2>
+            <form method="post" class="row g-2 align-items-end">
+                {% csrf_token %}
+                <input type="hidden" name="crear_sub" value="1">
+                <div class="col-12 col-md-5">
+                    <label class="form-label small mb-1">Categoría</label>
+                    <select name="main_id" class="form-select form-select-sm" required>
+                        {% for rubro in rubros %}
+                        <option value="{{ rubro.id }}">{{ rubro.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-8 col-md-4">
+                    <label class="form-label small mb-1">Nombre</label>
+                    <input type="text" name="nombre" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-4 col-md-2">
+                    <label class="form-label small mb-1">Orden</label>
+                    <input type="number" name="orden" class="form-control form-control-sm" min="0" placeholder="Auto">
+                </div>
+                <div class="col-12 col-md-1">
+                    <button class="btn-cta btn-sm w-100"><i class="bi bi-check-lg"></i></button>
+                </div>
+            </form>
         </div>
-        <div class="col-12 col-md-3">
-            <button class="btn-cta btn-sm w-100">Crear</button>
-        </div>
-    </form>
+    </div>
 </div>
 
-<div class="panel-card p-0 overflow-hidden">
+{% for rubro in rubros %}
+<div class="panel-card p-0 overflow-hidden mb-4 {% if not rubro.mostrar %}opacity-75{% endif %}">
+    <div class="d-flex flex-wrap align-items-center gap-2 px-3 py-2 bg-light border-bottom">
+        <i class="bi bi-tag-fill text-secondary"></i>
+        <input form="rubro-{{ rubro.id }}" type="text" name="nombre" value="{{ rubro.nombre }}"
+               class="form-control form-control-sm fw-bold" style="max-width:280px" required>
+        <span class="badge rounded-pill text-bg-secondary">{{ rubro.subs|length }} sub</span>
+        <div class="form-check form-switch ms-auto mb-0">
+            <input form="rubro-{{ rubro.id }}" class="form-check-input" type="checkbox"
+                   name="mostrar" id="mostrar-{{ rubro.id }}" {% if rubro.mostrar %}checked{% endif %}>
+            <label class="form-check-label small" for="mostrar-{{ rubro.id }}">Mostrar en tienda</label>
+        </div>
+        <button form="rubro-{{ rubro.id }}" class="btn btn-sm btn-outline-primary">
+            <i class="bi bi-check-lg"></i> Guardar
+        </button>
+        {% if not rubro.subs %}
+        <button form="del-rubro-{{ rubro.id }}" class="btn btn-sm btn-outline-danger"
+                onclick="return confirm('¿Eliminar la categoría {{ rubro.nombre }}?')">
+            <i class="bi bi-trash"></i>
+        </button>
+        {% endif %}
+    </div>
+    {% if rubro.subs %}
     <div class="table-responsive">
         <table class="table table-hover align-middle mb-0">
             <thead class="table-light">
                 <tr>
                     <th style="width:80px">Orden</th>
-                    <th>Nombre</th>
+                    <th>Subcategoría</th>
+                    <th class="d-none d-md-table-cell">Categoría</th>
                     <th class="d-none d-md-table-cell">Productos</th>
                     <th class="text-center">Visible</th>
                     <th class="text-end">Acciones</th>
                 </tr>
             </thead>
             <tbody>
-            {% for cat in categorias %}
+            {% for cat in rubro.subs %}
                 <tr class="{% if not cat.visible %}table-secondary text-muted{% endif %}">
                     <td>
                         <input form="cat-{{ cat.id }}" type="number" name="orden" value="{{ cat.orden }}"
@@ -45,6 +100,13 @@
                     <td>
                         <input form="cat-{{ cat.id }}" type="text" name="nombre" value="{{ cat.nombre }}"
                                class="form-control form-control-sm" required>
+                    </td>
+                    <td class="d-none d-md-table-cell">
+                        <select form="cat-{{ cat.id }}" name="main_id" class="form-select form-select-sm">
+                            {% for r in rubros %}
+                            <option value="{{ r.id }}" {% if r.id == cat.main_id %}selected{% endif %}>{{ r.nombre }}</option>
+                            {% endfor %}
+                        </select>
                     </td>
                     <td class="d-none d-md-table-cell">
                         <span class="badge rounded-pill text-bg-light">{{ cat.total_productos }}</span>
@@ -71,9 +133,22 @@
             </tbody>
         </table>
     </div>
+    {% else %}
+    <p class="text-muted small px-3 py-2 mb-0">Sin subcategorías.</p>
+    {% endif %}
 </div>
+{% endfor %}
 
-{% for cat in categorias %}
+{% for rubro in rubros %}
+<form id="rubro-{{ rubro.id }}" method="post" action="{% url 'panel_rubro_guardar' rubro.id %}" class="d-none">
+    {% csrf_token %}
+</form>
+{% if not rubro.subs %}
+<form id="del-rubro-{{ rubro.id }}" method="post" action="{% url 'panel_rubro_borrar' rubro.id %}" class="d-none">
+    {% csrf_token %}
+</form>
+{% endif %}
+{% for cat in rubro.subs %}
 <form id="cat-{{ cat.id }}" method="post" action="{% url 'panel_categoria_guardar' cat.id %}" class="d-none">
     {% csrf_token %}
 </form>
@@ -82,5 +157,6 @@
     {% csrf_token %}
 </form>
 {% endif %}
+{% endfor %}
 {% endfor %}
 {% endblock %}

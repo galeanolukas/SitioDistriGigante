@@ -20,12 +20,27 @@
             </div>
         </div>
         <div class="row g-2 align-items-end">
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <label class="form-label small mb-1">Intervalo (minutos, mínimo 5)</label>
                 <input type="number" name="suplai_sync_intervalo" class="form-control form-control-sm"
                        value="{{ cfg.suplai_sync_intervalo }}" min="5">
             </div>
-            <div class="col-md-5">
+            <div class="col-md-3">
+                <label class="form-label small mb-1">Lista de precios (grilla)</label>
+                {% if listas %}
+                <select name="suplai_lista_precio" class="form-select form-select-sm">
+                    {% for l in listas %}
+                    <option value="{{ l.lista_id }}" {% if l.lista_id == cfg.suplai_lista_precio %}selected{% endif %}>
+                        {{ l.nombre }} (id {{ l.lista_id }}){% if not l.activa %} — inactiva{% endif %}
+                    </option>
+                    {% endfor %}
+                </select>
+                {% else %}
+                <input type="text" name="suplai_lista_precio" class="form-control form-control-sm"
+                       value="{{ cfg.suplai_lista_precio }}" placeholder="id de lista, ej: 1">
+                {% endif %}
+            </div>
+            <div class="col-md-4">
                 <div class="form-check mt-4">
                     <input class="form-check-input" type="checkbox" name="suplai_sync_precios"
                            id="syncPrecios" {% if cfg.suplai_sync_precios %}checked{% endif %}>
@@ -34,7 +49,7 @@
                     </label>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <button class="btn-cta btn-sm w-100"><i class="bi bi-save"></i> Guardar</button>
             </div>
         </div>
@@ -50,6 +65,8 @@
             {% if ultimo.error %}
             <li class="list-group-item text-danger"><i class="bi bi-exclamation-triangle"></i> Error: {{ ultimo.error }}</li>
             {% else %}
+            <li class="list-group-item d-flex justify-content-between">
+                <span>Lista de precios</span><strong>{{ ultimo.lista_precio|default:cfg.suplai_lista_precio }}</strong></li>
             <li class="list-group-item d-flex justify-content-between">
                 <span>Productos en Suplai</span><strong>{{ ultimo.filas_suplai }}</strong></li>
             <li class="list-group-item d-flex justify-content-between">
@@ -105,6 +122,9 @@
         {% else %}<i class="bi bi-eye"></i> Previsualización — nada se guardó todavía{% endif %}
     </h2>
     <ul class="list-group list-group-flush mb-3">
+        <li class="list-group-item d-flex justify-content-between">
+            <span><i class="bi bi-tag"></i> Lista de precios usada</span>
+            <strong>{{ reporte.lista_precio|default:cfg.suplai_lista_precio }}</strong></li>
         <li class="list-group-item d-flex justify-content-between">
             <span><i class="bi bi-database"></i> Filas en Suplai</span>
             <strong>{{ reporte.filas_suplai }}</strong></li>
