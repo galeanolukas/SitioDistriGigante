@@ -15,7 +15,7 @@ from .forms import PanelProductForm, MercadoPagoCuentaForm
 from .importer import importar_lista_precios
 from .models import (Pedido, Product, MovimientoCaja, Category, Perfil,
                      DetallePedido, MercadoPagoCuenta, ConfiguracionTienda,
-                     ClienteVendedor, MainCategory)
+                     Cliente, MainCategory)
 
 
 # ---------- Roles ----------
@@ -494,102 +494,104 @@ def _post_int(request, key):
 
 @panel_access
 def clientes(request):
-    """Gestión de clientes y su asignación a vendedores.
-    Admin: ve todo y asigna a cualquier vendedor.
-    Vendedor: ve sus clientes y se auto-asigna clientes libres."""
+    """Gestión de clientes (identificados por WhatsApp/teléfono) y su
+    asignación a vendedores.
+    Admin: ve todos y asigna cualquier vendedor.
+    Vendedor: ve su cartera, crea clientes y toma los que están sin asignar."""
     es_vendedor = request.rol == 'vendedor'
     if not puede(request.rol, 'vendedor'):
         messages.error(request, "Esta sección es para Admin y Vendedores.")
         return redirect('panel')
 
-    perfil_usuario, _ = Perfil.objects.get_or_create(
-        user=request.user, defaults={'tipo_usuario': request.rol})
-
-    clientes_qs = Perfil.objects.filter(
-        tipo_usuario='cliente').select_related('user')
-
-    if es_vendedor:
-        asignaciones = ClienteVendedor.objects.filter(
-            vendedor=perfil_usuario).select_related('cliente__user', 'vendedor__user')
-        mios = asignaciones.values_list('cliente_id', flat=True)
-        todos_clientes = clientes_qs.exclude(id__in=mios)
-    else:
-        asignaciones = ClienteVendedor.objects.all().select_related(
-            'cliente__user', 'vendedor__user')
-        todos_clientes = clientes_qs
-
     if request.method == 'POST':
         if 'crear_cliente' in request.POST:
-            username = request.POST.get('username', '').strip()
-            password = request.POST.get('password', '').strip()
-            if not username or not password:
-                messages.error(request, "Usuario y contraseña son obligatorios.")
-            elif User.objects.filter(username=username).exists():
-                messages.error(request, f"El usuario '{username}' ya existe.")
+            nombre = request.POST.get('nombre', '').strip()
+            telefono = Cliente.normalizar_telefono(
+                request.POST.get('telefono', ''))
+            if not nombre or not telefono:
+                messages.error(request, "Nombre y teléfono son obligatorios.")
             else:
-                user = User.objects.create_user(
-                    username=username, password=password,
-                    first_name=request.POST.get('nombre', '').strip())
-                _asignar_rol(user, 'cliente')
-                if es_vendedor:
-                    ClienteVendedor.objects.create(
-                        cliente=user.perfil, vendedor=perfil_usuario)
-                    messages.success(request,
-                        f"Cliente '{username}' creado y asignado a tu cartera.")
-                else:
-                    messages.success(request, f"Cliente '{username}' creado.")
-
-        elif 'asignar_cliente' in request.POST:
-            cliente = Perfil.objects.filter(
-                id=_post_int(request, 'cliente_id'),
-                tipo_usuario='cliente').first()
-            if not cliente:
-                messages.error(request, "Seleccioná un cliente válido.")
-            else:
-                if es_vendedor:
-                    vendedor = perfil_usuario
-                else:
-                    vendedor = Perfil.objects.filter(
-                        id=_post_int(request, 'vendedor_id'),
-                        tipo_usuario__in=['vendedor', 'admin']).first()
-                    if not vendedor:
-                        messages.error(request, "Seleccioná un vendedor válido.")
-                        return redirect('panel_clientes')
-                asignacion, created = ClienteVendedor.objects.get_or_create(
-                    cliente=cliente, defaults={'vendedor': vendedor})
-                if not created:
-                    asignacion.vendedor = vendedor
-                    asignacion.save()
+                cliente, creado = Cliente.objects.get_or_create(
+                    telefono=telefono, defaults={'nombre': nombre})
+                if not creado:
+                    cliente.nombre = nombre
+                cliente.direccion = request.POST.get('direccion', '').strip()
+                cliente.localidad = request.POST.get('localidad', '').strip()
+                if es_vendedor and not cliente.vendedor_id:
+                    cliente.vendedor = request.user
+                cliente.save()
+                estado = 'creado' if creado else 'actualizado'
                 messages.success(request,
-                    f"'{cliente.user.username}' asignado a "
-                    f"'{vendedor.user.username}'.")
+                    f"Cliente '{nombre}' {estado}.")
 
-        elif 'eliminar_asignacion' in request.POST:
-            qs = ClienteVendedor.objects.filter(
-                id=_post_int(request, 'asignacion_id'))
+        elif 'asignar' in request.POST:
             if es_vendedor:
-                qs = qs.filter(vendedor=perfil_usuario)
-            asignacion = qs.first()
-            if asignacion:
-                nombre = asignacion.cliente.user.username
-                asignacion.delete()
-                messages.success(request,
-                    f"Se quitó la asignación de '{nombre}'.")
+                messages.error(request, "No podés reasignar vendedores.")
+                return redirect('panel_clientes')
+            cliente = Cliente.objects.filter(
+                id=_post_int(request, 'cliente_id')).first()
+            vendedor = User.objects.filter(
+                id=_post_int(request, 'vendedor_id'), is_active=True,
+                perfil__tipo_usuario__in=['vendedor', 'admin']).first()
+            if not cliente:
+                messages.error(request, "Cliente no encontrado.")
+            elif not vendedor:
+                messages.error(request, "Seleccioná un vendedor válido.")
             else:
-                messages.error(request, "Asignación no encontrada.")
+                cliente.vendedor = vendedor
+                cliente.save()
+                messages.success(request,
+                    f"'{cliente.nombre}' asignado a '{vendedor.username}'.")
+
+        elif 'desasignar' in request.POST:
+            qs = Cliente.objects.filter(id=_post_int(request, 'cliente_id'))
+            if es_vendedor:
+                qs = qs.filter(vendedor=request.user)
+            cliente = qs.first()
+            if cliente:
+                cliente.vendedor = None
+                cliente.save()
+                messages.success(request,
+                    f"'{cliente.nombre}' quedó sin vendedor asignado.")
+            else:
+                messages.error(request, "Cliente no encontrado.")
+
+        elif 'asignarme' in request.POST:
+            cliente = Cliente.objects.filter(
+                id=_post_int(request, 'cliente_id'),
+                vendedor__isnull=True).first()
+            if cliente:
+                cliente.vendedor = request.user
+                cliente.save()
+                messages.success(request,
+                    f"'{cliente.nombre}' quedó en tu cartera.")
+            else:
+                messages.error(request, "Ese cliente ya tiene vendedor.")
 
         return redirect('panel_clientes')
 
+    clientes_qs = (Cliente.objects.select_related('vendedor')
+                   .annotate(n_pedidos=Count('pedidos')))
+
+    if es_vendedor:
+        mis_clientes = clientes_qs.filter(vendedor=request.user)
+        libres = clientes_qs.filter(vendedor__isnull=True)
+    else:
+        mis_clientes = clientes_qs
+        libres = None
+
     context = {
         'rol': request.rol,
-        'asignaciones': asignaciones,
-        'todos_clientes': todos_clientes.order_by('user__username'),
-        'vendedores': (Perfil.objects.filter(tipo_usuario__in=['vendedor', 'admin'],
-                                             user__is_active=True)
-                       .select_related('user').order_by('user__username')
+        'mis_clientes': mis_clientes,
+        'libres': libres,
+        'sin_asignar': clientes_qs.filter(vendedor__isnull=True).count(),
+        'vendedores': (User.objects.filter(
+                           is_active=True,
+                           perfil__tipo_usuario__in=['vendedor', 'admin'])
+                       .select_related('perfil').order_by('username')
                        if not es_vendedor else None),
-        'sin_asignar': clientes_qs.exclude(
-            id__in=ClienteVendedor.objects.values('cliente_id')).count(),
+        'ref_link': request.build_absolute_uri(
+            f'/?ref={request.user.username}'),
     }
     return render(request, 'panel/clientes.html', context)
 

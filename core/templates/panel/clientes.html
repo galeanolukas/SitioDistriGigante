@@ -6,84 +6,50 @@
     {% if rol == 'vendedor' %}Mis clientes{% else %}Clientes y vendedores{% endif %}
 </h1>
 <p class="text-muted small mb-3">
-    {% if rol == 'vendedor' %}
-        Creá clientes y asignalos a tu cartera. Hay {{ sin_asignar }} sin vendedor asignado.
-    {% else %}
-        Asigná cada cliente a un vendedor. Hay {{ sin_asignar }} sin vendedor asignado.
-    {% endif %}
+    Los clientes quedan identificados por su número de WhatsApp cuando hacen
+    un pedido — no necesitan cuenta ni contraseña.
+    {% if rol != 'vendedor' %}Asigná cada uno a un vendedor.{% else %}Tenés {{ sin_asignar }} sin vendedor asignado.{% endif %}
 </p>
 
-<div class="row g-3 mb-4">
-    <div class="col-md-6">
-        <div class="panel-card h-100">
-            <h2 class="h6 fw-bold mb-3"><i class="bi bi-person-plus"></i> Nuevo cliente</h2>
-            <form method="post" class="row g-2">
-                {% csrf_token %}
-                <input type="hidden" name="crear_cliente" value="1">
-                <div class="col-12">
-                    <label class="form-label small mb-1">Usuario *</label>
-                    <input type="text" name="username" class="form-control form-control-sm" required>
-                </div>
-                <div class="col-6">
-                    <label class="form-label small mb-1">Contraseña *</label>
-                    <input type="text" name="password" class="form-control form-control-sm" required>
-                </div>
-                <div class="col-6">
-                    <label class="form-label small mb-1">Nombre</label>
-                    <input type="text" name="nombre" class="form-control form-control-sm">
-                </div>
-                <div class="col-12">
-                    <button class="btn-cta btn-sm w-100">Crear cliente</button>
-                </div>
-                {% if rol == 'vendedor' %}
-                <small class="text-muted">Se asigna automáticamente a tu cartera.</small>
-                {% endif %}
-            </form>
+{% if rol == 'vendedor' %}
+<div class="panel-card mb-4">
+    <h2 class="h6 fw-bold mb-2"><i class="bi bi-share"></i> Tu link de ventas</h2>
+    <p class="small text-muted mb-2">
+        Los pedidos que lleguen desde este link quedan atribuidos a vos y el
+        cliente pasa a tu cartera:
+    </p>
+    <code class="small d-block">{{ ref_link }}</code>
+</div>
+{% endif %}
+
+<div class="panel-card mb-4">
+    <h2 class="h6 fw-bold mb-3"><i class="bi bi-person-plus"></i> Nuevo cliente</h2>
+    <form method="post" class="row g-2">
+        {% csrf_token %}
+        <input type="hidden" name="crear_cliente" value="1">
+        <div class="col-6 col-md-3">
+            <label class="form-label small mb-1">Nombre *</label>
+            <input type="text" name="nombre" class="form-control form-control-sm" required>
         </div>
-    </div>
-    <div class="col-md-6">
-        <div class="panel-card h-100">
-            <h2 class="h6 fw-bold mb-3">
-                <i class="bi bi-link"></i>
-                {% if rol == 'vendedor' %}Asignar cliente a mi cartera{% else %}Asignar cliente a vendedor{% endif %}
-            </h2>
-            <form method="post" class="row g-2">
-                {% csrf_token %}
-                <input type="hidden" name="asignar_cliente" value="1">
-                <div class="col-12">
-                    <input type="text" id="filtroCliente" class="form-control form-control-sm"
-                           placeholder="Buscar cliente...">
-                </div>
-                <div class="col-{% if rol == 'vendedor' %}12{% else %}6{% endif %}">
-                    <label class="form-label small mb-1">Cliente</label>
-                    <select name="cliente_id" id="selectCliente" class="form-select form-select-sm" required size="6">
-                        {% for c in todos_clientes %}
-                        <option value="{{ c.id }}"
-                                data-txt="{{ c.user.username|lower }} {{ c.user.first_name|lower }} {{ c.user.email|lower }}">
-                            {{ c.user.username }}{% if c.user.first_name %} — {{ c.user.first_name }}{% endif %}
-                        </option>
-                        {% endfor %}
-                    </select>
-                </div>
-                {% if rol != 'vendedor' %}
-                <div class="col-6">
-                    <label class="form-label small mb-1">Vendedor</label>
-                    <select name="vendedor_id" class="form-select form-select-sm" required size="6">
-                        {% for v in vendedores %}
-                        <option value="{{ v.id }}">
-                            {{ v.user.username }}{% if v.user.first_name %} — {{ v.user.first_name }}{% endif %}
-                            ({{ v.get_tipo_usuario_display }})
-                        </option>
-                        {% endfor %}
-                    </select>
-                </div>
-                {% endif %}
-                <div class="col-12">
-                    <button class="btn-cta btn-sm w-100">Asignar</button>
-                </div>
-            </form>
+        <div class="col-6 col-md-3">
+            <label class="form-label small mb-1">WhatsApp / Teléfono *</label>
+            <input type="tel" name="telefono" class="form-control form-control-sm" required>
         </div>
-    </div>
+        <div class="col-6 col-md-3">
+            <label class="form-label small mb-1">Dirección</label>
+            <input type="text" name="direccion" class="form-control form-control-sm">
+        </div>
+        <div class="col-6 col-md-2">
+            <label class="form-label small mb-1">Localidad</label>
+            <input type="text" name="localidad" class="form-control form-control-sm">
+        </div>
+        <div class="col-12 col-md-1 d-flex align-items-end">
+            <button class="btn-cta btn-sm w-100">Crear</button>
+        </div>
+        {% if rol == 'vendedor' %}
+        <small class="text-muted">Si el cliente no tiene vendedor, queda en tu cartera.</small>
+        {% endif %}
+    </form>
 </div>
 
 <div class="panel-card p-0 overflow-hidden">
@@ -92,40 +58,71 @@
             <thead class="table-light">
                 <tr>
                     <th>Cliente</th>
-                    {% if rol != 'vendedor' %}<th>Vendedor</th>{% endif %}
-                    <th class="d-none d-md-table-cell">Desde</th>
-                    <th class="text-end"></th>
+                    <th class="d-none d-md-table-cell">Dirección</th>
+                    <th class="text-center">Pedidos</th>
+                    <th class="d-none d-md-table-cell">Última compra</th>
+                    {% if rol != 'vendedor' %}<th style="min-width:220px">Vendedor</th>
+                    {% else %}<th class="text-end"></th>{% endif %}
                 </tr>
             </thead>
             <tbody>
-            {% for a in asignaciones %}
-                <tr>
+            {% for c in mis_clientes %}
+                <tr class="{% if not c.vendedor_id %}table-warning{% endif %}">
                     <td class="fw-semibold">
-                        {{ a.cliente.user.username }}
-                        <div class="small text-muted fw-normal">{{ a.cliente.user.first_name }}</div>
+                        {{ c.nombre }}
+                        <div class="small text-muted fw-normal">
+                            <i class="bi bi-whatsapp"></i> {{ c.telefono }}
+                        </div>
+                    </td>
+                    <td class="d-none d-md-table-cell small text-muted">
+                        {{ c.direccion|default:'—' }}{% if c.localidad %}, {{ c.localidad }}{% endif %}
+                    </td>
+                    <td class="text-center">
+                        <span class="badge rounded-pill text-bg-light">{{ c.n_pedidos }}</span>
+                    </td>
+                    <td class="d-none d-md-table-cell small text-muted">
+                        {{ c.ultima_compra|date:'d/m/Y'|default:'—' }}
                     </td>
                     {% if rol != 'vendedor' %}
                     <td>
-                        {{ a.vendedor.user.username }}
-                        <span class="badge rounded-pill text-bg-light">{{ a.vendedor.get_tipo_usuario_display }}</span>
+                        <form method="post" class="d-flex gap-1">
+                            {% csrf_token %}
+                            <select name="vendedor_id" class="form-select form-select-sm">
+                                {% for v in vendedores %}
+                                <option value="{{ v.id }}" {% if c.vendedor_id == v.id %}selected{% endif %}>
+                                    {{ v.first_name|default:v.username }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <input type="hidden" name="cliente_id" value="{{ c.id }}">
+                            {% if c.vendedor_id %}
+                            <button name="asignar" value="1" class="btn btn-sm btn-outline-primary" title="Guardar">
+                                <i class="bi bi-check-lg"></i>
+                            </button>
+                            <button name="desasignar" value="1" class="btn btn-sm btn-outline-danger" title="Quitar vendedor">
+                                <i class="bi bi-x-lg"></i>
+                            </button>
+                            {% else %}
+                            <button name="asignar" value="1" class="btn btn-sm btn-cta">Asignar</button>
+                            {% endif %}
+                        </form>
                     </td>
-                    {% endif %}
-                    <td class="d-none d-md-table-cell text-muted small">{{ a.fecha_asignacion|date:'d/m/Y' }}</td>
+                    {% else %}
                     <td class="text-end">
                         <form method="post" class="d-inline"
-                              onsubmit="return confirm('¿Quitar la asignación de {{ a.cliente.user.username }}?')">
+                              onsubmit="return confirm('¿Quitar {{ c.nombre }} de tu cartera?')">
                             {% csrf_token %}
-                            <input type="hidden" name="eliminar_asignacion" value="1">
-                            <input type="hidden" name="asignacion_id" value="{{ a.id }}">
-                            <button class="btn btn-sm btn-outline-danger">
-                                <i class="bi bi-x-lg"></i> Quitar
+                            <input type="hidden" name="cliente_id" value="{{ c.id }}">
+                            <button name="desasignar" value="1" class="btn btn-sm btn-outline-danger">
+                                <i class="bi bi-x-lg"></i>
                             </button>
                         </form>
                     </td>
+                    {% endif %}
                 </tr>
             {% empty %}
-                <tr><td colspan="4" class="text-center text-muted py-4">
-                    {% if rol == 'vendedor' %}Todavía no tenés clientes asignados.{% else %}No hay asignaciones.{% endif %}
+                <tr><td colspan="6" class="text-center text-muted py-4">
+                    {% if rol == 'vendedor' %}Todavía no tenés clientes en tu cartera.{% else %}No hay clientes registrados.{% endif %}
                 </td></tr>
             {% endfor %}
             </tbody>
@@ -133,12 +130,35 @@
     </div>
 </div>
 
-<script>
-document.getElementById('filtroCliente').addEventListener('input', function () {
-    const f = this.value.toLowerCase();
-    document.querySelectorAll('#selectCliente option').forEach(o => {
-        o.style.display = o.dataset.txt.includes(f) ? '' : 'none';
-    });
-});
-</script>
+{% if rol == 'vendedor' and libres %}
+<div class="panel-card p-0 overflow-hidden mt-4">
+    <h2 class="h6 fw-bold px-3 pt-3 mb-0">
+        <i class="bi bi-person-plus"></i> Clientes sin vendedor ({{ libres|length }})
+    </h2>
+    <p class="small text-muted px-3 mb-2">Tomá los que sean tuyos con un click.</p>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <tbody>
+            {% for c in libres %}
+                <tr>
+                    <td class="fw-semibold">
+                        {{ c.nombre }}
+                        <div class="small text-muted fw-normal"><i class="bi bi-whatsapp"></i> {{ c.telefono }}</div>
+                    </td>
+                    <td class="d-none d-md-table-cell small text-muted">{{ c.direccion|default:'—' }}</td>
+                    <td class="text-center"><span class="badge rounded-pill text-bg-light">{{ c.n_pedidos }}</span></td>
+                    <td class="text-end">
+                        <form method="post" class="d-inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="cliente_id" value="{{ c.id }}">
+                            <button name="asignarme" value="1" class="btn btn-sm btn-cta">Asignarme</button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
 {% endblock %}
