@@ -1,6 +1,7 @@
 import json
 import os
 import tempfile
+from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -8,6 +9,7 @@ from django.contrib.auth.models import User, Group
 from django.core.paginator import Paginator
 from django.db.models import Q, Sum, Count, Prefetch
 from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
@@ -663,6 +665,16 @@ def flyer_borrar(request, flyer_id):
 
 # ---------- Productos (solo admin) ----------
 
+def _redirect_productos(request):
+    """Vuelve al listado conservando página y búsqueda de origen."""
+    url = reverse('panel_productos')
+    params = {k: v for k, v in request.GET.items()
+              if k in ('page', 'q') and v}
+    if params:
+        url += '?' + urlencode(params)
+    return redirect(url)
+
+
 @panel_access
 def productos(request):
     """Listado de productos con búsqueda y acceso a crear/editar"""
@@ -697,7 +709,7 @@ def producto_form(request, product_id=None):
         form.save()
         messages.success(request,
                          f"Producto '{form.instance.nombre}' guardado.")
-        return redirect('panel_productos')
+        return _redirect_productos(request)
 
     return render(request, 'panel/producto_form.html',
                   {'rol': request.rol, 'form': form, 'producto': producto})
@@ -720,7 +732,7 @@ def producto_borrar(request, product_id):
     else:
         producto.delete()
         messages.success(request, f"Producto '{producto.nombre}' eliminado.")
-    return redirect('panel_productos')
+    return _redirect_productos(request)
 
 
 # ---------- Carga de lista Excel (solo admin) ----------

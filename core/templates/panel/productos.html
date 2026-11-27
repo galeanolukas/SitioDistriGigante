@@ -59,7 +59,7 @@
                         <small class="text-muted">{{ p.categoria.nombre|default:'—' }}</small>
                     </td>
                     <td class="text-end text-nowrap">
-                        <a href="{% url 'panel_producto_editar' p.id %}" class="btn btn-sm btn-outline-primary">
+                        <a href="{% url 'panel_producto_editar' p.id %}?page={{ productos.number }}{% if q %}&q={{ q|urlencode }}{% endif %}" class="btn btn-sm btn-outline-primary">
                             <i class="bi bi-pencil"></i>
                         </a>
                         <button form="del-{{ p.id }}" class="btn btn-sm btn-outline-danger"
@@ -91,7 +91,7 @@
 {% endif %}
 
 {% for p in productos %}
-<form id="del-{{ p.id }}" method="post" action="{% url 'panel_producto_borrar' p.id %}" class="d-none">
+<form id="del-{{ p.id }}" method="post" action="{% url 'panel_producto_borrar' p.id %}?page={{ productos.number }}{% if q %}&q={{ q|urlencode }}{% endif %}" class="d-none">
     {% csrf_token %}
 </form>
 {% endfor %}

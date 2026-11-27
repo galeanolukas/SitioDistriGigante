@@ -89,7 +89,7 @@
             <button type="submit" class="btn-cta">
                 <i class="bi bi-check-lg"></i> Guardar producto
             </button>
-            <a href="{% url 'panel_productos' %}" class="btn btn-outline-secondary">Cancelar</a>
+            <a href="{% url 'panel_productos' %}{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}" class="btn btn-outline-secondary">Cancelar</a>
         </div>
     </form>
 </div>
