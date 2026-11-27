@@ -1983,7 +1983,7 @@ def delete_product(request, product_id):
 
 def product_detail(request, product_id):
     precio_x_unidad = 0
-    product = Product.objects.get(id=product_id)
+    product = get_object_or_404(Product, id=product_id)
     ofertas = Oferta.objects.all()
 
     try:
